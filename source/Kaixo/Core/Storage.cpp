@@ -27,9 +27,6 @@ namespace Kaixo {
         options.osxLibrarySubFolder = "Application Support";
 
         m_Properties.setStorageParameters(options);
-        if (!m_Properties.getUserSettings()->save()) {
-            std::cout << "Fuck aaaa";
-        }
     }
 
     // ------------------------------------------------
