@@ -1,4 +1,5 @@
 #include "Kaixo/Core/Gui/Views/XYController.hpp"
+#include "Kaixo/Core/Storage.hpp"
 
 // ------------------------------------------------
 
@@ -27,14 +28,21 @@ namespace Kaixo::Gui {
     void XYController::mouseDown(const juce::MouseEvent& event) {
         View::mouseDown(event);
         beginEdit();
-        setMouseCursor(juce::MouseCursor::NoCursor);
+
+        m_PreviousMousePosition = event.mouseDownPosition;
+
+        if (!Storage::flag(Setting::TouchMode)) {
+            setMouseCursor(juce::MouseCursor::NoCursor);
+        }
     }
 
     void XYController::mouseUp(const juce::MouseEvent& event) {
         View::mouseUp(event);
         endEdit();
 
-        context.cursorPos(localPointToGlobal(handlePos()));
+        if (!Storage::flag(Setting::TouchMode)) {
+            context.cursorPos(localPointToGlobal(handlePos()));
+        }
 
         setMouseCursor(juce::MouseCursor::NormalCursor);
     }
@@ -47,24 +55,28 @@ namespace Kaixo::Gui {
         if (event.mods.isShiftDown()) mult *= 0.25;
         if (event.mods.isCtrlDown()) mult *= 0.25;
 
-        auto deltaX = (event.mouseDownPosition.x - event.x) * mult;
-        auto deltaY = (event.mouseDownPosition.y - event.y) * mult;
+        auto deltaX = (m_PreviousMousePosition.x() - event.x) * mult;
+        auto deltaY = (m_PreviousMousePosition.y() - event.y) * mult;
         performEdit(Math::Fast::clamp1(settings.valueX - deltaX),
-            Math::Fast::clamp1(settings.valueY - deltaY));
+                    Math::Fast::clamp1(settings.valueY - deltaY));
 
-        context.cursorPos(localPointToGlobal(event.mouseDownPosition));
-        setMouseCursor(juce::MouseCursor::NoCursor);
+        if (Storage::flag(Setting::TouchMode)) {
+            m_PreviousMousePosition = { event.x, event.y };
+        } else {
+            context.cursorPos(localPointToGlobal(m_PreviousMousePosition));
+            setMouseCursor(juce::MouseCursor::NoCursor);
+        }
 
         repaint();
 
         if (settings.tooltip) {
             auto handle = handlePos();
             handle.y(handle.y() + settings.handleSize / 2 + 2);
-            ;
+            
             context.tooltip().open({
                 .string = settings.tooltip(settings.valueX, settings.valueY),
                 .position = localPointToGlobal(handle),
-                });
+            });
         }
     }
 

@@ -143,6 +143,7 @@ namespace Kaixo::Gui {
         std::vector<Listener*> m_Listeners{};
         std::vector<UIPoint> m_UIPoints{};
         std::size_t m_Closest = npos;
+        Kaixo::Point<> m_PreviousMousePosition{ 0, 0 };
         float m_CurrentPhase = 0;
         bool m_IsCurve = false;
         bool m_DidDrag = false;

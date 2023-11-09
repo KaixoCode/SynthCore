@@ -60,6 +60,12 @@ namespace Kaixo::Gui {
             }
         }
 
+        if (!Storage::flag(Setting::TouchMode)) {
+            setMouseCursor(juce::MouseCursor::NoCursor);
+        }
+
+        m_PreviousMousePosition = event.mouseDownPosition;
+
         beginEdit();
     }
 
@@ -72,14 +78,18 @@ namespace Kaixo::Gui {
             if (event.mods.isCtrlDown())  difference *= 0.25;
 
             switch (settings.type) {
-            case Type::Vertical:   difference *= (event.mouseDownPosition.y - event.y) * +.005; break;
-            case Type::Horizontal: difference *= (event.mouseDownPosition.x - event.x) * -.005; break;
+            case Type::Vertical:   difference *= (m_PreviousMousePosition.y() - event.y) * +.005; break;
+            case Type::Horizontal: difference *= (m_PreviousMousePosition.x() - event.x) * -.005; break;
             }
 
             performEdit(value() + difference);
-
-            context.cursorPos(localPointToGlobal(event.mouseDownPosition));
-            setMouseCursor(juce::MouseCursor::NoCursor);
+            
+            if (Storage::flag(Setting::TouchMode)) {
+                m_PreviousMousePosition = { event.x, event.y };
+            } else {
+                context.cursorPos(localPointToGlobal(m_PreviousMousePosition));
+                setMouseCursor(juce::MouseCursor::NoCursor);
+            }
 
             if (settings.tooltipValue) {
                 context.tooltip().update(valueString());
@@ -89,18 +99,21 @@ namespace Kaixo::Gui {
 
     void Knob::mouseUp(const juce::MouseEvent& event) {
         View::mouseUp(event);
-        if (settings.moveCursorWithValue) {
-            switch (settings.type) {
-            case Type::Vertical:
-                context.cursorPos(localPointToGlobal(Point{
-                    event.mouseDownPosition.x,
-                    y() + value() * height()
-                })); break;
-            case Type::Horizontal:
-                context.cursorPos(localPointToGlobal(Point{
-                    x() + value() * width(),
-                    event.mouseDownPosition.y,
-                })); break;
+
+        if (!Storage::flag(Setting::TouchMode)) {
+            if (settings.moveCursorWithValue) {
+                switch (settings.type) {
+                case Type::Vertical:
+                    context.cursorPos(localPointToGlobal(Point{
+                        m_PreviousMousePosition.x(),
+                        y() + value() * height()
+                    })); break;
+                case Type::Horizontal:
+                    context.cursorPos(localPointToGlobal(Point{
+                        x() + value() * width(),
+                        m_PreviousMousePosition.y(),
+                    })); break;
+                }
             }
         }
 

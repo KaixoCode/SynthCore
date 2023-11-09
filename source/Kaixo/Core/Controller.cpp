@@ -7,23 +7,6 @@
 namespace Kaixo {
 
     // ------------------------------------------------
-    
-    struct Storage {
-
-        Storage() {
-            juce::PropertiesFile::Options options;
-            options.applicationName = JucePlugin_Name;
-            options.filenameSuffix = ".settings";
-            options.storageFormat = juce::PropertiesFile::storeAsBinary;
-            options.osxLibrarySubFolder = "Application Support";
-
-            properties.setStorageParameters(options);
-        }
-
-        ApplicationProperties properties;
-    };
-
-    // ------------------------------------------------
 
     Controller::Controller()
         : AudioProcessor(BusesProperties()

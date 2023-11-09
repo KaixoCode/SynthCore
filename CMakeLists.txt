@@ -32,6 +32,7 @@ source_group(TREE ${CORE_SOURCE_DIRECTORY} FILES ${CORE_SOURCE})
 
 add_compile_definitions(
     SYNTH_InitialSize=${INITIAL_SIZE}
+    SYNTH_ThemeFile="${PROJECT_SOURCE_DIRECTORY}/${THEME}"
 )
 
 juce_add_plugin(${NAME}

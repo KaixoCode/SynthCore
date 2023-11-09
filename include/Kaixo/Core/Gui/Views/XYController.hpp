@@ -66,6 +66,9 @@ namespace Kaixo::Gui {
 
         // ------------------------------------------------
     private:
+        Point<> m_PreviousMousePosition{ 0, 0 };
+
+        // ------------------------------------------------
 
         Point<> handlePos();
 

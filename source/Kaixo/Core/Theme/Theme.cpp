@@ -11,7 +11,7 @@ namespace Kaixo::Theme {
     // ------------------------------------------------
 
     void Theme::openDefault() {
-        open("C:\\Users\\Jeroen\\source\\repos\\JuceProjects\\Yoyijo\\theme\\theme.json");
+        open(SYNTH_ThemeFile);
     }
 
     bool Theme::reopen() {
@@ -20,7 +20,7 @@ namespace Kaixo::Theme {
         m_Variables.clear();
         m_IsThemeOpened = false;
 
-        if (name() == "Default") {
+        if (name() == Default) {
             openDefault();
             return true;
         } else {

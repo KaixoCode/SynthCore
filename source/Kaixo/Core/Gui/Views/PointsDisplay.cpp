@@ -1,4 +1,5 @@
 #include "Kaixo/Core/Gui/Views/PointsDisplay.hpp"
+#include "Kaixo/Core/Storage.hpp"
 
 // ------------------------------------------------
 
@@ -60,9 +61,15 @@ namespace Kaixo::Gui {
         auto part = m_Closest;
         ensureUIPointsSize();
         if (event.getNumberOfClicks() != 2) {
-            setMouseCursor(juce::MouseCursor::NoCursor);
+
+            if (!Storage::flag(Setting::TouchMode)) {
+                setMouseCursor(juce::MouseCursor::NoCursor);
+            }
+
             m_UIPoints[part].dragging = true;
         }
+
+        m_PreviousMousePosition = event.mouseDownPosition;
     }
 
     void PointsDisplay::mouseExit(const juce::MouseEvent& event) {
@@ -97,8 +104,8 @@ namespace Kaixo::Gui {
                 if (event.mods.isCtrlDown())  mult *= 0.25;
 
                 Kaixo::Point value{
-                    mult.x() * (event.x - event.mouseDownPosition.x),
-                    mult.y() * (event.y - event.mouseDownPosition.y)
+                    mult.x() * (event.x - m_PreviousMousePosition.x()),
+                    mult.y() * (event.y - m_PreviousMousePosition.y())
                 };
 
                 if (!m_IsCurve && event.mods.isMiddleButtonDown()) value.x(0);
@@ -106,12 +113,16 @@ namespace Kaixo::Gui {
 
                 addAmountToPoint(part, value, !event.mods.isAltDown());
 
-                context.cursorPos(localPointToGlobal(Kaixo::Point<float>{
-                    event.mouseDownPosition.x,
-                        event.mouseDownPosition.y,
-                }));
+                if (Storage::flag(Setting::TouchMode)) {
+                    m_PreviousMousePosition = { event.x, event.y };
+                } else {
+                    context.cursorPos(localPointToGlobal(Kaixo::Point<float>{
+                        m_PreviousMousePosition.x(),
+                        m_PreviousMousePosition.y(),
+                    }));
 
-                setMouseCursor(juce::MouseCursor::NoCursor);
+                    setMouseCursor(juce::MouseCursor::NoCursor);
+                }
 
                 repaint();
                 return;
@@ -133,7 +144,7 @@ namespace Kaixo::Gui {
             m_UIPoints[part].dragging = false;
         }
 
-        if (selected != npos) {
+        if (selected != npos && !Storage::flag(Setting::TouchMode)) {
             if (m_DidDrag) {
                 Kaixo::Point p = m_IsCurve
                     ? positionOfCurvePoint(selected)
@@ -141,9 +152,9 @@ namespace Kaixo::Gui {
 
                 context.cursorPos(localPointToGlobal(p));
             }
-
-            setMouseCursor(juce::MouseCursor::NormalCursor);
         }
+
+        setMouseCursor(juce::MouseCursor::NormalCursor);
     }
 
     // ------------------------------------------------

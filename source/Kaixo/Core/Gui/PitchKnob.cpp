@@ -27,8 +27,8 @@ namespace Kaixo::Gui {
             if (event.mods.isCtrlDown())  difference *= 0.25;
 
             switch (Knob::settings.type) {
-            case Type::Vertical:   difference *= (event.mouseDownPosition.y - event.y) * +.005; break;
-            case Type::Horizontal: difference *= (event.mouseDownPosition.x - event.x) * -.005; break;
+            case Type::Vertical:   difference *= (m_PreviousMousePosition.y() - event.y) * +.005; break;
+            case Type::Horizontal: difference *= (m_PreviousMousePosition.x() - event.x) * -.005; break;
             }
 
             if (m_IsTranspose) {
@@ -40,13 +40,16 @@ namespace Kaixo::Gui {
                 transpose += Math::sign(difference);
 
                 performEdit((transpose + detune - settings.min) / (1.0 * settings.max - settings.min));
-            }
-            else {
+            } else {
                 performEdit(value() + difference * 0.02);
             }
 
-            context.cursorPos(localPointToGlobal(event.mouseDownPosition));
-            setMouseCursor(juce::MouseCursor::NoCursor);
+            if (Storage::flag(Setting::TouchMode)) {
+                m_PreviousMousePosition = { event.x, event.y };
+            } else {
+                context.cursorPos(localPointToGlobal(m_PreviousMousePosition));
+                setMouseCursor(juce::MouseCursor::NoCursor);
+            }
 
             if (Knob::settings.tooltipValue) {
                 context.tooltip().update(valueString());

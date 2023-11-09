@@ -10,6 +10,10 @@ namespace Kaixo::Theme {
 
     // ------------------------------------------------
 
+    constexpr static std::string_view Default = "Default";
+
+    // ------------------------------------------------
+
     class Theme : public Container {
     public:
 

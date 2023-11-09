@@ -1,5 +1,6 @@
 #pragma once
 #include "Kaixo/Core/Definitions.hpp"
+#include "Kaixo/Core/Storage.hpp"
 #include "Kaixo/Core/Gui/View.hpp"
 #include "Kaixo/Core/Gui/Tooltip.hpp"
 #include "Kaixo/Core/Theme/MultiFrame.hpp"
@@ -94,6 +95,7 @@ namespace Kaixo::Gui {
         // ------------------------------------------------
     protected:
         ParamValue m_Value = 0;
+        Point<> m_PreviousMousePosition{ 0, 0 };
 
         // ------------------------------------------------
 
