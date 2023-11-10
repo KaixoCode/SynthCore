@@ -300,9 +300,13 @@ namespace Kaixo::Theme {
     std::string FontElement::fitWithinWidth(std::string_view str, float maxWidth, std::string_view d) const {
         std::string path{ str.begin(), str.end() };
         std::string delim{ d };
+        std::size_t delimSize = delim.size();
+        std::size_t minStartSize = 3;
+        std::size_t removeNPerIter = 2;
+        std::size_t minSize = delimSize + minStartSize + removeNPerIter;
 
-        while (stringWidth(path) > maxWidth && path.size() > 9) {
-            path = path.substr(0, 3) + delim + path.substr(8);
+        while (stringWidth(path) > maxWidth && path.size() >= minSize) {
+            path = path.substr(0, minStartSize) + delim + path.substr(minSize);
         }
 
         return path;

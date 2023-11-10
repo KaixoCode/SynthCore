@@ -54,12 +54,19 @@ namespace Kaixo::Gui {
         void removeListener(Listener* listener);
 
         // ------------------------------------------------
+        
+        void scale(float scale);
+        float scale();
+
+        // ------------------------------------------------
 
     private:
         Controller& m_Controller;
         std::vector<ParamValue> m_ParameterValues{};
         std::map<std::int64_t, TabControl> m_TabControls{};
         std::unique_ptr<Tooltip> m_Tooltip;
+
+        float m_Scale = 1;
 
         // ------------------------------------------------
         

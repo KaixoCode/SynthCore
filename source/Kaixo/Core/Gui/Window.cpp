@@ -117,6 +117,15 @@ namespace Kaixo::Gui {
     }
 
     // ------------------------------------------------
+    
+    void Window::scale(float scale) {
+        setScaleFactor(scale);
+        m_Scale = scale;
+    }
+    
+    float Window::scale() { return m_Scale; }
+
+    // ------------------------------------------------
 
     void Window::timerCallback() {
         auto count = m_Controller.numParameters();

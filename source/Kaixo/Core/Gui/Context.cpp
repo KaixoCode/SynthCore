@@ -44,8 +44,8 @@ namespace Kaixo::Gui {
 
     // ------------------------------------------------
 
-    void Context::scale(float zoom) const { Desktop::getInstance().setGlobalScaleFactor(zoom); }
-    float Context::scale() const { return Desktop::getInstance().getGlobalScaleFactor(); }
+    void Context::scale(float zoom) const { getWindow().scale(zoom); }
+    float Context::scale() const { return getWindow().scale(); }
 
     // ------------------------------------------------
 

@@ -89,6 +89,55 @@ namespace Kaixo {
          * @param index json key
          * @param value value to assign to
          */
+        template<class Fun, class Ty = 
+            std::conditional_t<std::regular_invocable<Fun, json&>, json,
+            std::conditional_t<std::regular_invocable<Fun, string&>, string,
+            std::conditional_t<std::regular_invocable<Fun, array&>, array,
+            std::conditional_t<std::regular_invocable<Fun, object&>, object,
+            std::conditional_t<std::regular_invocable<Fun, std::int8_t&>, integral,
+            std::conditional_t<std::regular_invocable<Fun, std::int16_t&>, integral,
+            std::conditional_t<std::regular_invocable<Fun, std::int32_t&>, integral,
+            std::conditional_t<std::regular_invocable<Fun, std::int64_t&>, integral,
+            std::conditional_t<std::regular_invocable<Fun, std::uint8_t&>, unsigned_integral,
+            std::conditional_t<std::regular_invocable<Fun, std::uint16_t&>, unsigned_integral,
+            std::conditional_t<std::regular_invocable<Fun, std::uint32_t&>, unsigned_integral,
+            std::conditional_t<std::regular_invocable<Fun, std::uint64_t&>, unsigned_integral,
+            std::conditional_t<std::regular_invocable<Fun, double&>, floating,
+            std::conditional_t<std::regular_invocable<Fun, float&>, floating,
+            std::conditional_t<std::regular_invocable<Fun, boolean&>, boolean, void>>>>>>>>>>>>>>>>
+            requires (!std::same_as<Ty, void>)
+        void call_if_exists(std::string_view index, Fun fun) {
+            using type = type_alias<Ty>::type;
+            if (!is(Object)) { return; }
+            auto _it = as<object>().find(index);
+            if (_it == as<object>().end()) { return; }
+            if constexpr (std::same_as<Ty, json>) fun(_it->second);
+            else {
+                if (!std::holds_alternative<type>(_it->second._value)) { return; }
+                fun(_it->second.as<type>());
+            }
+        }
+        
+        /**
+         * Assign value if it exists.
+         * @param index json key
+         * @param value value to assign to
+         */
+        template<class Ty>
+        void assign_if_exists(std::string_view index, Ty& val) { 
+            using type = type_alias<Ty>::type;
+            if (!is(Object)) { return; }
+            auto _it = as<object>().find(index);
+            if (_it == as<object>().end()) { return; }
+            if (!std::holds_alternative<type>(_it->second._value)) { return; }
+            val = _it->second.as<type>();
+        }
+        
+        /**
+         * Assign value if it exists.
+         * @param index json key
+         * @param value value to assign to
+         */
         template<class Ty>
         void assign_or_default(std::string_view index, Ty& val, auto def) { 
             using type = type_alias<Ty>::type;

@@ -65,14 +65,6 @@ namespace Kaixo::Gui {
 
         // ------------------------------------------------
 
-    private:
-        std::vector<std::function<void(std::string_view)>> m_Callbacks;
-        Point<float> m_Offset{ 0, 0 };
-        std::int64_t m_Caret = 0;
-        std::int64_t m_CaretEnd = 0;
-
-        // ------------------------------------------------
-
         Rect<> paddedDimensions() const;
 
         // ------------------------------------------------
@@ -140,6 +132,14 @@ namespace Kaixo::Gui {
 
         std::int64_t positionToIndex(Point<int> pos) const;
         Point<int> indexToPosition(std::int64_t index) const;
+
+        // ------------------------------------------------
+
+    private:
+        std::vector<std::function<void(std::string_view)>> m_Callbacks;
+        Point<float> m_Offset{ 0, 0 };
+        std::int64_t m_Caret = 0;
+        std::int64_t m_CaretEnd = 0;
 
         // ------------------------------------------------
 
