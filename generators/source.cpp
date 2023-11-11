@@ -716,7 +716,7 @@ namespace Kaixo::Generator {
             return result;
         }
 
-        std::string toString() {
+        std::string parametersAsString() {
             std::string result;
 
             auto add = [&](std::string line = "", int indent = 0) {
@@ -767,12 +767,6 @@ namespace Kaixo::Generator {
             add();
             add("// ------------------------------------------------", 1);
             add();
-            
-            result += generateParameterAssigners();
-
-            add();
-            add("// ------------------------------------------------", 1);
-            add();
             add("}", 0);
 
             return result;
@@ -780,7 +774,7 @@ namespace Kaixo::Generator {
 
         // ------------------------------------------------
         
-        std::string generateParameterAssigners() {
+        std::string assignersAsString() {
             std::string result;
 
             auto add = [&](std::string line = "", int indent = 0) {
@@ -789,7 +783,8 @@ namespace Kaixo::Generator {
                 result += "\n";
             };
 
-            add("}");
+            add("#pragma once");
+            add("// THIS FILE IS GENERATED, DO NOT EDIT");
             add();
             add("// ------------------------------------------------");
             add();
@@ -916,6 +911,10 @@ namespace Kaixo::Generator {
             }
             add("}", 2);
             add("}", 1);
+            add();
+            add("// ------------------------------------------------", 1);
+            add();
+            add("}", 0);
 
             return result;
         }
@@ -936,25 +935,31 @@ int main(const int argc, char const* const* const argv) {
 
     std::vector<std::string_view> args{ argv, std::next(argv, static_cast<std::ptrdiff_t>(argc)) };
 
-    if (args.size() != 3) {
+    if (args.size() != 4) {
         return 0;
     }
 
     // ------------------------------------------------
 
     std::filesystem::path inputPath{ args[1] };
-    std::filesystem::path outputPath{ args[2] };
+    std::filesystem::path parameterPath{ args[2] };
+    std::filesystem::path assignersPath{ args[3] };
 
     // ------------------------------------------------
 
-    if (!std::filesystem::exists(outputPath.parent_path())) {
-        std::filesystem::create_directory(outputPath.parent_path());
+    if (!std::filesystem::exists(parameterPath.parent_path())) {
+        std::filesystem::create_directory(parameterPath.parent_path());
+    }
+    
+    if (!std::filesystem::exists(assignersPath.parent_path())) {
+        std::filesystem::create_directory(assignersPath.parent_path());
     }
 
     // ------------------------------------------------
 
     std::ifstream ifile{ inputPath };
-    std::ofstream ofile{ outputPath };
+    std::ofstream pfile{ parameterPath };
+    std::ofstream afile{ assignersPath };
 
     // ------------------------------------------------
 
@@ -967,7 +972,8 @@ int main(const int argc, char const* const* const argv) {
 
         generator.generate(xml.value());
 
-        ofile << generator.toString();
+        pfile << generator.parametersAsString();
+        afile << generator.assignersAsString();
     } else {
         std::cerr << "Failed to parse XML file [" << inputPath << "]\n";
     }
