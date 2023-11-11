@@ -142,8 +142,8 @@ namespace Kaixo::Gui {
 
         // ------------------------------------------------
         
-        virtual void wantsIdle(bool v) { m_Flags.wantsIdle = v; }
-        virtual bool wantsIdle() const { return m_Flags.wantsIdle; }
+        virtual void wantsIdle(bool v);
+        virtual bool wantsIdle() const;
 
         virtual void onIdle();
 

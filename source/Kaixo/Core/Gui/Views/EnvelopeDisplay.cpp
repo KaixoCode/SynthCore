@@ -60,23 +60,19 @@ namespace Kaixo::Gui {
         float totalProgress = x * multiplier();
         float maxCurve = PointsDisplay::settings.maxCurve;
 
-        if (totalProgress < m_Delay) {
+        if (totalProgress <= m_Delay) {
             float progress = totalProgress / m_Delay;
             return m_AttackLevel;
-        }
-        else if (totalProgress < m_Delay + m_Attack) {
+        } else if (totalProgress <= m_Delay + m_Attack) {
             float progress = (totalProgress - m_Delay) / m_Attack;
             return m_AttackLevel + (m_DecayLevel - m_AttackLevel) * Math::curve(progress, m_AttackCurve * 2 * maxCurve - maxCurve);
-        }
-        else if (totalProgress < m_Delay + m_Attack + m_Decay) {
+        } else if (totalProgress <= m_Delay + m_Attack + m_Decay) {
             float progress = (totalProgress - m_Delay - m_Attack) / m_Decay;
             return m_DecayLevel - (m_DecayLevel - m_Sustain) * Math::curve(progress, m_DecayCurve * 2 * maxCurve - maxCurve);
-        }
-        else if (totalProgress < m_Delay + m_Attack + m_Decay + m_Release) {
+        } else if (totalProgress <= m_Delay + m_Attack + m_Decay + m_Release) {
             float progress = (totalProgress - m_Delay - m_Attack - m_Decay) / m_Release;
             return m_Sustain - m_Sustain * Math::curve(progress, m_ReleaseCurve * 2 * maxCurve - maxCurve);
-        }
-        else {
+        } else {
             return 0;
         }
     }

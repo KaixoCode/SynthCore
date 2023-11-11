@@ -194,8 +194,11 @@ namespace Kaixo::Processing {
         void smooth(float millis) { m_SmoothMillis = millis; }
 
         void mode(Mode mode) { m_Mode = mode; }
+        void mode(float mode) { m_Mode = normalToIndex(mode, Mode::Amount); }
         void tempo(Tempo tempo) { m_Tempo = tempo; }
+        void tempo(float tempo) { m_Tempo = normalToIndex(tempo, Tempo::Amount); }
         void sync(Sync sync) { m_Sync = sync; }
+        void sync(float sync) { m_Sync = normalToIndex(sync, Sync::Amount); }
 
         // ------------------------------------------------
         

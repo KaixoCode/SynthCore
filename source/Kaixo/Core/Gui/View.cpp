@@ -75,7 +75,22 @@ namespace Kaixo::Gui {
     }
 
     // ------------------------------------------------
-    
+
+    void View::wantsIdle(bool v) {
+        m_Flags.wantsIdle = v; 
+    }
+
+    bool View::wantsIdle() const {
+        if (m_Flags.wantsIdle) return true;
+        // Also return true if a child wants idle
+        for (auto& view : m_Views) {
+            if (view->wantsIdle()) 
+                return true;
+        }
+
+        return false; 
+    }
+
     void View::onIdle() {
         for (auto& view : m_Views) {
             if (view->wantsIdle()) 

@@ -84,7 +84,7 @@ namespace Kaixo::Gui {
 
             // ------------------------------------------------
 
-            const std::size_t maxPoints = 0;
+            const std::size_t maxPoints = std::numeric_limits<std::size_t>::max(); // Initially no max nof points
 
             Theme::Stateful mainPoint{};
             Theme::Stateful curvePoint{};

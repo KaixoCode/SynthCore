@@ -34,11 +34,12 @@ namespace Kaixo {
 		Transform transform = Transformers::Range<0.f, 1.f>;
 		Formatter format = Formatters::Default;
 		ParamValue normalizedDefaultValue() const { return transform.normalize(defaultValue); };
-		bool doSmoothing() const { return steps == 0; }
+		bool doSmoothing() const { return smooth && steps == 0; }
 		bool doModulation() const { return steps == 0 && modulatable; }
 
 		// ------------------------------------------------
 
+		bool smooth : 1 = false;
 		bool multiply : 1 = false;
 		bool constrain : 1 = true;
 		bool modulatable : 1 = true;
@@ -51,7 +52,7 @@ namespace Kaixo {
 
 		// ------------------------------------------------
 		
-		operator ParamID() const { return id; }
+		constexpr operator ParamID() const { return id; }
 
 		// ------------------------------------------------
 

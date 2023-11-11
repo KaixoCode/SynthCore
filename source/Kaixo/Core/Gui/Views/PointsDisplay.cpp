@@ -11,7 +11,6 @@ namespace Kaixo::Gui {
         : View(c), settings(std::move(s)) 
     {
         wantsIdle(true);
-        m_UIPoints.resize(settings.maxPoints);
     }
 
     // ------------------------------------------------
@@ -99,7 +98,8 @@ namespace Kaixo::Gui {
         for (std::size_t part = 0; part < parts; ++part) {
             if (m_UIPoints[part].dragging) {
                 m_DidDrag = true;
-                Kaixo::Point mult = { 1.f / width(), -1.f / height() };
+                auto padded = paddedDimensions();
+                Kaixo::Point mult = { 1.f / padded.width(), -1.f / padded.height() };
                 if (event.mods.isShiftDown()) mult *= 0.25;
                 if (event.mods.isCtrlDown())  mult *= 0.25;
 
@@ -348,7 +348,7 @@ namespace Kaixo::Gui {
         UIPoint& uipoint = m_UIPoints[i];
 
         if (m_IsCurve) {
-            float a = 5 * amount.y();
+            float a = 8 * amount.y();
             float after = i + 1 == parts ? getPoint(0).y : getPoint(i + 1).y;
 
             if (point.y > after) a = -a;
@@ -366,7 +366,7 @@ namespace Kaixo::Gui {
             uipoint.x = newx;
             uipoint.y = newy;
 
-            newx = settings.line.loop && i == 0 ? 0 : newx;
+            //newx = settings.line.loop && i == 0 ? 0 : newx;
             
             if (snap) {
                 if (amount.x() != 0) point.x = snapToGridX(newx);

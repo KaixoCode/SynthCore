@@ -37,6 +37,7 @@ namespace Kaixo::Generator {
             std::string description{};
             std::string varName{};
             std::string bidirectional{};
+            std::string interface{};
 
             // ------------------------------------------------
 
@@ -70,10 +71,12 @@ namespace Kaixo::Generator {
             std::string steps{};
             std::string transform{};
             std::string format{};
+            std::string smooth{};
             std::string multiply{};
             std::string constrain{};
             std::string modulatable{};
             std::string automatable{};
+            std::string interface{};
 
             // ------------------------------------------------
 
@@ -114,9 +117,9 @@ namespace Kaixo::Generator {
 
                 // ------------------------------------------------
 
-                std::vector<Module> modules{};
-                std::vector<Parameter> parameters{};
-                std::vector<Source> sources{};
+                std::list<Module> modules{};
+                std::list<Parameter> parameters{};
+                std::list<Source> sources{};
 
                 // ------------------------------------------------
 
@@ -139,6 +142,11 @@ namespace Kaixo::Generator {
 
         std::map<std::size_t, std::string> fullParameterIdentifiers;
         std::map<std::size_t, std::string> fullSourceIdentifiers;
+
+        std::map<std::size_t, Parameter*> parameters;
+        std::map<std::size_t, Source*> sources;
+
+        std::string interfaceType{};
 
         // ------------------------------------------------
 
@@ -204,6 +212,7 @@ namespace Kaixo::Generator {
         // ------------------------------------------------
 
         void generate(basic_xml& xml) {
+            interfaceType = xml.attributeOr("interface", "none");
             parseModule(main, xml, {}, true);
             generateModule(main, true);
             instantiateModule(main);
@@ -260,7 +269,7 @@ namespace Kaixo::Generator {
                     scoped.shortNameSpace = trim(scoped.shortNameSpace);
                 }
 
-                scoped.variables[module.name] = std::to_string(i);
+                scoped.variables[module.varName] = std::to_string(i);
 
                 for (auto& child : xml.children) {
                     if (child.tag == "param") parseParam(index.parameters.emplace_back(), child, scoped);
@@ -286,6 +295,7 @@ namespace Kaixo::Generator {
             param.steps = xml.attributeOr("steps", param.steps);
             param.transform = xml.attributeOr("transform", param.transform);
             param.format = xml.attributeOr("format", param.format);
+            param.smooth = xml.attributeOr("smooth", param.smooth);
             param.multiply = xml.attributeOr("multiply", param.multiply);
             param.constrain = xml.attributeOr("constrain", param.constrain);
             param.modulatable = xml.attributeOr("modulatable", param.modulatable);
@@ -309,10 +319,14 @@ namespace Kaixo::Generator {
             param.steps = xml.attributeOr("steps", "0");
             param.transform = xml.attributeOr("transform", "Default");
             param.format = xml.attributeOr("format", "Default");
+            param.smooth = xml.attributeOr("smooth", "true");
             param.multiply = xml.attributeOr("multiply", "false");
             param.constrain = xml.attributeOr("constrain", "true");
             param.modulatable = xml.attributeOr("modulatable", "true");
             param.automatable = xml.attributeOr("automatable", "true");
+            param.interface = xml.attributeOr("interface", "");
+
+            parameters[param.id] = &param;
 
             setParamValues(param, xml, scope);
 
@@ -378,6 +392,10 @@ namespace Kaixo::Generator {
                 replace(str, "{index}", scope.count == 0 ? "" : std::to_string(scope.index + 1));
                 replace(str, "{i}", scope.count == 0 ? "" : std::to_string(scope.index));
 
+                for (auto& [name, value] : scope.variables) {
+                    replace(str, "$" + name, value);
+                }
+
                 return str = trim(str);
             };
 
@@ -385,6 +403,7 @@ namespace Kaixo::Generator {
             param.identifier = format(param.identifier);
             param.shortIdentifier = format(param.shortIdentifier);
             param.description = format(param.description);
+            param.interface = format(param.interface);
 
             param.fullVarName = scope.varName.empty() ? param.varName : scope.varName + "." + param.varName;
 
@@ -406,6 +425,9 @@ namespace Kaixo::Generator {
             source.varName = xml.attributeOr("var-name", nameToVar(source.name));
             source.description = xml.attributeOr("description", "");
             source.bidirectional = xml.attributeOr("bidirectional", "false");
+            source.interface = xml.attributeOr("interface", "");
+
+            sources[source.id] = &source;
 
             auto format = [&](std::string str) {
                 replace(str, "{namespace}", scope.nameSpace);
@@ -415,6 +437,10 @@ namespace Kaixo::Generator {
                 replace(str, "{index}", scope.count == 0 ? "" : std::to_string(scope.index + 1));
                 replace(str, "{i}", scope.count == 0 ? "" : std::to_string(scope.index));
 
+                for (auto& [name, value] : scope.variables) {
+                    replace(str, "$" + name, value);
+                }
+
                 return str = trim(str);
             };
 
@@ -422,6 +448,7 @@ namespace Kaixo::Generator {
             source.identifier = format(source.identifier);
             source.shortIdentifier = format(source.shortIdentifier);
             source.description = format(source.description);
+            source.interface = format(source.interface);
 
             source.fullVarName = scope.varName.empty() ? source.varName : scope.varName + "." + source.varName;
 
@@ -619,6 +646,7 @@ namespace Kaixo::Generator {
             add(".steps = " + param.steps + ", ");
             add(".transform = Transformers::" + param.transform + ", ");
             add(".format = Formatters::" + param.format + ", ");
+            add(".smooth = " + param.smooth + ", ");
             add(".multiply = " + param.multiply + ", ");
             add(".constrain = " + param.constrain + ", ");
             add(".modulatable = " + param.modulatable + ", ");
@@ -739,7 +767,155 @@ namespace Kaixo::Generator {
             add();
             add("// ------------------------------------------------", 1);
             add();
+            
+            result += generateParameterAssigners();
+
+            add();
+            add("// ------------------------------------------------", 1);
+            add();
             add("}", 0);
+
+            return result;
+        }
+
+        // ------------------------------------------------
+        
+        std::string generateParameterAssigners() {
+            std::string result;
+
+            auto add = [&](std::string line = "", int indent = 0) {
+                for (std::size_t i = 0; i < indent; ++i) result += tab;
+                result += line;
+                result += "\n";
+            };
+
+            add("}");
+            add();
+            add("// ------------------------------------------------");
+            add();
+            add("namespace Kaixo::Processing {");
+
+            if (interfaceType == "modulation") {
+                add("#define KAIXO_INTERNAL_MODULATION");
+                add();
+                add("// ------------------------------------------------", 1);
+                add();
+                add("constexpr void assignSources(auto& database) {", 1);
+                for (auto& [id, source] : sources) {
+                    std::string idstr = std::to_string(id);
+                    std::string accessor = source->interface;
+
+                    replace(accessor, "$self", "database.self()");
+                    replace(accessor, "$value", "p.access");
+
+                    if (!accessor.empty()) {
+                        add("// Source: " + source->fullVarName, 2);
+                        add("{", 2);
+                        add("auto& s = database.source(" + idstr + ");", 3);
+                        if (source->bidirectional == "true") {
+                            add("s.normalized = " + accessor + ";", 3);
+                            add("s.value = s.normalized * 2 - 1;", 3);
+                        } else {
+                            add("s.value = s.normalized = " + accessor + ";", 3);
+                        }
+                        add("}", 2);
+                    }
+                }
+                add("}", 1);
+                add();
+                add("// ------------------------------------------------", 1);
+                add();
+                add("constexpr void assignParameters(auto& database) {", 1);
+                for (auto& [id, param] : parameters) {
+                    std::string idstr = std::to_string(id);
+                    std::string accessor = param->interface;
+
+                    replace(accessor, "$self", "database.self()");
+                    replace(accessor, "$value", "p.access");
+
+                    if (param->steps == "0" && param->smooth != "false") {
+                        add("// Parameter: " + param->fullVarName, 2);
+                        add("if (database.necessary(" + idstr + ")) {", 2);
+                        add("auto& p = database.parameter(" + idstr + ");", 3);
+                        if (param->modulatable == "true") {
+                            add("float value = p.value += p.add;", 3);
+                            if (param->multiply == "true") {
+                                add("database.loopOverSources(" + idstr + ", [&](ModulationSourceID source, float amount) {", 3);
+                                add("value *= amount * database.source(source).normalized + Math::Fast::min(1 - amount, 1);", 4);
+                                add("});", 3);
+                            } else {
+                                add("database.loopOverSources(" + idstr + ", [&](ModulationSourceID source, float amount) {", 3);
+                                add("value += amount * database.source(source).value;", 4);
+                                add("});", 3);
+                            }
+
+                            if (param->constrain == "true") {
+                                add("p.access = Math::Fast::clamp1(value);", 3);
+                            } else {
+                                add("p.access = value;", 3);
+                            }
+                        } else {
+                            add("p.access = p.value += p.add;", 3);
+                        }
+                        if (!accessor.empty()) add(accessor + ";", 3);
+                        add("}", 2);
+                    }
+                }
+                add("}", 1);
+            } else if (interfaceType == "normal") {
+                add("constexpr void assignParameters(auto& database) {", 1);
+                for (auto& [id, param] : parameters) {
+                    std::string idstr = std::to_string(id);
+                    std::string accessor = param->interface;
+
+                    replace(accessor, "$self", "database.self()");
+                    replace(accessor, "$value", "p.access");
+
+                    if (param->steps == "0" && param->smooth != "false") {
+                        add("// Parameter: " + param->fullVarName, 2);
+                        add("if (database.necessary(" + idstr + ")) {", 2);
+                        add("auto& p = database.parameter(" + idstr + ");", 3);
+                        add("p.access = p.value += p.add;", 3);
+                        if (!accessor.empty()) add(accessor + ";", 3);
+                        add("}", 2);
+                    }
+                }
+                add("}", 1);
+            }
+            add();
+            add("// ------------------------------------------------", 1);
+            add();
+            add("constexpr void assignParameter(auto& database, ParamID id, ParamValue val) {", 1);
+            add("switch(id) {", 2);
+            for (auto& [id, param] : parameters) {
+                std::string idstr = std::to_string(id);
+                std::string accessor = param->interface;
+
+                replace(accessor, "$self", "database.self()");
+                replace(accessor, "$value", "p.access");
+
+                add("case " + idstr + ": { // Parameter: " + param->fullVarName, 2);
+                if (param->steps == "0" && param->smooth != "false") {
+                    add("auto& p = database.parameter(" + idstr + ");", 3);
+                    add("if (database.self().isActive()) {", 3);
+                    add("p.goal = val;", 4);
+                    add("database.setChanging(" + idstr + ");", 4);
+                    add("} else {", 3);
+                    add("p.access = p.value = p.goal = val;", 4);
+                    add("p.add = 0;", 4);
+                    if (!accessor.empty()) add(accessor + ";", 4);
+                    add("}", 3);
+                } else {
+                    add("auto& p = database.parameter(" + idstr + ");", 3);
+                    add("p.access = p.value = p.goal = val;", 3);
+                    add("p.add = 0;", 3);
+                    if (!accessor.empty()) add(accessor + ";", 3);
+                }
+                add("}", 2);
+                add("break;", 2);
+            }
+            add("}", 2);
+            add("}", 1);
 
             return result;
         }

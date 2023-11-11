@@ -24,7 +24,7 @@ namespace Kaixo::Theme {
             openDefault();
             return true;
         } else {
-            auto& _backup = path();
+            std::filesystem::path _backup = path();
             openDefault();
             return open(_backup);
         }
