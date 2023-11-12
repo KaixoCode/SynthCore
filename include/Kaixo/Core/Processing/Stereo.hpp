@@ -17,6 +17,7 @@ namespace Kaixo::Processing {
 
 		// ------------------------------------------------
 
+		constexpr Stereo& operator=(Sample other) { l = other, r = other; return *this; }
 		constexpr Stereo& operator+=(const Stereo& other) { l += other.l, r += other.r; return *this; }
 		constexpr Stereo& operator-=(const Stereo& other) { l -= other.l, r -= other.r; return *this; }
 		constexpr Stereo& operator*=(const Stereo& other) { l *= other.l, r *= other.r; return *this; }
