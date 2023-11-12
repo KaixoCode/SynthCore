@@ -31,6 +31,7 @@ namespace Kaixo::Processing {
     }
 
     void ModulationDatabase::deserialize(json& data) {
+        init();
         for (ParamID param = 0; param < Parameters; ++param) {
             auto& modulations = m_Modulations[param];
             auto& val = getFromIdentifier(data, parameter(param).fullVarName);
