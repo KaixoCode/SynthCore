@@ -333,11 +333,11 @@ namespace Kaixo::Generator {
             for (auto& child : xml.children) {
                 if (child.tag == "index") {
                     auto constrain = child.attributeOr("if", "");
-                    auto and_parts = split(constrain, "&&");
+                    auto and_parts = split(constrain, " and ");
 
                     bool match = true;
                     for (auto& and_part : and_parts) {
-                        auto or_parts = split(and_part, "||");
+                        auto or_parts = split(and_part, " or ");
 
                         bool or_match = false;
                         for (auto& or_part : or_parts) {
