@@ -99,6 +99,9 @@ namespace Kaixo {
         void performEdit(ParamID id, ParamValue value);
         void endEdit    (ParamID id);
 
+        void linkPitchWheel(ParamID id) { m_PitchWheelLinkedParameter = id; }
+        void linkModWheel(ParamID id) { m_ModWheelLinkedParameter = id; }
+
         // ------------------------------------------------
         
         template<std::derived_from<Processing::Interface> Ty>
@@ -127,6 +130,9 @@ namespace Kaixo {
         double m_Bpm = 128;
         std::int64_t m_TimeInSamples = 0;
         juce::AudioPlayHead::TimeSignature m_TimeSignature{};
+
+        ParamID m_PitchWheelLinkedParameter = NoParam;
+        ParamID m_ModWheelLinkedParameter = NoParam;
 
         // ------------------------------------------------
         

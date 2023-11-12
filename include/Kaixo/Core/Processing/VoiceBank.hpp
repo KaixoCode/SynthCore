@@ -149,7 +149,6 @@ namespace Kaixo::Processing {
             for (std::size_t i = m_OverridenNoteHistory.size(); i > 0; --i) {
                 auto& _history = m_OverridenNoteHistory[i - 1];
                 if (_history.voice == voice) {
-                    m_PressedVoices.remove(_history.voice);
                     m_OverridenNoteHistory.erase_index(i - 1);
                     triggerVoice(_history.voice, _history.note, _history.velocity, true);
                     return true;
@@ -187,6 +186,7 @@ namespace Kaixo::Processing {
             m_Voices[i].velocity = velocity;
             m_Voices[i].trigger(legato);
             m_Voices[i].pressed = true;
+            m_PressedVoices.remove(i);
             m_PressedVoices.push_back(i);
             m_PressedInOrder.remove(i);
             m_PressedInOrder.push_back(i);

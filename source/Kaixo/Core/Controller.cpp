@@ -116,6 +116,16 @@ namespace Kaixo {
         for (const auto& raw : midiMessages) {
             const auto& message = raw.getMessage();
 
+            if (message.isControllerOfType(0) && m_ModWheelLinkedParameter != NoParam) {
+                m_Processor->param(m_ModWheelLinkedParameter, message.getControllerValue() / 127.);
+                continue;
+            }
+            
+            if (message.isPitchWheel() && m_PitchWheelLinkedParameter != NoParam) {
+                m_Processor->param(m_PitchWheelLinkedParameter, message.getPitchWheelValue() / 16384.);
+                continue;
+            }
+
             if (message.isNoteOn()) {
                 m_Processor->noteOn(message.getNoteNumber(), message.getVelocity() / 127.);
                 continue;

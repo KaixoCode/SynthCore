@@ -1,7 +1,10 @@
 #pragma once
-#include "pch.hpp"
-#include "base/processing/Filter.hpp"
-#include "base/processing/Buffer.hpp"
+
+// ------------------------------------------------
+
+#include "Kaixo/Core/Definitions.hpp"
+#include "Kaixo/Core/Processing/Filter.hpp"
+#include "Kaixo/Core/Processing/Buffer.hpp"
 
 // ------------------------------------------------
 

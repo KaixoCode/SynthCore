@@ -1,6 +1,7 @@
 #pragma once
 #include "Kaixo/Core/Definitions.hpp"
-#include "Kaixo/Core/Processing/Stereo.hpp"
+
+// ------------------------------------------------
 
 namespace Kaixo::Processing {
 

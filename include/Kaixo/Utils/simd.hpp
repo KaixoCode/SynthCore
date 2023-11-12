@@ -25,9 +25,13 @@ namespace Kaixo {
     concept is_simd = requires () { typename Ty::base; typename Ty::type; { Ty::bits }; };
 
     struct simd_path {
-        static inline enum {
+
+        enum _path {
             s0, s128, s256, s512
-        } path = s512;
+        };
+
+        static inline _path path = s256;
+
     };
 
     // ------------------------------------------------

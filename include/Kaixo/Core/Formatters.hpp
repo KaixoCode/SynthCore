@@ -252,6 +252,11 @@ namespace Kaixo {
 	// ------------------------------------------------
 
 	namespace Transformers {
+		constexpr Transform Default{
+			[](ParamValue v) -> ParamValue { return v; },
+			[](ParamValue v) -> ParamValue { return v; },
+		};
+
 		template<ParamValue Start, ParamValue End>
 		constexpr Transform Range{
 			[](ParamValue v) -> ParamValue { return v * (End - Start) + Start; },

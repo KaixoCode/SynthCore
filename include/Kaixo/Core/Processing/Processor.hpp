@@ -26,8 +26,8 @@ namespace Kaixo::Processing {
 
         // ------------------------------------------------
 
-        virtual void noteOn(Note note, double velocity) {};
-        virtual void noteOff(Note note, double velocity) {};
+        virtual void noteOn(Note note, double velocity) {}
+        virtual void noteOff(Note note, double velocity) {}
 
         // ------------------------------------------------
 
