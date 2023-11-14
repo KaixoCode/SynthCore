@@ -23,14 +23,14 @@ namespace Kaixo::Processing {
         
         // ------------------------------------------------
         
-        auto outputBuffer() const -> Buffer&;
-        auto inputBuffer()  const -> const Buffer&;
+        Buffer& outputBuffer() const;
+        const Buffer& inputBuffer() const;
 
-        auto sampleRate()    const -> double;
-        auto bpm()           const -> double;
-        auto timeInSamples() const -> std::int64_t;
+        double sampleRate() const;
+        double bpm() const;
+        std::int64_t timeInSamples() const;
 
-        auto timeSignature() const -> juce::AudioPlayHead::TimeSignature;
+        juce::AudioPlayHead::TimeSignature timeSignature() const;
 
         // ------------------------------------------------
 

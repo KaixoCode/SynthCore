@@ -80,30 +80,40 @@ file(GLOB_RECURSE GENERATOR_SOURCE
 
 source_group(TREE ${CORE_SOURCE_DIRECTORY} FILES ${GENERATOR_SOURCE})
     
-add_executable(GenerateParameters
+add_executable(Generator
     ${GENERATOR_SOURCE})
 
-target_include_directories(GenerateParameters
+target_include_directories(Generator
     PRIVATE
         ${CORE_SOURCE_DIRECTORY}generators/)
 
 # ==============================================
 
+set(GENERATED_SIMD "simd.hpp")
 set(GENERATED_PARAMETERS "Parameters.hpp")
 set(GENERATED_ASSIGNERS "Assigners.hpp") 
+
 set(GENERATE_PARAMETERS_FROM ${CMAKE_SOURCE_DIR}/${PARAMETERS})
 set(GENERATE_PARAMETERS_TO ${GENERATED_SOURCES_DIR}/${GENERATED_PARAMETERS})
 set(GENERATE_ASSIGNERS_TO ${GENERATED_SOURCES_DIR}/${GENERATED_ASSIGNERS})
 
+set(GENERATE_SIMD_FROM ${GENERATED_SOURCES_DIR}/resources/simd_operations.xml)
+set(GENERATE_SIMD_TO ${GENERATED_SOURCES_DIR}/${GENERATED_SIMD})
+
 add_custom_command(OUTPUT ${GENERATE_PARAMETERS_TO}
-    COMMAND GenerateParameters ${GENERATE_PARAMETERS_FROM} ${GENERATE_PARAMETERS_TO} ${GENERATE_ASSIGNERS_TO}
+    COMMAND Generator "parameters" ${GENERATE_PARAMETERS_FROM} ${GENERATE_PARAMETERS_TO} ${GENERATE_ASSIGNERS_TO}
     DEPENDS ${GENERATE_PARAMETERS_FROM}
 )
 
-add_custom_target(GenerateParameters_run
-    DEPENDS ${GENERATE_PARAMETERS_TO} ${GENERATE_ASSIGNERS_TO}
+add_custom_command(OUTPUT ${GENERATE_SIMD_TO}
+    COMMAND Generator "simd" ${GENERATE_SIMD_FROM} ${GENERATE_SIMD_TO}
+    DEPENDS ${GENERATE_SIMD_FROM}
 )
 
-add_dependencies(${NAME} GenerateParameters_run)
+add_custom_target(Generator_run
+    DEPENDS ${GENERATE_PARAMETERS_TO} ${GENERATE_ASSIGNERS_TO} ${GENERATE_SIMD_TO}
+)
+
+add_dependencies(${NAME} Generator_run)
 
 # ==============================================

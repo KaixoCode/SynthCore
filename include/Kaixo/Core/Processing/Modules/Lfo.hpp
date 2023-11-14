@@ -240,7 +240,7 @@ namespace Kaixo::Processing {
                 break;
             case Sync::Tempo:
                 float nmrBarsForTempo = bars(m_Tempo);
-                float beatsPerSecond = bpm();
+                float beatsPerSecond = bpm() / 60;
                 float beatsPerBar = timeSignature().numerator;
                 float barsPerSecond = beatsPerSecond / beatsPerBar;
                 float samplesPerBar = sampleRate() / barsPerSecond;

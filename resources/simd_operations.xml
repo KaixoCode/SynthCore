@@ -1,0 +1,115 @@
+<simd>
+    <function name="add">
+        <entry type="float" bits="128" dependencies="SSE">_mm_add_ps($0, $1)</entry>
+        <entry type="float" bits="256" dependencies="AVX">_mm256_add_ps($0, $1)</entry>
+        <entry type="float" bits="512" dependencies="AVX512F">_mm512_add_ps($0, $1)</entry>
+        <entry type="int" bits="128" dependencies="SSE2">_mm_add_epi32($0, $1)</entry>
+        <entry type="int" bits="256" dependencies="AVX2">_mm256_add_epi32($0, $1)</entry>
+        <entry type="int" bits="512" dependencies="AVX512F">_mm512_add_epi32($0, $1)</entry>
+    </function>
+
+    <function name="sub">
+        <entry type="float" bits="128" dependencies="SSE">_mm_sub_ps($0, $1)</entry>
+        <entry type="float" bits="256" dependencies="AVX">_mm256_sub_ps($0, $1)</entry>
+        <entry type="float" bits="512" dependencies="AVX512F">_mm512_sub_ps($0, $1)</entry>
+        <entry type="int" bits="128" dependencies="SSE2">_mm_sub_epi32($0, $1)</entry>
+        <entry type="int" bits="256" dependencies="AVX2">_mm256_sub_epi32($0, $1)</entry>
+        <entry type="int" bits="512" dependencies="AVX512F">_mm512_sub_epi32($0, $1)</entry>
+    </function>
+
+    <function name="mul">
+        <entry type="float" bits="128" dependencies="SSE">_mm_mul_ps($0, $1)</entry>
+        <entry type="float" bits="256" dependencies="AVX">_mm256_mul_ps($0, $1)</entry>
+        <entry type="float" bits="512" dependencies="AVX512F">_mm512_mul_ps($0, $1)</entry>
+        <entry type="int" bits="128" dependencies="SSE4p1">_mm_mullo_epi32($0, $1)</entry>
+        <entry type="int" bits="256" dependencies="AVX2">_mm256_mullo_epi32($0, $1)</entry>
+        <entry type="int" bits="512" dependencies="AVX512F">_mm512_mullo_epi32($0, $1)</entry>
+    </function>
+
+    <function name="div">
+        <entry type="float" bits="128" dependencies="SSE">_mm_div_ps($0, $1)</entry>
+        <entry type="float" bits="256" dependencies="AVX">_mm256_div_ps($0, $1)</entry>
+        <entry type="float" bits="512" dependencies="AVX512F">_mm512_div_ps($0, $1)</entry>
+        <entry type="int" bits="128" dependencies="SSE">_mm_idiv_epi32($0, $1)</entry>
+        <entry type="int" bits="256" dependencies="AVX">_mm256_idiv_epi32($0, $1)</entry>
+        <entry type="int" bits="512" dependencies="AVX512F">_mm512_div_epi32($0, $1)</entry>
+    </function>
+
+    <function name="and">
+        <entry type="float" bits="128" dependencies="SSE">_mm_and_ps($0, $1)</entry>
+        <entry type="float" bits="256" dependencies="AVX">_mm256_and_ps($0, $1)</entry>
+        <entry type="float" bits="512" dependencies="AVX512DQ">_mm512_and_ps($0, $1)</entry>
+        <entry type="int" bits="128" dependencies="SSE2">_mm_and_si128($0, $1)</entry>
+        <entry type="int" bits="256" dependencies="AVX2">_mm256_and_si256($0, $1)</entry>
+        <entry type="int" bits="512" dependencies="AVX512F">_mm512_and_si512($0, $1)</entry>
+    </function>
+
+    <function name="or">
+        <entry type="float" bits="128" dependencies="SSE">_mm_or_ps($0, $1)</entry>
+        <entry type="float" bits="256" dependencies="AVX">_mm256_or_ps($0, $1)</entry>
+        <entry type="float" bits="512" dependencies="AVX512DQ">_mm512_or_ps($0, $1)</entry>
+        <entry type="int" bits="128" dependencies="SSE2">_mm_or_si128($0, $1)</entry>
+        <entry type="int" bits="256" dependencies="AVX2">_mm256_or_si256($0, $1)</entry>
+        <entry type="int" bits="512" dependencies="AVX512F">_mm512_or_si512($0, $1)</entry>
+    </function>
+
+    <function name="xor">
+        <entry type="float" bits="128" dependencies="SSE">_mm_xor_ps($0, $1)</entry>
+        <entry type="float" bits="256" dependencies="AVX">_mm256_xor_ps($0, $1)</entry>
+        <entry type="float" bits="512" dependencies="AVX512DQ">_mm512_xor_ps($0, $1)</entry>
+        <entry type="int" bits="128" dependencies="SSE2">_mm_xor_si128($0, $1)</entry>
+        <entry type="int" bits="256" dependencies="AVX2">_mm256_xor_si256($0, $1)</entry>
+        <entry type="int" bits="512" dependencies="AVX512F">_mm512_xor_si512($0, $1)</entry>
+    </function>
+
+    <function name="eq">
+        <entry type="float" bits="128" dependencies="SSE">_mm_cmpeq_ps($0, $1)</entry>
+        <entry type="float" bits="128" dependencies="AVX">_mm_cmp_ps($0, $1, _CMP_EQ_OS)</entry>
+        <entry type="float" bits="256" dependencies="AVX">_mm256_cmp_ps($0, $1, _CMP_EQ_OS)</entry>
+        <entry type="float" bits="512" dependencies="AVX512F">_mm512_cmpeq_ps_mask($0, $1)</entry>
+    </function>
+
+    <function name="not">
+        <entry type="float" bits="128" dependencies="SSE">$xor($0, _mm_set1_ps(0xFFFFFFFF))</entry>
+        <entry type="float" bits="128" dependencies="AVX">_mm_cmp_ps($0, $1, _CMP_EQ_OS)</entry>
+        <entry type="float" bits="256" dependencies="AVX">_mm256_cmp_ps($0, $1, _CMP_EQ_OS)</entry>
+        <entry type="float" bits="512" dependencies="AVX512F">_mm512_cmpeq_ps_mask($0, $1)</entry>
+    </function>
+
+    <function name="conditional">
+        <entry type="float" bits="128;256">$or($and($0, $1), $and($not($0), $2))</entry>
+        <entry type="float" bits="512" dependencies="AVX512F">_mm512_mask_blend_ps($0, $1, $2)</entry>
+    </function>
+
+    
+
+    <function name="sum">
+        <entry type="float" bits="128" dependencies="AVX;SSE">
+            auto shuf = _mm_movehdup_ps($0);  // SSE3 (Possibly also possible with _mm_shuffle_ps (SSE))
+            auto sums = $add($0, shuf);
+            shuf = _mm_movehl_ps(shuf, sums); // SSE
+            sums = _mm_add_ss(sums, shuf);    // SSE
+            return _mm_cvtss_f32(sums);       // SSE
+        </entry>
+        <entry type="float" bits="256" dependencies="AVX;SSE;SSE3">
+            auto hiQuad = _mm256_extractf128_ps($0, 1);      // AVX
+            auto loQuad = _mm256_castps256_ps128($0);        // AVX
+            auto sumQuad = $add(loQuad, hiQuad);
+            auto loDual = sumQuad;
+            auto hiDual = _mm_movehl_ps(sumQuad, sumQuad);   // SSE
+            auto sumDual = $add(loDual, hiDual);
+            auto lo = sumDual;
+            auto hi = _mm_shuffle_ps(sumDual, sumDual, 0x1); // SSE
+            auto sum = _mm_add_ss(lo, hi);                   // SSE
+            return _mm_cvtss_f32(sum);                       // SSE
+        </entry>
+        <entry type="float" bits="512" dependencies="AVX512F;AVX512DQ">
+            const auto v0 = _mm512_castps512_ps256($0);    // AVX512F 
+            const auto v1 = _mm512_extractf32x8_ps($0, 1); // AVX512DQ
+            const auto x0 = $add[bits=256](v0, v1); 
+            return $sum[bits=256](x0);
+        </entry>
+    </function>
+
+
+</simd>

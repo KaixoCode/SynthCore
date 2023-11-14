@@ -18,11 +18,75 @@ namespace Kaixo {
 
     // ------------------------------------------------
 
+    template<class Ty, std::size_t Bits> struct underlying_simd;
+    template<> struct underlying_simd<int, 128> : std::type_identity<__m128i> {};
+    template<> struct underlying_simd<int, 256> : std::type_identity<__m256i> {};
+    template<> struct underlying_simd<int, 512> : std::type_identity<__m512i> {};
+    template<> struct underlying_simd<float, 128> : std::type_identity<__m128> {};
+    template<> struct underlying_simd<float, 256> : std::type_identity<__m256> {};
+    template<> struct underlying_simd<float, 512> : std::type_identity<__m512> {};
+    template<class Ty, std::size_t Bits> using underlying_simd_t = typename underlying_simd<Ty, Bits>::type;
+
+    // ------------------------------------------------
+
     template<class Ty>
     concept simd_type = std::floating_point<Ty> || std::integral<Ty>;
 
     template<class Ty>
     concept is_simd = requires () { typename Ty::base; typename Ty::type; { Ty::bits }; };
+
+    enum simd_capability {
+        SSE      = 1 <<  0, // Always required
+        SSE2     = 1 <<  1,
+        SSE3     = 1 <<  2,
+        SSE4p1   = 1 <<  3,
+        AVX      = 1 <<  4,
+        FMA      = 1 <<  5,
+        AVX2     = 1 <<  6,
+        AVX512F  = 1 <<  7,
+        AVX512BW = 1 <<  8,
+        AVX512VL = 1 <<  9,
+        AVX512CD = 1 << 10,
+        AVX512DQ = 1 << 11,
+    };
+
+    template<class Type, std::size_t Bits, simd_capability Capabilities>
+    struct simd_add {
+        constexpr static simd_capability capabilities = Capabilities;
+        using type = Type;
+        using simd_type = underlying_simd_t<Type, Bits>;
+        KAIXO_INLINE simd_type KAIXO_VECTORCALL operator()(const simd_type& a, const simd_type& b) const noexcept {
+            if constexpr (std::same_as<type, float>) {
+                if constexpr (Bits == 128) {
+                    if constexpr (Capabilities & SSE) return _mm_add_ps(a, b);
+                } else if constexpr (Bits == 256) {
+                    if constexpr (Capabilities & AVX) return _mm256_add_ps(a, b);
+                } else if constexpr (Bits == 512) {
+                    if constexpr (Capabilities & AVX512F) return _mm512_add_ps(a, b);
+                }
+            }
+        }
+    };
+
+    constexpr std::size_t determine_highest_supported_bit_count(simd_capability capabilities) {
+        if (capabilities & AVX512F) return 512;
+        else if (capabilities & AVX) return 256;
+        else if (capabilities & SSE) return 128;
+    }
+
+    template<class = float, simd_capability>
+    class specialized_simd;
+
+    template<simd_capability Capabilities>
+    class specialized_simd<float, Capabilities> {
+    public:
+
+        constexpr static std::size_t bits = determine_highest_supported_bit_count(Capabilities);
+        using type = float;
+        using simd_type = underlying_simd_t<type, bits>;
+
+    };
+
 
     struct simd_path {
 
@@ -38,17 +102,6 @@ namespace Kaixo {
 
     template<class = float, std::size_t = 256>
     struct simd;
-
-    // ------------------------------------------------
-
-    template<class Ty, std::size_t Bits> struct underlying_simd;
-    template<> struct underlying_simd<int, 128> : std::type_identity<__m128i> {};
-    template<> struct underlying_simd<int, 256> : std::type_identity<__m256i> {};
-    template<> struct underlying_simd<int, 512> : std::type_identity<__m512i> {};
-    template<> struct underlying_simd<float, 128> : std::type_identity<__m128> {};
-    template<> struct underlying_simd<float, 256> : std::type_identity<__m256> {};
-    template<> struct underlying_simd<float, 512> : std::type_identity<__m512> {};
-    template<class Ty, std::size_t Bits> using underlying_simd_t = typename underlying_simd<Ty, Bits>::type;
 
     // ------------------------------------------------
 

@@ -7,14 +7,14 @@ namespace Kaixo::Processing {
 
     // ------------------------------------------------
     
-    auto Module::outputBuffer() const ->       Buffer& { return m_Controller->m_Output; }
-    auto Module::inputBuffer()  const -> const Buffer& { return m_Controller->m_Input; }
+    Buffer& Module::outputBuffer() const { return m_Controller->m_Output; }
+    const Buffer& Module::inputBuffer() const { return m_Controller->m_Input; }
 
-    auto Module::sampleRate()    const -> double { return m_Controller->m_SampleRate; }
-    auto Module::bpm()           const -> double { return m_Controller->m_Bpm; }
-    auto Module::timeInSamples() const -> std::int64_t { return m_Controller->m_TimeInSamples; }
+    double Module::sampleRate() const { return m_Controller->m_SampleRate; }
+    double Module::bpm() const { return m_Controller->m_Bpm; }
+    std::int64_t Module::timeInSamples() const { return m_Controller->m_TimeInSamples; }
 
-    auto Module::timeSignature() const -> juce::AudioPlayHead::TimeSignature { return m_Controller->m_TimeSignature; }
+    juce::AudioPlayHead::TimeSignature Module::timeSignature() const { return m_Controller->m_TimeSignature; }
 
     // ------------------------------------------------
 

@@ -65,6 +65,7 @@ namespace Kaixo::Gui {
         void paint(juce::Graphics& g) override;
 
         // ------------------------------------------------
+
     private:
         Point<> m_PreviousMousePosition{ 0, 0 };
 
