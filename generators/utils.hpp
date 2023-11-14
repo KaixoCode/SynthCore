@@ -5,12 +5,14 @@
 #include <optional>
 #include <map>
 #include <vector>
+#include <set>
 #include <fstream>
 #include <array>
 #include <sstream>
 #include <list>
 #include <iostream>
 #include <filesystem>
+#include <unordered_map>
 
 // ------------------------------------------------
 
@@ -37,6 +39,8 @@ namespace Kaixo::Generator {
         std::size_t pos_start = 0, pos_end;
         std::string_view token;
         std::vector<std::string_view> res;
+
+        if (s.empty()) return res;
 
         while (true) {
             std::size_t delim_len = 0;

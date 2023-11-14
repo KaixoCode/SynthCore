@@ -77,21 +77,21 @@
     </function>
 
     <function name="conditional">
-        <entry type="float" bits="128;256">$or($and($0, $1), $and($not($0), $2))</entry>
+        <entry type="float" bits="128,256">$or($and($0, $1), $and($not($0), $2))</entry>
         <entry type="float" bits="512" dependencies="AVX512F">_mm512_mask_blend_ps($0, $1, $2)</entry>
     </function>
 
     
 
-    <function name="sum">
-        <entry type="float" bits="128" dependencies="AVX;SSE">
+    <function name="sum"> 
+        <entry type="float" bits="128" dependencies="AVX,SSE">
             auto shuf = _mm_movehdup_ps($0);  // SSE3 (Possibly also possible with _mm_shuffle_ps (SSE))
             auto sums = $add($0, shuf);
             shuf = _mm_movehl_ps(shuf, sums); // SSE
             sums = _mm_add_ss(sums, shuf);    // SSE
             return _mm_cvtss_f32(sums);       // SSE
         </entry>
-        <entry type="float" bits="256" dependencies="AVX;SSE;SSE3">
+        <entry type="float" bits="256" dependencies="AVX,SSE,SSE3">
             auto hiQuad = _mm256_extractf128_ps($0, 1);      // AVX
             auto loQuad = _mm256_castps256_ps128($0);        // AVX
             auto sumQuad = $add(loQuad, hiQuad);
@@ -103,7 +103,7 @@
             auto sum = _mm_add_ss(lo, hi);                   // SSE
             return _mm_cvtss_f32(sum);                       // SSE
         </entry>
-        <entry type="float" bits="512" dependencies="AVX512F;AVX512DQ">
+        <entry type="float" bits="512" dependencies="AVX512F,AVX512DQ">
             const auto v0 = _mm512_castps512_ps256($0);    // AVX512F 
             const auto v1 = _mm512_extractf32x8_ps($0, 1); // AVX512DQ
             const auto x0 = $add[bits=256](v0, v1); 

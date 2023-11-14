@@ -5,6 +5,8 @@
 #include <type_traits>
 #include <numeric>
 
+#include <GeneratedSimd.hpp>
+
 #include <immintrin.h>
 
 // ------------------------------------------------
