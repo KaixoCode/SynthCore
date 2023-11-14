@@ -26,12 +26,12 @@ namespace Kaixo::Generator {
 
     // ------------------------------------------------
 
-    bool oneOf(char c, std::string_view cs) { return cs.find(c) != std::string_view::npos; }
+    inline bool oneOf(char c, std::string_view cs) { return cs.find(c) != std::string_view::npos; }
 
     // ------------------------------------------------
 
     template<std::convertible_to<std::string_view> ...Tys>
-    std::vector<std::string_view> split(std::string_view s, Tys...delimiters) {
+    inline std::vector<std::string_view> split(std::string_view s, Tys...delimiters) {
         constexpr std::size_t Size = sizeof...(Tys);
         std::string_view delimiter[Size]{ delimiters... };
         std::size_t pos_start = 0, pos_end;
@@ -64,7 +64,7 @@ namespace Kaixo::Generator {
 
     // ------------------------------------------------
 
-    std::string_view trim(std::string_view view, const char* t = " \t\n\r\f\v") {
+    inline std::string_view trim(std::string_view view, const char* t = " \t\n\r\f\v") {
         if (auto i = view.find_first_not_of(t); i != std::string_view::npos) view = view.substr(i);
         if (auto i = view.find_last_not_of(t); i != std::string_view::npos) view = view.substr(0, i + 1);
         return view;
@@ -72,7 +72,7 @@ namespace Kaixo::Generator {
 
     // ------------------------------------------------
 
-    void remove_leading_whitespace(std::string& str) {
+    inline void remove_leading_whitespace(std::string& str) {
         std::size_t _i = 0;
         bool newline = true;
         while (_i < str.size()) {
@@ -93,7 +93,7 @@ namespace Kaixo::Generator {
 
     // ------------------------------------------------
 
-    void replace(std::string& str, std::string_view replace, std::string_view with) {
+    inline void replace(std::string& str, std::string_view replace, std::string_view with) {
         std::size_t index = 0;
         while (true) {
             index = str.find(replace, index);
