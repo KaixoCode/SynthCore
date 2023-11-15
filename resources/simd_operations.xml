@@ -77,7 +77,8 @@
     </function>
 
     <function name="conditional">
-        <entry type="float" bits="128,256">$or($and($0, $1), $and($not($0), $2))</entry>
+        <entry type="float" bits="128">$or($and($0, $1), $and($not($0), $2))</entry>
+        <entry type="float" bits="256">$or($and($0, $1), $and($not($0), $2))</entry>
         <entry type="float" bits="512" dependencies="AVX512F">_mm512_mask_blend_ps($0, $1, $2)</entry>
     </function>
 

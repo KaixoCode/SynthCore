@@ -7,6 +7,7 @@
 
 #include <GeneratedSimd.hpp>
 
+
 #include <immintrin.h>
 
 // ------------------------------------------------
@@ -28,6 +29,63 @@ namespace Kaixo {
     template<> struct underlying_simd<float, 256> : std::type_identity<__m256> {};
     template<> struct underlying_simd<float, 512> : std::type_identity<__m512> {};
     template<class Ty, std::size_t Bits> using underlying_simd_t = typename underlying_simd<Ty, Bits>::type;
+
+    // ------------------------------------------------
+    
+    template<class Type, std::size_t Bits>
+    constexpr Capabilities test_dependencies = SSE;
+
+    template<> constexpr Capabilities test_dependencies<float, 128> = SSE;
+    template<> constexpr Capabilities test_dependencies<float, 256> = AVX;
+    template<> constexpr Capabilities test_dependencies<float, 512> = AVX512F;
+
+    template<class Type, auto Capabilities>
+    struct test_function {
+
+        constexpr static std::size_t determineMaxBits() {
+            if constexpr (Capabilities & test_dependencies<Type, 512>) return 512;
+            if constexpr (Capabilities & test_dependencies<Type, 256>) return 256;
+            if constexpr (Capabilities & test_dependencies<Type, 128>) return 128;
+            return 0;
+        }
+
+        constexpr static std::size_t maxBits = Capabilities;
+
+        template<std::size_t Bits>
+        static inline auto call(
+            underlying_simd_t<Type, Bits> _param_a, 
+            underlying_simd_t<Type, Bits> _param_b) 
+        {
+            if constexpr (std::same_as<Type, float>) {
+                if constexpr (Bits > maxBits) {
+                    // Fallback??
+                }
+                else if constexpr (Bits == 512) {
+
+                }
+                else if (Bits == 256) {
+
+                }
+                else if (Bits == 128) {
+
+                }
+                else {
+
+                }
+            } else if constexpr (std::same_as<Type, int>) {
+
+            }
+        }
+
+
+        template<>
+        static inline float call<0>(float, float) {
+
+        }
+
+
+
+    };
 
     // ------------------------------------------------
 
