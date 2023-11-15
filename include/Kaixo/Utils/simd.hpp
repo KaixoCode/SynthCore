@@ -43,6 +43,12 @@ namespace Kaixo {
     struct test_function {
 
         constexpr static std::size_t determineMaxBits() {
+            // Try 512 using capabilities
+            // if fail: do 2x 256; otherwise just do 512
+            // if 256 fail: do 4x 128; otherwise just fo 256
+            // id 128 fail: do 16x normal operation.
+
+
             if constexpr (Capabilities & test_dependencies<Type, 512>) return 512;
             if constexpr (Capabilities & test_dependencies<Type, 256>) return 256;
             if constexpr (Capabilities & test_dependencies<Type, 128>) return 128;

@@ -99,19 +99,17 @@ namespace Kaixo::Generator {
 
             // ------------------------------------------------
             
-            struct Key {
+            struct Compiled {
                 Type type;
                 int bits;
-            };
-
-            struct Compiled {
                 std::set<std::string> dependencies{};
                 std::string body;
+                std::string dependenciesStr;
             };
 
             std::size_t args = 0;
             std::string declaration{};
-            std::map<std::pair<Type, int>, Compiled> compiled{};
+            std::vector<Compiled> compiled{};
 
             // ------------------------------------------------
 
@@ -178,7 +176,9 @@ namespace Kaixo::Generator {
             std::size_t i = 0;
             std::size_t maxParams = 0;
 
-            auto& compiled = fun.compiled[{ entry.type, entry.bits }];
+            auto& compiled = fun.compiled.emplace_back();
+            compiled.bits = entry.bits;
+            compiled.type = entry.type;
 
             compiled.dependencies.insert_range(entry.dependencies);
 
@@ -233,7 +233,11 @@ namespace Kaixo::Generator {
                 if (functions.contains(name)) {
                     compileFunction(functions[name]);
 
-                    compiled.dependencies.insert_range(functions[name].compiled[{ entry.type, entry.bits }].dependencies);
+                    for (auto& comp : functions[name].compiled) {
+                        if (comp.bits == entry.bits && comp.type == entry.type) {
+                            compiled.dependencies.insert_range(comp.dependencies);
+                        }
+                    }
                 }
 
                 if (name == "0") {
@@ -254,7 +258,8 @@ namespace Kaixo::Generator {
 
                     if (params.size() != 0) {
                         std::string type = entry.type == Float ? "float" : "int";
-                        std::string bits = "";
+                        std::string bits = std::to_string(entry.bits);
+                        std::string caps = "C";
 
                         for (auto& param : params) {
                             auto parts = split(param, "=");
@@ -265,12 +270,13 @@ namespace Kaixo::Generator {
 
                             if (parts[0] == "type") type = parts[1];
                             if (parts[0] == "bits") bits = parts[1];
+                            if (parts[0] == "caps") caps = parts[1];
                         }
 
-                        std::string call = makeName(name) + "<"s + type + ", " + bits + ">::call";
+                        std::string call = makeName(name) + "<"s + type + ", " + caps + ">::call<" + bits + ">";
                         compiledBody.replace(start, end - start, call);
                     } else {
-                        std::string call = makeName(name) + "<type, bits>::call";
+                        std::string call = makeName(name) + "<Type, C>::call<Bits>";
                         compiledBody.replace(start, end - start, call);
                     }
                 }
@@ -281,6 +287,7 @@ namespace Kaixo::Generator {
         }
 
         void compileFunction(Function& fun) {
+            if (fun.alreadyCompiled) return;
             for (auto& entry : fun.entries) {
                 compileEntry(fun, entry);
             }
@@ -324,12 +331,15 @@ namespace Kaixo::Generator {
             add();
 
             for (auto& [name, fun] : functions) {
-                add("template<class Type, std::size_t Bits>", 0);
-                add("constexpr Capabilities " + name + "_dependencies = None;");
+                add("template<class Type, Capabilities C>", 0);
+                add("struct " + name + "_function {", 0);
+                add("constexpr static std::size_t determineMaxBits() {", 1);
 
-                for (auto& [key, entry] : fun.compiled) {
-                    std::string type = key.first == Float ? "float" : "int";
-                    std::string bits = std::to_string(key.second);
+                std::map<std::string, std::map<std::string, std::vector<std::string>>> parts;
+
+                for (auto& entry : fun.compiled) {
+                    std::string type = entry.type == Float ? "float" : "int";
+                    std::string bits = std::to_string(entry.bits);
                     std::string dependencies = "";
                     bool first = true;
                     for (auto& dep : entry.dependencies) {
@@ -337,17 +347,21 @@ namespace Kaixo::Generator {
                         dependencies += dep;
                         first = false;
                     }
+                    entry.dependenciesStr = dependencies;
 
-                    add("template<> constexpr Capabilities " + name + "_dependencies<" + type + ", " + bits + "> = " + dependencies + ";", 0);
+                    parts[type][bits].push_back("if constexpr (C & (" + dependencies + ")) return " + bits + "; ");
                 }
 
-                add();
-                add("template<class Type, Capabilities C", 0);
-                add("struct " + name + "_function {", 0);
-                add("constexpr static std::size_t determineMaxBits() {", 1);
-                add("if constexpr (C & " + name + "_dependencies<Type, 512>) return 512;", 2);
-                add("if constexpr (C & " + name + "_dependencies<Type, 256>) return 256;", 2);
-                add("if constexpr (C & " + name + "_dependencies<Type, 128>) return 128;", 2);
+                add("if constexpr (std::same_as<Type, float>) {", 2);
+                for (auto& part : parts["float"]["512"]) add(part, 3);
+                for (auto& part : parts["float"]["256"]) add(part, 3);
+                for (auto& part : parts["float"]["128"]) add(part, 3);
+                add("} else if constexpr (std::same_as<Type, int>) {", 2);
+                for (auto& part : parts["int"]["512"]) add(part, 3);
+                for (auto& part : parts["int"]["256"]) add(part, 3);
+                for (auto& part : parts["int"]["128"]) add(part, 3);
+                add("}", 2);
+
                 add("return 0;", 2);
                 add("}", 1);
                 add();
@@ -364,11 +378,12 @@ namespace Kaixo::Generator {
                 add("static inline auto call(" + args + ") {", 1);
 
                 bool first = true;
-                for (auto& [key, entry] : fun.compiled) {
-                    std::string type = (key.first == Float ? "float" : "int");
-                    std::string bits = std::to_string(key.second);
+                for (auto& entry : fun.compiled) {
+                    std::string type = (entry.type == Float ? "float" : "int");
+                    std::string bits = std::to_string(entry.bits);
 
-                    add((first ? "" : "else ") + "if constexpr (std::same_as<Type, "s + type + "> && Bits == " + bits + ") {", 2);
+                    add((first ? "" : "else ") + "if constexpr (std::same_as<Type, "s + type + "> && Bits == "
+                        + bits + " && (C & (" + entry.dependenciesStr + "))) {", 2);
                     std::string body = "";
                     if (!entry.body.contains("\n")) body += "return ";
                     body += entry.body + ";";
