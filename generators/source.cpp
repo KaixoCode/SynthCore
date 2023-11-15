@@ -86,6 +86,11 @@ namespace Kaixo::Generator {
                 int bits{};
                 std::string body{};
                 std::set<std::string> dependencies{};
+                bool alreadyCompiled = false;
+
+                // ------------------------------------------------
+
+                std::string dependenciesStr;
 
                 // ------------------------------------------------
 
@@ -95,21 +100,11 @@ namespace Kaixo::Generator {
 
             std::string name{};
             std::vector<Entry> entries{};
-            bool alreadyCompiled = false;
 
             // ------------------------------------------------
             
-            struct Compiled {
-                Type type;
-                int bits;
-                std::set<std::string> dependencies{};
-                std::string body;
-                std::string dependenciesStr;
-            };
-
             std::size_t args = 0;
             std::string declaration{};
-            std::vector<Compiled> compiled{};
 
             // ------------------------------------------------
 
@@ -167,6 +162,8 @@ namespace Kaixo::Generator {
         }
 
         void compileEntry(Function& fun, Function::Entry& entry){
+            if (entry.alreadyCompiled) return;
+            entry.alreadyCompiled = true;
 
             std::string compiledBody = entry.body;
 
@@ -176,11 +173,7 @@ namespace Kaixo::Generator {
             std::size_t i = 0;
             std::size_t maxParams = 0;
 
-            auto& compiled = fun.compiled.emplace_back();
-            compiled.bits = entry.bits;
-            compiled.type = entry.type;
-
-            compiled.dependencies.insert_range(entry.dependencies);
+            auto& compiled = entry;
 
             // Find all variables
             while ((index = compiledBody.find_first_of("$")) != std::string::npos) {
@@ -209,15 +202,16 @@ namespace Kaixo::Generator {
                             ++end;
                         } else if (compiledBody[end] == '[') {
                             parsingParameter = true;
-                            ++end;
                             name = compiledBody;
                             name = name.substr(index, end - index);
+                            ++end;
                             index = end;
                         } else break;
                     } else {
                         if (compiledBody[end] == ']') {
                             parameterString = compiledBody;
-                            parameterString = parameterString.substr(index, end - index - 1);
+                            parameterString = parameterString.substr(index, end - index);
+                            ++end;
                             break;
                         } else ++end;
                     }
@@ -229,16 +223,6 @@ namespace Kaixo::Generator {
                 }
 
                 std::cout << "var: " << name << " params: " << parameterString << "\n";
-
-                if (functions.contains(name)) {
-                    compileFunction(functions[name]);
-
-                    for (auto& comp : functions[name].compiled) {
-                        if (comp.bits == entry.bits && comp.type == entry.type) {
-                            compiled.dependencies.insert_range(comp.dependencies);
-                        }
-                    }
-                }
 
                 if (name == "0") {
                     compiledBody.replace(start, end - start, "_param_a");
@@ -256,9 +240,9 @@ namespace Kaixo::Generator {
 
                     auto params = split(parameterString, ",");
 
+                    std::string type = entry.type == Float ? "float" : "int";
+                    std::string bits = std::to_string(entry.bits);
                     if (params.size() != 0) {
-                        std::string type = entry.type == Float ? "float" : "int";
-                        std::string bits = std::to_string(entry.bits);
                         std::string caps = "C";
 
                         for (auto& param : params) {
@@ -279,6 +263,18 @@ namespace Kaixo::Generator {
                         std::string call = makeName(name) + "<Type, C>::call<Bits>";
                         compiledBody.replace(start, end - start, call);
                     }
+
+                    if (functions.contains(name)) {
+                        Type t = type == "float" ? Float : Int;
+                        int b = bits == "512" ? 512 : bits == "256" ? 256 : 128;
+
+                        for (auto& entry : functions[name].entries) {
+                            if (entry.bits == b && entry.type == t) {
+                                compileEntry(functions[name], entry);
+                                compiled.dependencies.insert_range(entry.dependencies);
+                            }
+                        }
+                    }
                 }
             }
 
@@ -287,11 +283,9 @@ namespace Kaixo::Generator {
         }
 
         void compileFunction(Function& fun) {
-            if (fun.alreadyCompiled) return;
             for (auto& entry : fun.entries) {
                 compileEntry(fun, entry);
             }
-            fun.alreadyCompiled = true;
         }
 
         void compileFunctions() {
@@ -337,7 +331,7 @@ namespace Kaixo::Generator {
 
                 std::map<std::string, std::map<std::string, std::vector<std::string>>> parts;
 
-                for (auto& entry : fun.compiled) {
+                for (auto& entry : fun.entries) {
                     std::string type = entry.type == Float ? "float" : "int";
                     std::string bits = std::to_string(entry.bits);
                     std::string dependencies = "";
@@ -369,16 +363,16 @@ namespace Kaixo::Generator {
                 add();
 
                 std::string args = "";
-                if (fun.args >= 1) args += "underlying_type<Type, Bits> _param_a";
-                if (fun.args >= 2) args += ", underlying_type<Type, Bits> _param_b";
-                if (fun.args >= 3) args += ", underlying_type<Type, Bits> _param_c";
-                if (fun.args >= 4) args += ", underlying_type<Type, Bits> _param_d";
+                if (fun.args >= 1) args += "const underlying_type<Type, Bits>& _param_a";
+                if (fun.args >= 2) args += ", const underlying_type<Type, Bits>& _param_b";
+                if (fun.args >= 3) args += ", const underlying_type<Type, Bits>& _param_c";
+                if (fun.args >= 4) args += ", const underlying_type<Type, Bits>& _param_d";
 
                 add("template<std::size_t Bits>", 1);
                 add("static inline auto call(" + args + ") {", 1);
 
                 bool first = true;
-                for (auto& entry : fun.compiled) {
+                for (auto& entry : fun.entries) {
                     std::string type = (entry.type == Float ? "float" : "int");
                     std::string bits = std::to_string(entry.bits);
 
