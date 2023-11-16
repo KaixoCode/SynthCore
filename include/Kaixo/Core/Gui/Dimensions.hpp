@@ -16,6 +16,10 @@ namespace Kaixo::Gui {
         public:
 
             // ------------------------------------------------
+            
+            virtual ~Value() = default;
+
+            // ------------------------------------------------
 
             virtual Coord get(const Rect<>&) const = 0;
 
