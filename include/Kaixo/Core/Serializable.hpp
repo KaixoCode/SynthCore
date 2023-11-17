@@ -9,21 +9,21 @@
 
 namespace Kaixo {
 
-	// ------------------------------------------------
+    // ------------------------------------------------
 
-	class Serializable {
-	public:
+    class Serializable {
+    public:
 
-		// ------------------------------------------------
+        // ------------------------------------------------
 
-		virtual void init() {} // reset state to default
-		virtual json serialize() = 0;
-		virtual void deserialize(json&) = 0;
+        virtual void init() {} // reset state to default
+        virtual json serialize() = 0;
+        virtual void deserialize(json&) = 0;
 
-		// ------------------------------------------------
+        // ------------------------------------------------
 
-	};
+    };
 
-	// ------------------------------------------------
+    // ------------------------------------------------
 
 }

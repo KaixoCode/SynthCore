@@ -150,11 +150,11 @@ namespace Kaixo::Gui {
     // ------------------------------------------------
 
     float FilterDisplay::Entry::decibelsAt(float x) {
-        filter.setSampleRate(48000);
-        filter.setFrequency(Math::Fast::magnitude_to_log<20.f, 20000.f>(frequency));
-        filter.setQ(resonance);
-        filter.setGain(gain * 30 - 15);
-        filter.setType(Processing::eqParamTypeToFilterType(type));
+        filter.sampleRate(48000);
+        filter.frequency(Math::Fast::magnitude_to_log<20.f, 20000.f>(frequency));
+        filter.resonance(resonance);
+        filter.gain(gain * 30 - 15);
+        filter.type(type);
         filter.bypass = enable < 0.5;
 
         auto& coeff = filter.getCoefficients();

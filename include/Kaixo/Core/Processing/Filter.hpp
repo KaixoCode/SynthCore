@@ -72,11 +72,12 @@ namespace Kaixo::Processing {
         // ------------------------------------------------
 
         constexpr bool quadruple() const { return m_Type == FilterType::LowPass4 || m_Type == FilterType::HighPass4; }
-        constexpr void setSampleRate(double sr) { set(sr, m_SampleRate); }
-        constexpr void setGain(double gain) { set(gain, m_Gain); }
-        constexpr void setFrequency(double frequency) { set(frequency, m_Frequency); }
-        constexpr void setQ(double q) { set(q, m_Q); }
-        constexpr void setType(FilterType type) { set(type, m_Type); }
+        constexpr void sampleRate(double sr) { set(sr, m_SampleRate); }
+        constexpr void gain(double gain) { set(gain, m_Gain); }
+        constexpr void frequency(double frequency) { set(frequency, m_Frequency); }
+        constexpr void resonance(double q) { set(q, m_Q); }
+        constexpr void type(FilterType type) { set(type, m_Type); }
+        constexpr void type(double t) { type(eqParamTypeToFilterType(t)); }
 
         // ------------------------------------------------
 
