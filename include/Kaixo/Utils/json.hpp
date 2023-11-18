@@ -1,4 +1,7 @@
 #pragma once
+
+// ------------------------------------------------
+
 #include <string_view>
 #include <vector>
 #include <charconv>
@@ -9,41 +12,33 @@
 #include <array>
 #include <stack>
 
+// ------------------------------------------------
+
+#include "Kaixo/Utils/string_literal.hpp"
+#include "Kaixo/Utils/StringUtils.hpp"
+
+// ------------------------------------------------
+
 namespace Kaixo {
-    /**
-     * Check if c is one of the characters in cs.
-     * @param c character to check
-     * @param cs string view of characters to check against
-     * @return true if c is in cs
-     */
-    constexpr bool oneOf(char c, std::string_view cs) { return cs.find(c) != std::string_view::npos; }
 
-    /**
-     * Trim the ends of a string view, trims all characters in t
-     * @param view view to trimg
-     * @param t literal that contains the characters to trim
-     * @return trimmed view
-     */
-    constexpr std::string_view trim(std::string_view view, const char* t = " \t\n\r\f\v") {
-        if (auto i = view.find_first_not_of(t); i != std::string_view::npos) view = view.substr(i);
-        if (auto i = view.find_last_not_of(t); i != std::string_view::npos) view = view.substr(0, i + 1);
-        return view;
-    }
-
-    constexpr std::string_view trimBegin(std::string_view view, const char* t = " \t\n\r\f\v") {
-        if (auto i = view.find_first_not_of(t); i != std::string_view::npos) view = view.substr(i);
-        return view;
-    }
-    
-    constexpr std::string_view trimEnd(std::string_view view, const char* t = " \t\n\r\f\v") {
-        if (auto i = view.find_last_not_of(t); i != std::string_view::npos) view = view.substr(0, i + 1);
-        return view;
-    }
+    // ------------------------------------------------
 
     class json {
+
+        // ------------------------------------------------
+
         struct object_hash : std::hash<std::string_view> { using is_transparent = std::true_type; };
+
+        // ------------------------------------------------
+
     public:
+
+        // ------------------------------------------------
+
         enum value_type { Floating, Integral, Unsigned, String, Boolean, Array, Object, Null, None };
+
+        // ------------------------------------------------
+
         using floating = double;
         using integral = std::int64_t;
         using unsigned_integral = std::uint64_t;
@@ -52,8 +47,17 @@ namespace Kaixo {
         using array = std::vector<json>;
         using object = std::map<std::string, json, std::less<void>>;
         using null = std::nullptr_t;
+
+        // ------------------------------------------------
+
     private:
+
+        // ------------------------------------------------
+
         using value = std::variant<floating, integral, unsigned_integral, string, boolean, array, object, null>;
+
+        // ------------------------------------------------
+
         template<class Ty> struct type_alias { using type = Ty; };
         template<> struct type_alias<float> { using type = floating; };
         template<> struct type_alias<double> { using type = floating; };
@@ -62,21 +66,29 @@ namespace Kaixo {
         template<std::size_t N> struct type_alias<char[N]> { using type = string; };
         template<std::signed_integral Ty> struct type_alias<Ty> { using type = integral; };
         template<std::unsigned_integral Ty> struct type_alias<Ty> { using type = unsigned_integral; };
+
+        // ------------------------------------------------
+
         value _value;
+
+        // ------------------------------------------------
+
     public:
+
+        // ------------------------------------------------
+
         template<class Ty = null> requires (!std::same_as<std::decay_t<Ty>, json>)
         json(const Ty& ty = {}) : _value(static_cast<typename type_alias<Ty>::type>(ty)) {}
-        
+
+        // ------------------------------------------------
+
         template<class Ty> Ty& as() { return std::get<Ty>(_value); }
         template<class Ty> const Ty& as() const { return std::get<Ty>(_value); }
         auto type() const { return static_cast<value_type>(_value.index()); }
         bool is(value_type t) const { return t == type(); }
 
-        /**
-         * Check if object contains key.
-         * @param index json key
-         * @return true if found, false if not object
-         */
+        // ------------------------------------------------
+
         bool contains(std::string_view index, value_type type = None) const {
             if (!is(Object)) return false;
             auto _it = as<object>().find(index);
@@ -84,11 +96,8 @@ namespace Kaixo {
             else return _it != as<object>().end() && _it->second.is(type);
         }
 
-        /**
-         * Assign value if it exists.
-         * @param index json key
-         * @param value value to assign to
-         */
+        // ------------------------------------------------
+
         template<class Fun, class Ty = 
             std::conditional_t<std::regular_invocable<Fun, json&>, json,
             std::conditional_t<std::regular_invocable<Fun, string&>, string,
@@ -117,12 +126,7 @@ namespace Kaixo {
                 fun(_it->second.as<type>());
             }
         }
-        
-        /**
-         * Assign value if it exists.
-         * @param index json key
-         * @param value value to assign to
-         */
+
         template<class Ty>
         void assign_if_exists(std::string_view index, Ty& val) { 
             using type = type_alias<Ty>::type;
@@ -132,12 +136,7 @@ namespace Kaixo {
             if (!std::holds_alternative<type>(_it->second._value)) { return; }
             val = _it->second.as<type>();
         }
-        
-        /**
-         * Assign value if it exists.
-         * @param index json key
-         * @param value value to assign to
-         */
+
         template<class Ty>
         void assign_or_default(std::string_view index, Ty& val, auto def) { 
             using type = type_alias<Ty>::type;
@@ -147,12 +146,7 @@ namespace Kaixo {
             if (!std::holds_alternative<type>(_it->second._value)) { val = def; return; }
             val = _it->second.as<type>();
         }
-        
-        /**
-         * Assign value if it exists.
-         * @param index json key
-         * @param value value to assign to
-         */
+
         template<class Ty>
         void assign_or_default(Ty& val, auto def) { 
             using type = type_alias<Ty>::type;
@@ -160,11 +154,8 @@ namespace Kaixo {
             val = as<type>();
         }
 
-        /**
-         * Accessor for object. Becomes object if it's null. Throws if not object.
-         * @param index name of json key
-         * @return reference to json value at that key
-         */
+        // ------------------------------------------------
+
         json& operator[](std::string_view index) {
             if (is(Null)) _value = object{};
             else if (!is(Object)) throw std::exception("Not an object.");
@@ -173,12 +164,6 @@ namespace Kaixo {
             else return _it->second;
         }
 
-        /**
-         * Accessor for array. Becomes array if it's null. Throws if not array.
-         * If index > size, it resizes the array.
-         * @param index index in array
-         * @return reference to json value at that index
-         */
         json& operator[](std::size_t index) {
             if (is(Null)) _value = array{};
             else if (!is(Array)) throw std::exception("Not an array.");
@@ -186,11 +171,6 @@ namespace Kaixo {
             return as<array>()[index];
         }
         
-        /**
-         * Accessor for object. Becomes object if it's null. Throws if not object.
-         * @param index name of json key
-         * @return reference to json value at that key
-         */
         const json& operator[](std::string_view index) const {
             if (!is(Object)) throw std::exception("Not an object.");
             auto _it = as<object>().find(index);
@@ -198,43 +178,30 @@ namespace Kaixo {
             else return _it->second;
         }
 
-        /**
-         * Accessor for array. Becomes array if it's null. Throws if not array.
-         * If index > size, it resizes the array.
-         * @param index index in array
-         * @return reference to json value at that index
-         */
         const json& operator[](std::size_t index) const {
             if (!is(Array)) throw std::exception("Not an array.");
             if (as<array>().size() <= index) throw std::exception("Out of bounds");
             return as<array>()[index];
         }
 
-        /**
-         * Emplace value to array, becomes array if null, throws if not array.
-         * @param val value to emplace
-         * @return reference to emplaced json value
-         */
+        // ------------------------------------------------
+
         template<class Ty> json& emplace(const Ty& val) {
             if (is(Null)) _value = array{};
             else if (!is(Array)) throw std::exception("Not an array.");
             return as<array>().emplace_back(val);
         }
 
-        /**
-         * @return size of either object or array, or 0 of it's neither
-         */
+        // ------------------------------------------------
+
         std::size_t size() const {
             return is(Array) ? as<array>().size() 
                 : is(Object) ? as<object>().size() 
                 : is(String) ? as<string>().size() : 0ull;
         }
 
-        /**
-         * Parse json from a string.
-         * @param val json string
-         * @return optional, value if correct json
-         */
+        // ------------------------------------------------
+
         static std::optional<json> parse(std::string_view val) {
             if ((val = trim(val)).empty()) return {};
             std::optional<json> _result = {};
@@ -243,15 +210,14 @@ namespace Kaixo {
             return {};
         }
 
-        /**
-         * Convert this json to a json string.
-         */
+        // ------------------------------------------------
+
         std::string to_string() {
             switch (type()) {
             case Floating: return std::to_string(as<floating>());
             case Integral: return std::to_string(as<integral>());
             case Unsigned: return std::to_string(as<unsigned_integral>());
-            case String: return '"' + as<string>() + '"';
+            case String: return '"' + escape(as<string>()) + '"';
             case Boolean: return as<boolean>() ? "true" : "false";
             case Null: return "null";
             case None: return "null";
@@ -270,7 +236,7 @@ namespace Kaixo {
                 bool first = true;
                 for (auto& [key, val] : as<object>()) {
                     if (!first) result += ",";
-                    result += '"' + key + '"' + ":" + val.to_string();
+                    result += '"' + escape(key) + '"' + ":" + val.to_string();
                     first = false;
                 }
                 return result + "}";
@@ -279,14 +245,85 @@ namespace Kaixo {
             }
         }
 
-    private:
-        static std::string removefloatEscapes(std::string_view str) {
-            std::string _str{ str };
-            for (auto _i = _str.begin(); _i < _str.end(); ++_i) {
-                if (*_i == '\\') {
-                    _i = _str.erase(_i); 
+        std::string to_pretty_string(std::size_t indent = 0) {
+            std::string result;
+            bool first = true;
+
+            auto add = [&](std::string line = "", int x = 0, bool newline = true) {
+                for (std::size_t i = 0; i < x + indent; ++i) result += "    ";
+                result += line;
+                if (newline) result += "\n";
+            };
+
+            switch (type()) {
+            case Array: {
+                bool hasNestedObject = false;
+                for (auto& val : as<array>()) {
+                    if (val.is(json::Object) || val.is(json::Array)) {
+                        hasNestedObject = true;
+                        break;
+                    }
                 }
+
+                if (hasNestedObject) {
+                    result += "[\n";
+                    for (auto& val : as<array>()) {
+                        if (!first) result += ",\n";
+                        add(val.to_pretty_string(indent + 1), 1, false);
+                        first = false;
+                    }
+                    result += '\n';
+                    add("]", 0, false);
+                } else {
+                    result += "[";
+                    for (auto& val : as<array>()) {
+                        if (!first) result += ", ";
+                        result += val.to_pretty_string(indent + 1);
+                        first = false;
+                    }
+                    result += "]";
+                }
+                return result;
             }
+            case Object: {
+                result += "{\n";
+                for (auto& [key, val] : as<object>()) {
+                    if (!first) result += ",\n";
+                    add("\"" + escape(key) + "\": " + val.to_pretty_string(indent + 1), 1, false);
+                    first = false;
+                }
+                result += '\n';
+                add("}", 0, false);
+                return result;
+            }
+            default: return to_string();
+            }
+        }
+
+        // ------------------------------------------------
+
+    private:
+        static std::string removeEscapes(std::string_view str) {
+            std::string _str{ str };
+            replace_str(_str, "\\b", "\b");
+            replace_str(_str, "\\f", "\f");
+            replace_str(_str, "\\n", "\n");
+            replace_str(_str, "\\r", "\r");
+            replace_str(_str, "\\t", "\t");
+            replace_str(_str, "\\\"", "\"");
+            replace_str(_str, "\\\\", "\\");
+            return _str;
+        }
+        
+        static std::string escape(std::string_view str) {
+            std::string _str{ str };
+            replace_str(_str, "\\", "\\\\");
+            replace_str(_str, "\b", "\\b");
+            replace_str(_str, "\f", "\\f");
+            replace_str(_str, "\n", "\\n");
+            replace_str(_str, "\r", "\\r");
+            replace_str(_str, "\t", "\\t");
+            replace_str(_str, "\"", "\\\"");
             return _str;
         }
 
@@ -372,7 +409,7 @@ namespace Kaixo {
                     }
                 }                                                // else not escaped
                 val = _result.substr(_offset + _index + 1);      //   remove from remainder
-                return removefloatEscapes(_result.substr(1, _offset + _index - 1));
+                return removeEscapes(_result.substr(1, _offset + _index - 1));
             }
         }
 
@@ -411,4 +448,7 @@ namespace Kaixo {
                 ? _result : std::optional<json>{};
         }
     };
+
+    // ------------------------------------------------
+
 }

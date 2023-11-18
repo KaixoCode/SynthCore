@@ -58,6 +58,7 @@ namespace Kaixo::Theme {
         // ------------------------------------------------
 
         switch (theme.type()) {
+        case json::String: loadZoomLevel(1, json::object{ { "image", theme } }); break;
         case json::Object: loadZoomLevel(1, theme); break;
         case json::Array:
             for (auto& el : theme.as<json::array>()) {

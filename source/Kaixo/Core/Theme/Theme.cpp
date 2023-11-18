@@ -2,16 +2,31 @@
 
 // ------------------------------------------------
 
+#include <DefaultTheme.hpp>
+
+// ------------------------------------------------
+
 namespace Kaixo::Theme {
 
     // ------------------------------------------------
 
-    Theme::Theme() : Container(this) {}
+    Theme::Theme() : Container(this) {
+        std::string asString;
+        asString.reserve(DefaultThemeBytes);
+        for (auto& line : DefaultTheme) {
+            asString += trim(line);
+        }
+
+        if (auto val = json::parse(asString)) {
+            m_DefaultTheme = val.value();
+        }
+    }
 
     // ------------------------------------------------
 
     void Theme::openDefault() {
-        open(SYNTH_ThemeFile);
+        open(m_DefaultTheme, Default);
+        m_OpenedPath = Default;
     }
 
     bool Theme::reopen() {

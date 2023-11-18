@@ -55,6 +55,7 @@ namespace Kaixo::Theme {
         // ------------------------------------------------
 
     private:
+        json m_DefaultTheme{};
         std::map<std::string, json, std::less<>> m_Variables{};
         std::map<std::string, ImageID> m_LoadedImagesByKey{};
         std::vector<Image> m_LoadedImages;

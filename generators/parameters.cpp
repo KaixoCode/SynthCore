@@ -82,10 +82,10 @@ namespace Kaixo::Generator {
             index.firstParameterId = paramId;
 
             auto format = [&](std::string str) {
-                replace(str, "{name}", module.name);
-                replace(str, "{short-name}", module.shortName);
-                replace(str, "{index}", module.count == 0 ? "" : std::to_string(i + 1));
-                replace(str, "{i}", module.count == 0 ? "" : std::to_string(i));
+                replace_str(str, "{name}", module.name);
+                replace_str(str, "{short-name}", module.shortName);
+                replace_str(str, "{index}", module.count == 0 ? "" : std::to_string(i + 1));
+                replace_str(str, "{i}", module.count == 0 ? "" : std::to_string(i));
                 return str = trim(str);
                 };
 
@@ -201,11 +201,11 @@ namespace Kaixo::Generator {
             }
         }
 
-        replace(param.transform, "[", "<");
-        replace(param.transform, "]", ">");
+        replace_str(param.transform, "[", "<");
+        replace_str(param.transform, "]", ">");
 
-        replace(param.format, "[", "<");
-        replace(param.format, "]", ">");
+        replace_str(param.format, "[", "<");
+        replace_str(param.format, "]", ">");
 
         // Convert values to strings if it's a Group
         if (param.format.find("Group") != std::string::npos) {
@@ -225,15 +225,15 @@ namespace Kaixo::Generator {
         }
 
         auto format = [&](std::string str) {
-            replace(str, "{namespace}", scope.nameSpace);
-            replace(str, "{short-namespace}", scope.shortNameSpace);
-            replace(str, "{name}", param.name);
-            replace(str, "{short-name}", param.shortName);
-            replace(str, "{index}", scope.count == 0 ? "" : std::to_string(scope.index + 1));
-            replace(str, "{i}", scope.count == 0 ? "" : std::to_string(scope.index));
+            replace_str(str, "{namespace}", scope.nameSpace);
+            replace_str(str, "{short-namespace}", scope.shortNameSpace);
+            replace_str(str, "{name}", param.name);
+            replace_str(str, "{short-name}", param.shortName);
+            replace_str(str, "{index}", scope.count == 0 ? "" : std::to_string(scope.index + 1));
+            replace_str(str, "{i}", scope.count == 0 ? "" : std::to_string(scope.index));
 
             for (auto& [name, value] : scope.variables) {
-                replace(str, "$" + name, value);
+                replace_str(str, "$" + name, value);
             }
 
             return str = trim(str);
@@ -270,15 +270,15 @@ namespace Kaixo::Generator {
         sources[source.id] = &source;
 
         auto format = [&](std::string str) {
-            replace(str, "{namespace}", scope.nameSpace);
-            replace(str, "{short-namespace}", scope.shortNameSpace);
-            replace(str, "{name}", source.name);
-            replace(str, "{short-name}", source.shortName);
-            replace(str, "{index}", scope.count == 0 ? "" : std::to_string(scope.index + 1));
-            replace(str, "{i}", scope.count == 0 ? "" : std::to_string(scope.index));
+            replace_str(str, "{namespace}", scope.nameSpace);
+            replace_str(str, "{short-namespace}", scope.shortNameSpace);
+            replace_str(str, "{name}", source.name);
+            replace_str(str, "{short-name}", source.shortName);
+            replace_str(str, "{index}", scope.count == 0 ? "" : std::to_string(scope.index + 1));
+            replace_str(str, "{i}", scope.count == 0 ? "" : std::to_string(scope.index));
 
             for (auto& [name, value] : scope.variables) {
-                replace(str, "$" + name, value);
+                replace_str(str, "$" + name, value);
             }
 
             return str = trim(str);
@@ -641,8 +641,8 @@ namespace Kaixo::Generator {
                 std::string idstr = std::to_string(id);
                 std::string accessor = source->interface;
 
-                replace(accessor, "$self", "database.self()");
-                replace(accessor, "$value", "p.access");
+                replace_str(accessor, "$self", "database.self()");
+                replace_str(accessor, "$value", "p.access");
 
                 if (!accessor.empty()) {
                     add("// Source: " + source->fullVarName, 2);
@@ -667,8 +667,8 @@ namespace Kaixo::Generator {
                 std::string idstr = std::to_string(id);
                 std::string accessor = param->interface;
 
-                replace(accessor, "$self", "database.self()");
-                replace(accessor, "$value", "p.access");
+                replace_str(accessor, "$self", "database.self()");
+                replace_str(accessor, "$value", "p.access");
 
                 if (param->steps == "0" && param->smooth != "false") {
                     add("// Parameter: " + param->fullVarName, 2);
@@ -709,8 +709,8 @@ namespace Kaixo::Generator {
                 std::string idstr = std::to_string(id);
                 std::string accessor = param->interface;
 
-                replace(accessor, "$self", "database.self()");
-                replace(accessor, "$value", "p.access");
+                replace_str(accessor, "$self", "database.self()");
+                replace_str(accessor, "$value", "p.access");
 
                 if (param->steps == "0" && param->smooth != "false") {
                     add("// Parameter: " + param->fullVarName, 2);
@@ -732,8 +732,8 @@ namespace Kaixo::Generator {
             std::string idstr = std::to_string(id);
             std::string accessor = param->interface;
 
-            replace(accessor, "$self", "database.self()");
-            replace(accessor, "$value", "p.access");
+            replace_str(accessor, "$self", "database.self()");
+            replace_str(accessor, "$value", "p.access");
 
             add("case " + idstr + ": { // Parameter: " + param->fullVarName, 2);
             if (param->steps == "0" && param->smooth != "false") {

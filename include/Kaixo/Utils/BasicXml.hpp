@@ -1,9 +1,19 @@
 #pragma once
-#include "utils.hpp"
 
 // ------------------------------------------------
 
-namespace Kaixo::Generator {
+#include <vector>
+#include <string>
+#include <map>
+#include <optional>
+
+// ------------------------------------------------
+
+#include "Kaixo/Utils/StringUtils.hpp"
+
+// ------------------------------------------------
+
+namespace Kaixo {
 
     // ------------------------------------------------
 
@@ -169,4 +179,7 @@ namespace Kaixo::Generator {
             return _result;
         }
     };
+
+    // ------------------------------------------------
+
 }

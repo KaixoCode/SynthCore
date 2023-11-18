@@ -18,6 +18,7 @@ file(GLOB_RECURSE PROJECT_SOURCE
     "${PROJECT_SOURCE_DIRECTORY}/source/*.cpp"
     "${PROJECT_SOURCE_DIRECTORY}/include/*.hpp"
     "${PROJECT_SOURCE_DIRECTORY}/resources/*.xml"
+    "${PROJECT_SOURCE_DIRECTORY}/theme/*.json"
 )
 
 file(GLOB_RECURSE CORE_SOURCE
@@ -33,7 +34,6 @@ source_group(TREE ${CORE_SOURCE_DIRECTORY} FILES ${CORE_SOURCE})
 
 add_compile_definitions(
     SYNTH_InitialSize=${INITIAL_SIZE}
-    SYNTH_ThemeFile="${PROJECT_SOURCE_DIRECTORY}/${THEME}"
 )
 
 juce_add_plugin(${NAME}
@@ -86,7 +86,8 @@ add_executable(Generator
 
 target_include_directories(Generator
     PRIVATE
-        ${CORE_SOURCE_DIRECTORY}generators/)
+        ${CORE_SOURCE_DIRECTORY}/include/
+        ${CORE_SOURCE_DIRECTORY}/generators/)
 
 # ==============================================
 
@@ -97,15 +98,30 @@ set(GENERATE_PARAMETERS_FROM ${PROJECT_SOURCE_DIRECTORY}/${PARAMETERS})
 set(GENERATE_PARAMETERS_TO ${GENERATED_SOURCES_DIR}/${GENERATED_PARAMETERS})
 set(GENERATE_ASSIGNERS_TO ${GENERATED_SOURCES_DIR}/${GENERATED_ASSIGNERS})
 
+set(GENERATED_THEME "DefaultTheme.hpp")
+
+set(GENERATE_THEME_FROM ${PROJECT_SOURCE_DIRECTORY}/${THEME})
+set(GENERATE_THEME_FOLDER ${PROJECT_SOURCE_DIRECTORY}/${THEME_FOLDER})
+set(GENERATE_THEME_TO ${GENERATED_SOURCES_DIR}/${GENERATED_THEME})
+
 add_custom_command(OUTPUT ${GENERATE_PARAMETERS_TO}
     COMMAND Generator "parameters" ${GENERATE_PARAMETERS_FROM} ${GENERATE_PARAMETERS_TO} ${GENERATE_ASSIGNERS_TO}
     DEPENDS ${GENERATE_PARAMETERS_FROM}
 )
 
-add_custom_target(Generator_run
+add_custom_command(OUTPUT ${GENERATE_THEME_TO}
+    COMMAND Generator "theme" ${GENERATE_THEME_FROM} ${GENERATE_THEME_FOLDER} ${GENERATE_THEME_TO}
+    DEPENDS ${GENERATE_THEME_FROM}
+)
+
+add_custom_target(GenerateParameters
     DEPENDS ${GENERATE_PARAMETERS_TO} ${GENERATE_ASSIGNERS_TO}
 )
 
-add_dependencies(${NAME} Generator_run)
+add_custom_target(GenerateTheme
+    DEPENDS ${GENERATE_THEME_TO}
+)
+
+add_dependencies(${NAME} GenerateParameters GenerateTheme)
 
 # ==============================================

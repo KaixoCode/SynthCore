@@ -249,6 +249,7 @@ namespace Kaixo::Theme {
     // ------------------------------------------------
 
     float FontElement::charWidth(char c, char before, char after) const {
+        if (zoomLevel.size() == 0) return 0;
         auto& render = zoomLevel.at(1);
 
         bool shouldSpace = before != '\0' && after != '\0';
@@ -270,6 +271,8 @@ namespace Kaixo::Theme {
     // ------------------------------------------------
 
     float FontElement::stringWidth(std::string_view str) const {
+        if (zoomLevel.size() == 0) return 0;
+
         auto& render = zoomLevel.at(1);
 
         float total = 0;
