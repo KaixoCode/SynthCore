@@ -96,8 +96,8 @@ namespace Kaixo::Gui {
 
     Coord ScrollView::scrollSpace() {
         switch (settings.type) {
-        case Type::Vertical:   return m_HighestCoord - height() + settings.margin.y() + settings.margin.height();
-        case Type::Horizontal: return m_HighestCoord - width() + settings.margin.x() + settings.margin.width();
+        case Type::Vertical:   return m_HighestCoord - height() + settings.margin.height();
+        case Type::Horizontal: return m_HighestCoord - width() + settings.margin.width();
         }
     }
 
@@ -159,9 +159,12 @@ namespace Kaixo::Gui {
             Coord w = rect.width();
             Coord x = rect.x();
             Coord y = rect.y();
+            bool first = true;
             for (auto& view : views()) {
                 if (!view->isVisible()) continue;
-                y += view->height() + settings.gap;
+                if (!first) y += settings.gap;
+                y += view->height();
+                first = false;
             }
 
             m_HighestCoord = Math::max(y, 1.);
@@ -204,9 +207,12 @@ namespace Kaixo::Gui {
             Coord h = rect.height();
             Coord x = rect.x();
             Coord y = rect.y();
+            bool first = true;
             for (auto& view : views()) {
                 if (!view->isVisible()) continue;
-                x += view->width() + settings.gap;
+                if (!first) x += settings.gap;
+                x += view->width();
+                first = false;
             }
 
             m_HighestCoord = Math::max(x, 1.);
