@@ -3,6 +3,11 @@
 #include "Kaixo/Core/Theme/Container.hpp"
 #include "Kaixo/Core/Theme/ZoomMultiplier.hpp"
 #include "Kaixo/Core/Theme/Image.hpp"
+#include "Kaixo/Core/Theme/Basic.hpp"
+#include "Kaixo/Core/Theme/Color.hpp"
+#include "Kaixo/Core/Theme/Stateful.hpp"
+#include "Kaixo/Core/Theme/MultiFrame.hpp"
+#include "Kaixo/Core/Theme/FontMap.hpp"
 
 // ------------------------------------------------
 
@@ -95,3 +100,5 @@ namespace Kaixo::Theme {
     // ------------------------------------------------
 
 }
+
+#include <GeneratedTheme.hpp>

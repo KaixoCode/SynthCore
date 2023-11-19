@@ -1,4 +1,5 @@
 #include "Kaixo/Core/Theme/Color.hpp"
+#include "Kaixo/Core/Theme/Theme.hpp"
 
 // ------------------------------------------------
 

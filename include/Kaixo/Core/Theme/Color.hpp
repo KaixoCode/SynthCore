@@ -2,7 +2,6 @@
 #include "Kaixo/Core/Definitions.hpp"
 #include "Kaixo/Core/Theme/Element.hpp"
 #include "Kaixo/Core/Theme/ZoomMultiplier.hpp"
-#include "Kaixo/Core/Theme/Theme.hpp"
 
 // ------------------------------------------------
 
