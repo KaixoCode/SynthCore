@@ -28,6 +28,8 @@ namespace Kaixo::Processing {
 
         // ------------------------------------------------
 
+        float delay() const { return m_Delay; }
+
         void delay(float millis) { m_TargetDelay = millis; }
 
         // ------------------------------------------------
@@ -53,7 +55,7 @@ namespace Kaixo::Processing {
 
         Stereo read(float delayMs) const {
             float delaySamples = sampleRate() * delayMs / 1000.;
-            float read = Math::Fast::fmod(m_Write + size() - delaySamples, size());
+            float read = Math::Fast::fmod(m_Write + 2 * size() - delaySamples, size());
             std::size_t delay1 = static_cast<std::size_t>(read);
             std::size_t delay2 = static_cast<std::size_t>(read + 1) % size();
             float ratio = read - delay1;
@@ -62,7 +64,10 @@ namespace Kaixo::Processing {
 
         // ------------------------------------------------
 
-        void resize(std::size_t size) { m_Samples.resize(size); }
+        void resize(std::size_t size) { 
+            m_Samples.resize(size);
+            reset();
+        }
 
         // ------------------------------------------------
 
