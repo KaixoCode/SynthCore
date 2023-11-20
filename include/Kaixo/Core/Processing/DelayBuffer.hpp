@@ -1,6 +1,10 @@
 #pragma once
+
+// ------------------------------------------------
+
 #include "Kaixo/Core/Definitions.hpp"
 #include "Kaixo/Core/Processing/Stereo.hpp"
+#include "Kaixo/Core/Processing/Module.hpp"
 
 // ------------------------------------------------
 
@@ -8,83 +12,76 @@ namespace Kaixo::Processing {
 
     // ------------------------------------------------
 
-    struct DelayBuffer {
+    class DelayBuffer : public Module {
+    public:
 
         // ------------------------------------------------
 
-        DelayBuffer(std::size_t bufferSize = 1024) { reserve(bufferSize); }
-        ~DelayBuffer() { delete[] m_Buffer; }
+        DelayBuffer(float maxDelay)
+            : m_MaxDelay(maxDelay) 
+        {}
 
         // ------------------------------------------------
 
-        void setSampleRate(double sr) {
-            if (m_SampleRate != sr) {
-                m_SampleRate = sr;
-                updateSmooth();
-                updateDelay();
-            }
-        }
+        Stereo input;
+        Stereo output;
 
         // ------------------------------------------------
 
-        void setDelay(double millis) {
-            if (m_DelayMillis != millis) {
-                m_DelayMillis = millis;
-                updateDelay();
-            }
-        }
+        void delay(float millis) { m_TargetDelay = millis; }
 
         // ------------------------------------------------
 
-        Stereo write(Stereo in) {
-            m_Buffer[m_Write] = in;
-            auto res = read();
-
-            m_Write = (m_Write + 1) % m_Size;
+        void process() override {
+            m_Samples[m_Write] = input;
+            output = read(m_Delay);
+            m_Write = (m_Write + 1) % size();
             m_Delay = m_Delay * m_Smooth + m_TargetDelay * (1 - m_Smooth);
-
-            return res;
         }
 
-        Stereo read() const {
-            double read = Math::Fast::fmod(m_Write + m_Size - m_Delay, m_Size);
-            std::size_t delay1 = static_cast<std::size_t>(read);
-            std::size_t delay2 = static_cast<std::size_t>(read + 1) % m_Size;
-            double ratio = read - delay1;
+        void prepare(double sampleRate, std::size_t maxBufferSize) override {
+            resize(sampleRate * m_MaxDelay / 1000.);
+            m_Smooth = Math::smoothCoef(0.99, 48000. / sampleRate);
+        }
 
-            return m_Buffer[delay2] * ratio + m_Buffer[delay1] * (1 - ratio);
+        void reset() override {
+            m_Delay = m_TargetDelay;
+            std::ranges::fill(m_Samples, 0);
         }
 
         // ------------------------------------------------
 
-        void reset() {
-            m_Delay = m_TargetDelay;
-            std::memset(m_Buffer, 0, m_Size * sizeof(Stereo));
+        Stereo read(float delayMs) const {
+            float delaySamples = sampleRate() * delayMs / 1000.;
+            float read = Math::Fast::fmod(m_Write + size() - delaySamples, size());
+            std::size_t delay1 = static_cast<std::size_t>(read);
+            std::size_t delay2 = static_cast<std::size_t>(read + 1) % size();
+            float ratio = read - delay1;
+            return m_Samples[delay2] * ratio + m_Samples[delay1] * (1 - ratio);
         }
 
-        void reserve(std::size_t size) { if (size > m_Size) resize(size); }
+        // ------------------------------------------------
 
-        void resize(std::size_t size) {
-            auto backup = m_Buffer;
-            m_Buffer = new Stereo[size];
-            std::memcpy(m_Buffer, backup, sizeof(Stereo) * Math::min(m_Size, size));
-            m_Size = size;
-            delete[] backup;
-        }
+        void resize(std::size_t size) { m_Samples.resize(size); }
+
+        // ------------------------------------------------
+
+        std::size_t size() const { return m_Samples.size(); }
 
         // ------------------------------------------------
     
     private:
-        double m_SampleRate = 48000;
-        std::size_t m_Size = 0;
-        Stereo* m_Buffer = nullptr;
+        std::vector<Stereo> m_Samples{};
         std::size_t m_Write = 0;
-        double m_Delay = 0;
-        double m_TargetDelay = 0;
-        double m_DelayMillis = 0;
-        double m_Smooth = Math::smoothCoef(0.99, 48000. / m_SampleRate);
+        float m_MaxDelay = 0;
+        float m_Delay = 0;
+        float m_TargetDelay = 0;
+        float m_Smooth = 0.99;
 
-        void updateSmooth() { m_Smooth = Math::smoothCoef(0.99, 48000. / m_SampleRate); }
-        void updateDelay() { m_TargetDelay = (m_DelayMillis / 1000.) * m_SampleRate; }
+        // ------------------------------------------------
+
     };
+
+    // ------------------------------------------------
+
 }
