@@ -630,19 +630,38 @@ namespace Kaixo::Processing {
     // ------------------------------------------------
 
     template<std::size_t N, class Sample = double, class MathQuality = Math>
-    class StereoEqualizer : public std::array<Biquad<Sample, MathQuality>, N> {
+    class StereoEqualizer : public std::array<Biquad<Sample, MathQuality>, N>, public Module {
     public:
+
+        // ------------------------------------------------
 
         Stereo input;
         Stereo output;
 
-        void process() {
+        // ------------------------------------------------
+
+        void process() override {
             output = input;
-            for (auto& filter : *this) output = filter.process(output);
+            for (auto& filter : *this) {
+                output = filter.process(output);
+            }
             input = { 0, 0 };
         }
 
-        void reset() { for (auto& filter : *this) filter.reset(); }
+        void prepare(double sampleRate, std::size_t maxBufferSize) override {
+            for (auto& filter : *this) {
+                filter.sampleRate(sampleRate);
+            }
+        }
+
+        void reset() override {
+            for (auto& filter : *this) {
+                filter.reset();
+            }
+        }
+
+        // ------------------------------------------------
+
     };
 
     // ------------------------------------------------
