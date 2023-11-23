@@ -23,11 +23,12 @@ namespace Kaixo::Gui {
             Type type = Type::Vertical;
             Theme::Basic background;
             Theme::Stateful scrollbar;
-            Rect<> margin{ 4, 4, 4, 4 };          // Margin around the contained views
+            Rect<> margin{ 4, 4, 4, 4 };     // Margin around the contained views
             Coord gap = 4;                   // Gap between contained views
             Coord minSize = 20;              // Minimum scroll bar size
             Coord barThickness = 10;         // Thickness of the scroll bar
             Rect<> barPadding{ 4, 4, 4, 4 }; // Padding around the scroll bar
+            bool keepBarSpace = true;        // Keep the space of the scroll bar unused
             Theme::Align alignChildren = Theme::Align::Center; // Alignment of children
         } settings;
 
@@ -63,7 +64,7 @@ namespace Kaixo::Gui {
 
         // ------------------------------------------------
 
-    private:
+    protected:
         Coord m_HighestCoord = 0;
         float m_Scrolled = 0;
         float m_PressScrolled = 0;

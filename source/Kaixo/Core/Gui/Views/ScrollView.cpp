@@ -136,18 +136,25 @@ namespace Kaixo::Gui {
     }
 
     Rect<> ScrollView::childrenRect() {
+        Point<> barSize = scrollbarNecessary() || settings.keepBarSpace
+            ? Point {
+                settings.barThickness + settings.barPadding.x() + settings.barPadding.width(),
+                settings.barThickness + settings.barPadding.y() + settings.barPadding.height(),
+            } 
+            : Point{ settings.margin.width(), settings.margin.height() };
+
         switch (settings.type) {
         case Type::Vertical: return {
             settings.margin.x(),
             settings.margin.y(),
-            width() - settings.margin.x() - settings.barThickness - settings.barPadding.x() - settings.barPadding.width(),
+            width() - settings.margin.x() - barSize.x(),
             height() - settings.margin.y() - settings.margin.height(),
         };
         case Type::Horizontal: return {
             settings.margin.x(),
             settings.margin.y(),
             width() - settings.margin.x() - settings.margin.width(),
-            height() - settings.margin.y() - settings.barThickness - settings.barPadding.y() - settings.barPadding.height(),
+            height() - settings.margin.y() - barSize.y(),
         };
         }
     }
