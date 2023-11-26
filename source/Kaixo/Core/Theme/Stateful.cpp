@@ -20,30 +20,94 @@ namespace Kaixo::Theme {
 
     // ------------------------------------------------
 
-    void StatefulElement::State::interpret(const json& theme, ZoomMultiplier zoom) {
-        
+    void StatefulElement::State::interpret(const basic_json& in) {
+
         // ------------------------------------------------
 
-        if (theme.contains("image", json::String)) {
-            auto& path = theme["image"].as<json::string>();
-            id = self->registerImage(path, zoom);
-        } else {
-            id = NoImage;
+        basic_json theme = in;
+
+        // ------------------------------------------------
+
+        if (in.contains("extends")) {
+            theme.merge(in["extends"]);
+            in["extends"].foreach([&](const basic_json& val) { theme.merge(val); });
         }
 
         // ------------------------------------------------
+        
+        auto layer = [&](const basic_json& theme) {
 
-        state = interpretState(theme);
-        clip = interpretClip(theme);
+            // ------------------------------------------------
+
+            Layer& layer = layers.emplace_back(self);
+            if (theme.contains("image", basic_json::String)) {
+                layer.id = self->registerImage(theme["image"].as<basic_json::string>());
+            }
+
+            // ------------------------------------------------
+
+            layer.clip = interpretClip(theme);
+
+            // ------------------------------------------------
+
+            if (auto _tiles = interpretTiles(theme)) {
+                layer.isTiled = true;
+                layer.tiles = _tiles.value();
+            }
+
+            // ------------------------------------------------
+
+            if (theme.contains("font")) {
+                layer.font.interpret(self->variableOrValue(theme["font"]));
+            }
+                
+            // ------------------------------------------------
+
+            if (theme.contains("text", basic_json::String)) {
+                layer.text = theme["text"].as<basic_json::string>();
+            }
+
+            // ------------------------------------------------
+
+            if (theme.contains("text-color")) {
+                layer.fillAlphaWithColor = true;
+                layer.textColor.interpret(self->variableOrValue(theme["text-color"]));
+            }
+
+            // ------------------------------------------------
+
+            std::array<int, 2> arr2;
+            if (theme.try_get("text-offset", arr2)) {
+                layer.textOffset.x(arr2[0]);
+                layer.textOffset.y(arr2[1]);
+            }
+
+            // ------------------------------------------------
+                
+            layer.textAlign = Align::Center;
+            if (theme.contains("text-align", basic_json::String)) {
+                auto& align = theme["text-align"].as<basic_json::string>();
+                layer.textAlign = alignFromString(align);
+            }
+
+            // ------------------------------------------------
+
+            if (theme.contains("background-color")) {
+                layer.hasBackgroundColor = true;
+                layer.backgroundColor.interpret(self->variableOrValue(theme["background-color"]));
+            }
+
+            // ------------------------------------------------
+
+        };
 
         // ------------------------------------------------
 
-        if (auto _tiles = interpretTiles(theme)) {
-            isTiled = true;
-            tiles = _tiles.value();
-        } else {
-            isTiled = false;
-            tiles = {};
+        layers.clear(); // remove previous layers
+        layer(theme);
+        if (theme.contains("layers", basic_json::Array)) {
+            for (auto& l : theme["layers"].as<basic_json::array>())
+                layer(l);
         }
 
         // ------------------------------------------------
@@ -51,8 +115,16 @@ namespace Kaixo::Theme {
     }
 
     // ------------------------------------------------
+    
+    bool StatefulElement::State::Layer::draw(juce::Graphics& g, const Rect<float>& pos, Align align) const {
+         bool didDraw = false;
 
-    bool StatefulElement::State::draw(juce::Graphics& g, const Rect<float>& pos, Align align) const {
+        if (hasBackgroundColor) {
+            g.setColour(backgroundColor);
+            g.fillRect(pos);
+            didDraw = true;
+        }
+
         if (auto image = self->image(id)) {
             image.draw(ClippedInstruction{
                 .graphics = g,
@@ -61,35 +133,73 @@ namespace Kaixo::Theme {
                 .align = align,
                 .position = pos
             });
-
-            return true;
+            didDraw = true;
         }
-        return false;
+
+        if (!text.empty()) {
+            Point<float> at = pointFromAlign(textAlign, pos) + textOffset.toFloat();
+
+            if (fillAlphaWithColor) g.setColour(textColor);
+            font.draw(g, at, text, textAlign, fillAlphaWithColor);
+            didDraw = true;
+        }
+
+        return didDraw;
     }
 
     // ------------------------------------------------
 
-    void StatefulElement::interpret(const json& theme) {
-        if (!theme.is(json::Array)) return;
-        auto& arr = theme.as<json::array>();
-        zoomLevel.clear();
-        for (auto& el : arr) {
-            ZoomMultiplier zoom = el.contains("zoom", json::Floating) ? el["zoom"].as<json::floating>() : 1;
-            State state{ self };
-            state.interpret(el, zoom);
-            if (state.id != NoImage)
-                zoomLevel[zoom].states.push_back(std::move(state));
+    bool StatefulElement::State::draw(juce::Graphics& g, const Rect<float>& pos, Align align) const {
+        bool didDraw = false;
+        for (auto& layer : layers) {
+            if (layer.draw(g, pos, align)) didDraw = true;
         }
+        return didDraw;
+    }
+
+    // ------------------------------------------------
+
+    void StatefulElement::interpret(const basic_json& in) {
+
+        // ------------------------------------------------
+
+        if (!in.is(basic_json::Object)) return;
+
+        // ------------------------------------------------
+
+        basic_json theme = in;
+
+        // ------------------------------------------------
+        
+        states.clear();
+
+        // ------------------------------------------------
+        
+        for (auto& [str, state] : interpretState(theme)) {
+            theme[str].merge(theme);
+            State& s = states.emplace_back();
+            s.state = state;
+            s.self = self;
+            s.interpret(theme[str]);
+        }
+
+        // ------------------------------------------------
+
+        State& base = states.emplace_back();
+        base.state = View::State::Default;
+        base.self = self;
+        base.interpret(theme);
+
+        // ------------------------------------------------
+
     }
 
     // ------------------------------------------------
 
     void StatefulElement::draw(juce::Graphics& g, const Rect<float>& pos, View::State state, Align align) const {
-        if (auto _level = self->pickZoom(zoomLevel)) {
-            for (auto& s : _level->states) {
-                if ((s.state & state) == s.state) {
-                    if (s.draw(g, pos, align)) return;
-                }
+        for (auto& s : states) {
+            if ((s.state & state) == s.state) {
+                if (s.draw(g, pos, align)) return;
             }
         }
     }
@@ -112,26 +222,79 @@ namespace Kaixo::Theme {
 
     // ------------------------------------------------
     
-    View::State interpretState(const json& theme) {
+    std::vector<std::pair<std::string, View::State>> interpretState(const basic_json& theme) {
 
         // ------------------------------------------------
-        
-        View::State state = View::State::Default;
-        if (theme.contains("states", json::Array)) {
-            for (auto& s : theme["states"].as<json::array>()) {
-                if (!s.is(json::String)) continue;
-                if (s.as<json::string>() == "disabled") state |= View::State::Disabled;
-                if (s.as<json::string>() == "hovering") state |= View::State::Hovering;
-                if (s.as<json::string>() == "pressed")  state |= View::State::Pressed;
-                if (s.as<json::string>() == "enabled")  state |= View::State::Enabled;
-                if (s.as<json::string>() == "selected") state |= View::State::Selected;
-                if (s.as<json::string>() == "focused")  state |= View::State::Focused;
+
+        using enum View::State;
+        constexpr std::array<std::pair<std::string_view, View::State>, 10> map{ {
+            { "hovering", Hovering },
+            { "pressed", Pressed },
+            { "enabled", Enabled },
+            { "disabled", Disabled },
+            { "selected", Selected },
+            { "focused", Focused },
+        } };
+
+        // ------------------------------------------------
+
+        std::vector<std::pair<std::string, View::State>> states;
+        std::vector<std::size_t> precedence;
+
+        // ------------------------------------------------
+
+        for (std::size_t i = 1; i < 64; ++i) {
+
+            // ------------------------------------------------
+
+            std::string key{};
+            View::State state = Default;
+
+            // ------------------------------------------------
+
+            bool first = true;
+            for (std::size_t j = 0; j < map.size(); ++j) {
+                if (i & (1ull << j)) {
+                    if (!first) key += '-'; // delimiter
+                    key += map[j].first;
+                    state |= map[j].second;
+                    first = false;
+                }
             }
+
+            // ------------------------------------------------
+
+            auto& obj = theme.as<basic_json::object>();
+            auto it = obj.find(key);
+            if (it == obj.end()) continue;
+
+            // ------------------------------------------------
+
+            bool added = false;
+            auto index = std::distance(obj.begin(), it);
+            for (std::size_t j = 0; j < states.size(); ++j) {
+                if (index < precedence[j]) {
+                    states.insert(states.begin() + j, { key, state });
+                    precedence.insert(precedence.begin() + j, index);
+                    added = true;
+                    break;
+                }
+            }
+
+            // ------------------------------------------------
+
+            if (!added) {
+                states.push_back({ key, state });
+                precedence.push_back(index);
+            }
+
+            // ------------------------------------------------
+
         }
 
         // ------------------------------------------------
-        
-        return state;
+
+        return states;
 
         // ------------------------------------------------
 

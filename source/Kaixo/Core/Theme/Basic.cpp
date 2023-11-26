@@ -19,68 +19,64 @@ namespace Kaixo::Theme {
 
     // ------------------------------------------------
 
-    void BasicElement::interpret(const json& theme) {
+    void BasicElement::interpret(const basic_json& in) {
 
         // ------------------------------------------------
 
-        auto loadZoomLevel = [&](float zoom, const json& theme) {
-
-            // ------------------------------------------------
-
-            if (theme.contains("image", json::String)) {
-                auto& path = theme["image"].as<json::string>();
-                zoomLevel[zoom].id = self->registerImage(path);
-            } else {
-                zoomLevel[zoom].id = NoImage;
-            }
-
-            // ------------------------------------------------
-
-            zoomLevel[zoom].clip = interpretClip(theme);
-
-            // ------------------------------------------------
-            
-            if (auto tiles = interpretTiles(theme)) {
-                zoomLevel[zoom].isTiled = true;
-                zoomLevel[zoom].tiles = tiles.value();
-            } else {
-                zoomLevel[zoom].isTiled = false;
-                zoomLevel[zoom].tiles = {};
-            }
-
-            // ------------------------------------------------
-
-        };
+        id = NoImage;
+        isTiled = false;
+        tiles = {};
 
         // ------------------------------------------------
-
-        zoomLevel.clear();
-
-        // ------------------------------------------------
-
-        switch (theme.type()) {
-        case json::String: loadZoomLevel(1, json::object{ { "image", theme } }); break;
-        case json::Object: loadZoomLevel(1, theme); break;
-        case json::Array:
-            for (auto& el : theme.as<json::array>()) {
-                float zoom = el.contains("zoom", json::Floating) ? el["zoom"].as<json::floating>() : 1;
-                loadZoomLevel(zoom, el);
-            } break;
+        
+        if (in.is(basic_json::String)) {
+            id = self->registerImage(in.as<basic_json::string>());
+            return; // Only path to image
         }
+
+        // ------------------------------------------------
+
+        basic_json theme = in;
+
+        // ------------------------------------------------
+
+        if (in.contains("extends")) {
+            theme.merge(in["extends"]);
+            in["extends"].foreach([&](const basic_json& val) { theme.merge(val); });
+        }
+
+        // ------------------------------------------------
+
+        if (theme.contains("image", basic_json::String)) {
+            auto& path = theme["image"].as<basic_json::string>();
+            id = self->registerImage(path);
+        }
+
+        // ------------------------------------------------
+
+        clip = interpretClip(theme);
+
+        // ------------------------------------------------
+            
+        if (auto t = interpretTiles(theme)) {
+            isTiled = true;
+            tiles = t.value();
+        }
+
+        // ------------------------------------------------
+
     }
 
     // ------------------------------------------------
 
     void BasicElement::draw(juce::Graphics& g, const Rect<float>& pos) const {
-        if (auto _level = self->pickZoom(zoomLevel)) {
-            if (auto _image = self->image(_level->id)) {
-                _image.draw(TiledInstruction{
-                    .graphics = g,
-                    .description = _level->tiles,
-                    .clip = _level->clip,
-                    .position = pos
-                });
-            }
+        if (auto _image = self->image(id)) {
+            _image.draw(TiledInstruction{
+                .graphics = g,
+                .description = tiles,
+                .clip = clip,
+                .position = pos
+            });
         }
     }
 
@@ -102,7 +98,7 @@ namespace Kaixo::Theme {
 
     // ------------------------------------------------
 
-    Rect<int> interpretClip(const json& theme) {
+    Rect<int> interpretClip(const basic_json& theme) {
 
         // ------------------------------------------------
 
@@ -110,48 +106,30 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
-        if (theme.contains("offset", json::Array)) {
-            auto& arr = theme["offset"].as<json::array>();
+        std::array<int, 2> arr2;
+        std::array<int, 4> arr4;
 
-            if (arr.size() == 2 &&
-                arr[0].is(json::Unsigned) &&
-                arr[1].is(json::Unsigned))
-            {
-                result.x(static_cast<int>(arr[0].as<json::unsigned_integral>()));
-                result.y(static_cast<int>(arr[1].as<json::unsigned_integral>()));
-            }
+        // ------------------------------------------------
+
+        if (theme.try_get("clip", arr4)) {
+            result.x(arr4[0]);
+            result.y(arr4[1]);
+            result.width(arr4[2]);
+            result.height(arr4[3]);
         }
 
         // ------------------------------------------------
 
-        if (theme.contains("size", json::Array)) {
-            auto& arr = theme["size"].as<json::array>();
-
-            if (arr.size() == 2 &&
-                arr[0].is(json::Unsigned) &&
-                arr[1].is(json::Unsigned))
-            {
-                result.width(static_cast<int>(arr[0].as<json::unsigned_integral>()));
-                result.height(static_cast<int>(arr[1].as<json::unsigned_integral>()));
-            }
+        if (theme.try_get("offset", arr2)) {
+            result.x(arr2[0]);
+            result.y(arr2[1]);
         }
 
         // ------------------------------------------------
 
-        if (theme.contains("clip", json::Array)) {
-            auto& arr = theme["clip"].as<json::array>();
-
-            if (arr.size() == 4 &&
-                arr[0].is(json::Unsigned) &&
-                arr[1].is(json::Unsigned) &&
-                arr[2].is(json::Unsigned) &&
-                arr[3].is(json::Unsigned))
-            {
-                result.x(static_cast<int>(arr[0].as<json::unsigned_integral>()));
-                result.y(static_cast<int>(arr[1].as<json::unsigned_integral>()));
-                result.width(static_cast<int>(arr[2].as<json::unsigned_integral>()));
-                result.height(static_cast<int>(arr[3].as<json::unsigned_integral>()));
-            }
+        if (theme.try_get("size", arr2)) {
+            result.width(arr2[0]);
+            result.height(arr2[1]);
         }
 
         // ------------------------------------------------
@@ -164,38 +142,27 @@ namespace Kaixo::Theme {
 
     // ------------------------------------------------
 
-    std::optional<TiledDescription> interpretTiles(const json& theme) {
+    std::optional<TiledDescription> interpretTiles(const basic_json& theme) {
 
         // ------------------------------------------------
-
-        if (theme.contains("edges", json::Array)) {
-            auto& arr = theme["edges"].as<json::array>();
-
+        
+        std::vector<std::size_t> edges;
+        if (theme.try_get("edges", edges)) {
             TiledDescription tiles{};
 
-            if (arr.size() == 2 &&
-                arr[0].is(json::Unsigned) &&
-                arr[1].is(json::Unsigned))
-            {
-                tiles.left   = arr[0].as<json::unsigned_integral>();
-                tiles.top    = arr[1].as<json::unsigned_integral>();
-                tiles.right  = arr[0].as<json::unsigned_integral>();
-                tiles.bottom = arr[1].as<json::unsigned_integral>();
+            if (edges.size() == 2) {
+                tiles.left = edges[0];
+                tiles.top = edges[1];
+                tiles.right = edges[0];
+                tiles.bottom = edges[1];
             }
 
-            else if (arr.size() == 4 &&
-                arr[0].is(json::Unsigned) &&
-                arr[1].is(json::Unsigned) &&
-                arr[2].is(json::Unsigned) &&
-                arr[3].is(json::Unsigned))
-            {
-                tiles.left = arr[0].as<json::unsigned_integral>();
-                tiles.top = arr[1].as<json::unsigned_integral>();
-                tiles.right = arr[2].as<json::unsigned_integral>();
-                tiles.bottom = arr[3].as<json::unsigned_integral>();
+            if (edges.size() == 4) {
+                tiles.left = edges[0];
+                tiles.top = edges[1];
+                tiles.right = edges[2];
+                tiles.bottom = edges[3];
             }
-
-            // ------------------------------------------------
 
             return tiles;
         }

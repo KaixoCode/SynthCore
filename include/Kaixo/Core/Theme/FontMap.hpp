@@ -43,7 +43,6 @@ namespace Kaixo::Theme {
         struct Interface {
             virtual float fontSize() const = 0;
             virtual float stringWidth(std::string_view) const = 0;
-            virtual float charWidth(char c, char before = '\0', char after = '\0') const = 0;
             virtual void draw(juce::Graphics& g, const Point<float>& pos, std::string_view str, Align align = Align::TopLeft) const = 0;
         };
 
@@ -63,7 +62,6 @@ namespace Kaixo::Theme {
         // ------------------------------------------------
         
         float stringWidth(std::string_view str) const;
-        float charWidth(char c, char before = '\0', char after = '\0') const;
 
         // ------------------------------------------------
 
@@ -111,29 +109,23 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
-        struct ZoomLevel {
-            ImageID id = NoImage;
-
-            std::map<char, Letter> charMap{};
-        };
-
-        // ------------------------------------------------
-
-        std::map<ZoomMultiplier, ZoomLevel> zoomLevel{};
+        FontID font = NoFont; // Actual font file
+        float size = 0;
+        ImageID id = NoImage;
+        std::map<char, Letter> charMap{};
         float maxHeight = 0;
 
         // ------------------------------------------------
 
-        void interpret(const json& theme) override;
+        void interpret(const basic_json& theme) override;
 
         // ------------------------------------------------
 
-        void draw(juce::Graphics& g, const Point<float>& pos, std::string_view str, Align align = Align::TopLeft) const;
+        void draw(juce::Graphics& g, const Point<float>& pos, std::string_view str, Align align = Align::TopLeft, bool fillAlphaWithColor = false) const;
 
         // ------------------------------------------------
 
         float stringWidth(std::string_view str) const;
-        float charWidth(char c, char before = '\0', char after = '\0') const;
         std::string fitWithinWidth(std::string_view str, float maxWidth, std::string_view delim = "...") const;
 
         // ------------------------------------------------

@@ -68,20 +68,14 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
-        struct ZoomLevel {
-            ImageID id = NoImage;
-            bool isTiled = false;
-            Rect<int> clip{ 0, 0, 0, 0 };
-            TiledDescription tiles{};
-        };
+        ImageID id = NoImage;
+        bool isTiled = false;
+        Rect<int> clip{ 0, 0, 0, 0 };
+        TiledDescription tiles{};
 
         // ------------------------------------------------
 
-        std::map<ZoomMultiplier, ZoomLevel> zoomLevel{ { 1, {} } };
-
-        // ------------------------------------------------
-
-        void interpret(const json& theme) override;
+        void interpret(const basic_json& theme) override;
 
         // ------------------------------------------------
 
@@ -97,8 +91,8 @@ namespace Kaixo::Theme {
 
     // ------------------------------------------------
     
-    Rect<int> interpretClip(const json& theme);
-    std::optional<TiledDescription> interpretTiles(const json& theme);
+    Rect<int> interpretClip(const basic_json& theme);
+    std::optional<TiledDescription> interpretTiles(const basic_json& theme);
 
     // ------------------------------------------------
 

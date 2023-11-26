@@ -75,22 +75,22 @@ namespace Kaixo::Generator {
 
         // ------------------------------------------------
 
-        bool findAndReplaceInJson(json& val, std::string_view value, std::string_view repl) {
+        bool findAndReplaceInJson(basic_json& val, std::string_view value, std::string_view repl) {
             bool occurs = false;
-            if (val.is(json::Object)) {
-                for (auto& [k, v] : val.as<json::object>()) {
+            if (val.is(basic_json::Object)) {
+                for (auto& [k, v] : val.as<basic_json::object>()) {
                     if (findAndReplaceInJson(v, value, repl)) {
                         occurs = true;
                     }
                 }
-            } else if (val.is(json::Array)) {
-                for (auto& v : val.as<json::array>()) {
+            } else if (val.is(basic_json::Array)) {
+                for (auto& v : val.as<basic_json::array>()) {
                     if (findAndReplaceInJson(v, value, repl)) {
                         occurs = true;
                     }
                 }
-            } else if (val.is(json::String)) {
-                if (val.as<json::string>() == value) {
+            } else if (val.is(basic_json::String)) {
+                if (val.as<basic_json::string>() == value) {
                     val = repl;
                     return true;
                 }
@@ -103,26 +103,28 @@ namespace Kaixo::Generator {
             std::string name = path.string();
             replace_str(name, "/", "::");
             replace_str(name, "\\", "::");
-            replace_str(name, ".png", "");
-            replace_str(name, ".json", "");
-            return name;
+            replace_str(name, ".png", "::png");
+            replace_str(name, ".json", "::json");
+            replace_str(name, ".otf", "::otf");
+            replace_str(name, ".ttf", "::ttf");
+            return "$" + name;
 
         }
 
         // ------------------------------------------------
 
-        void assignImageAsBinary(json& to, std::filesystem::path p) {
+        void assignFileAsBinary(basic_json& to, std::filesystem::path p) {
             std::ifstream file{ p, std::ios::binary };
 
             if (!file.is_open()) {
-                std::cerr << "Failed to open PNG file [" << p << "]\n";
+                std::cerr << "Failed to open file [" << p << "]\n";
                 return;
             }
 
             to = base64_encode(file_to_string(file));
         }
 
-        void assignJson(json& to, std::filesystem::path p) {
+        void assignJson(basic_json& to, std::filesystem::path p) {
 
             std::ifstream file{ p };
 
@@ -131,7 +133,7 @@ namespace Kaixo::Generator {
                 return;
             }
 
-            if (auto res = json::parse(file_to_string(file))) {
+            if (auto res = basic_json::parse(file_to_string(file))) {
                 to = res.value();
             } else {
                 std::cerr << "Failed to parse nested JSON file [" << p << "]\n";
@@ -141,7 +143,7 @@ namespace Kaixo::Generator {
 
         // ------------------------------------------------
 
-        void generateFile(json& val, std::filesystem::path path) {
+        void generateFile(basic_json& val, std::filesystem::path path) {
             auto relative = std::filesystem::relative(path, themeFolder).string();
             replace_str(relative, "\\", "/");
             auto name = pathToKeyName(relative);
@@ -149,13 +151,17 @@ namespace Kaixo::Generator {
             if (!findAndReplaceInJson(val, relative, name)) return;
 
             if (path.extension() == ".png") {
-                assignImageAsBinary(val["images"][name], path);
+                assignFileAsBinary(val["images"][name], path);
             } else if (path.extension() == ".json") {
                 assignJson(val["variables"][name], path);
+            } else if (path.extension() == ".ttf"
+                || path.extension() == ".otf") 
+            {
+                assignFileAsBinary(val["fonts"][name], path);
             }
         }
 
-        void generateFolder(json& val, std::filesystem::path f) {
+        void generateFolder(basic_json& val, std::filesystem::path f) {
             for (auto& entry : std::filesystem::directory_iterator(f)) {
                 if (entry.is_directory()) generateFolder(val, entry.path());
                 else if (entry.is_regular_file()) generateFile(val, entry.path());
@@ -163,7 +169,7 @@ namespace Kaixo::Generator {
         }
 
         std::string content;
-        void generate(json& val) {
+        void generate(basic_json& val) {
             generateFolder(val, themeFolder);
             content = val.to_pretty_string();
         }
@@ -251,7 +257,7 @@ namespace Kaixo::Generator {
 
         // ------------------------------------------------
 
-        if (auto res = json::parse(file_to_string(ifile))) {
+        if (auto res = basic_json::parse(file_to_string(ifile))) {
             ThemeGenerator generator;
 
             generator.themeFolder = inputPath.parent_path();
@@ -327,24 +333,24 @@ namespace Kaixo::Generator {
 
         // ------------------------------------------------
 
-        Element generateContainer(json& val) {
+        Element generateContainer(basic_json& val) {
             Element result{};
-            if (val.is(json::Object)) {
-                auto& obj = val.as<json::object>();
+            if (val.is(basic_json::Object)) {
+                auto& obj = val.as<basic_json::object>();
                 for (auto& [key, v] : obj) {
                     Element generated = generateContainer(v);
                     generated.name = key;
                     result.elements.push_back(std::move(generated));
                 }
-            } else if (val.is(json::String)) {
-                result.type = val.as<json::string>();
+            } else if (val.is(basic_json::String)) {
+                result.type = val.as<basic_json::string>();
             } else {
                 std::cerr << "Expected either Object or String\n";
             }
             return result;
         }
 
-        void generate(json& val) {
+        void generate(basic_json& val) {
             root = generateContainer(val);
         }
 
@@ -755,7 +761,7 @@ namespace Kaixo::Generator {
 
         // ------------------------------------------------
 
-        if (auto res = json::parse(file_to_string(ifile))) {
+        if (auto res = basic_json::parse(file_to_string(ifile))) {
             SchemaGenerator generator;
 
             generator.generate(res.value());

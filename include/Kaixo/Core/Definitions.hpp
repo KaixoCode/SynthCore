@@ -60,6 +60,11 @@ namespace Kaixo {
 
     using ImageID = std::size_t;
     constexpr ImageID NoImage = static_cast<ImageID>(-1);
+    
+    // ------------------------------------------------
+
+    using FontID = std::size_t;
+    constexpr FontID NoFont = static_cast<FontID>(-1);
 
     // ------------------------------------------------
 

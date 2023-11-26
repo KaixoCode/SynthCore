@@ -13,11 +13,11 @@ namespace Kaixo::Theme {
 
     // ------------------------------------------------
 
-    void ColorElement::interpret(const json& theme) {
+    void ColorElement::interpret(const basic_json& theme) {
 
         // ------------------------------------------------
 
-        if (!theme.is(json::Array)) return;
+        if (!theme.is(basic_json::Array)) return;
 
         // ------------------------------------------------
 
@@ -25,56 +25,56 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
-        auto& arr = theme.as<json::array>();
+        auto& arr = theme.as<basic_json::array>();
 
         // ------------------------------------------------
 
         if (arr.size() == 1 &&
-            arr[0].is(json::Unsigned)) 
+            arr[0].is(basic_json::Number))
         {
-            red = arr[0].as<json::unsigned_integral>();
-            green = arr[0].as<json::unsigned_integral>();
-            blue = arr[0].as<json::unsigned_integral>();
+            red = arr[0].as<std::uint8_t>();
+            green = arr[0].as<std::uint8_t>();
+            blue = arr[0].as<std::uint8_t>();
             alpha = 255;
         } 
 
         // ------------------------------------------------
 
         else if (arr.size() == 2 &&
-            arr[0].is(json::Unsigned) &&
-            arr[1].is(json::Unsigned)) 
+            arr[0].is(basic_json::Number) &&
+            arr[1].is(basic_json::Number))
         {
-            red = arr[0].as<json::unsigned_integral>();
-            green = arr[0].as<json::unsigned_integral>();
-            blue = arr[0].as<json::unsigned_integral>();
-            alpha = arr[1].as<json::unsigned_integral>();
+            red = arr[0].as<std::uint8_t>();
+            green = arr[0].as<std::uint8_t>();
+            blue = arr[0].as<std::uint8_t>();
+            alpha = arr[1].as<std::uint8_t>();
         } 
 
         // ------------------------------------------------
 
         else if (arr.size() == 3 &&
-            arr[0].is(json::Unsigned) &&
-            arr[1].is(json::Unsigned) &&
-            arr[2].is(json::Unsigned)) 
+            arr[0].is(basic_json::Number) &&
+            arr[1].is(basic_json::Number) &&
+            arr[2].is(basic_json::Number)) 
         {
-            red = arr[0].as<json::unsigned_integral>();
-            green = arr[1].as<json::unsigned_integral>();
-            blue = arr[2].as<json::unsigned_integral>();
+            red = arr[0].as<std::uint8_t>();
+            green = arr[1].as<std::uint8_t>();
+            blue = arr[2].as<std::uint8_t>();
             alpha = 255;
         }
 
         // ------------------------------------------------
 
         else if (arr.size() == 4 &&
-            arr[0].is(json::Unsigned) &&
-            arr[1].is(json::Unsigned) &&
-            arr[2].is(json::Unsigned) &&
-            arr[3].is(json::Unsigned)) 
+            arr[0].is(basic_json::Number) &&
+            arr[1].is(basic_json::Number) &&
+            arr[2].is(basic_json::Number) &&
+            arr[3].is(basic_json::Number)) 
         {
-            red = arr[0].as<json::unsigned_integral>();
-            green = arr[1].as<json::unsigned_integral>();
-            blue = arr[2].as<json::unsigned_integral>();
-            alpha = arr[3].as<json::unsigned_integral>();
+            red = arr[0].as<std::uint8_t>();
+            green = arr[1].as<std::uint8_t>();
+            blue = arr[2].as<std::uint8_t>();
+            alpha = arr[3].as<std::uint8_t>();
         }
 
         // ------------------------------------------------

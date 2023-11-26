@@ -29,7 +29,8 @@ namespace Kaixo::Theme {
         // ------------------------------------------------
 
         bool hasVariable(std::string_view name) const { return m_Variables.contains(name); };
-        const json& variable(std::string_view name) { return m_Variables.find(name)->second; };
+        const basic_json& variable(std::string_view name) { return m_Variables.find(name)->second; };
+        const basic_json& variableOrValue(const basic_json& value);
 
         // ------------------------------------------------
         
@@ -49,6 +50,13 @@ namespace Kaixo::Theme {
         Image image(ImageID id) const;
 
         // ------------------------------------------------
+
+        FontID registerFont(const std::filesystem::path& path, float size = 1);
+        FontID registerFont(std::string_view id, std::string_view base64, float size = 1);
+
+        juce::Font font(FontID id) const;
+
+        // ------------------------------------------------
         
         ZoomMultiplier currentZoom() const { return m_Zoom; }
 
@@ -60,19 +68,29 @@ namespace Kaixo::Theme {
         // ------------------------------------------------
 
     private:
-        json m_DefaultTheme{};
-        std::map<std::string, json, std::less<>> m_Variables{};
-        std::map<std::string, ImageID> m_LoadedImagesByKey{};
-        std::vector<Image> m_LoadedImages;
+        basic_json m_DefaultTheme{};
+        std::map<std::string, basic_json, std::less<>> m_Variables{};
+        std::map<std::string, ImageID, std::less<void>> m_LoadedImagesByKey{};
+        std::map<ImageID, Image> m_LoadedImages;
+        std::map<std::string, FontID, std::less<void>> m_LoadedFontsByKey{};
+        std::map<FontID, juce::Font> m_LoadedFonts;
         std::filesystem::path m_OpenedPath;
         std::string m_OpenedThemeName;
         ZoomMultiplier m_Zoom = 1;
         bool m_IsThemeOpened = false;
 
         // ------------------------------------------------
+        
+        ImageID nextImageID();
+        FontID nextFontID();
 
-        void findVariables(const json& json);
-        void open(json& json, std::string_view name);
+        // ------------------------------------------------
+
+        void findVariables(basic_json& json);
+        void open(basic_json& json, std::string_view name);
+        
+        // ------------------------------------------------
+
     };
 
     // ------------------------------------------------

@@ -17,18 +17,18 @@ namespace Kaixo {
 
     // ------------------------------------------------
 
-    constexpr std::string_view trim(std::string_view view, const char* t = " \t\n\r\f\v") {
+    constexpr std::string_view trim(std::string_view view, std::string_view t = " \t\n\r\f\v") {
         if (auto i = view.find_first_not_of(t); i != std::string_view::npos) view = view.substr(i);
         if (auto i = view.find_last_not_of(t); i != std::string_view::npos) view = view.substr(0, i + 1);
         return view;
     }
 
-    constexpr std::string_view trimBegin(std::string_view view, const char* t = " \t\n\r\f\v") {
+    constexpr std::string_view trimBegin(std::string_view view, std::string_view t = " \t\n\r\f\v") {
         if (auto i = view.find_first_not_of(t); i != std::string_view::npos) view = view.substr(i);
         return view;
     }
 
-    constexpr std::string_view trimEnd(std::string_view view, const char* t = " \t\n\r\f\v") {
+    constexpr std::string_view trimEnd(std::string_view view, std::string_view t = " \t\n\r\f\v") {
         if (auto i = view.find_last_not_of(t); i != std::string_view::npos) view = view.substr(0, i + 1);
         return view;
     }

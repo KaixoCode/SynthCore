@@ -3,6 +3,8 @@
 #include "Kaixo/Core/Gui/View.hpp"
 #include "Kaixo/Core/Theme/Element.hpp"
 #include "Kaixo/Core/Theme/Image.hpp"
+#include "Kaixo/Core/Theme/FontMap.hpp"
+#include "Kaixo/Core/Theme/Color.hpp"
 
 // ------------------------------------------------
 
@@ -12,7 +14,24 @@ namespace Kaixo::Theme {
 
     /*
      * [{
-     *     "image" : "relative/path/to/image.png",
+     *     "layers": [{
+     *         "image": "relative/path/to/image.png",
+     *
+     *         "offset": [0u, 0u],         // Offset in image
+     *         "size"  : [0u, 0u],         // Size of sub-image (and also frame)
+     *         "clip"  : [0u, 0u, 0u, 0u], // Clip sub-image
+     *
+     *         "edges" : [0u, 0u],         // Nine-tiled x and y
+     *         "edges" : [0u, 0u, 0u, 0u], // Nine-tiled all edges separate
+     *
+     *         "background-color": some color, // background fill color
+     *
+     *         "text": "some string", 
+     *         "font": some font,
+     *         "text-color": some color,  // Color of the text
+     *         "text-offset": [0u, 0u],
+     *         "text-align": "top-left | top-right | top-center | center-left | center | center-right | bottom-left | bottom-center | bottom-left",
+     *     }],
      *
      *     "states" : [    // This image is selected when all these states match
      *         "hovering",
@@ -21,14 +40,8 @@ namespace Kaixo::Theme {
      *         "disabled",
      *         "enabled",
      *         "focused",
-     *     ],
-     *
-     *     "offset": [0u, 0u],         // Offset in image
-     *     "size"  : [0u, 0u],         // Size of sub-image (and also frame)
-     *     "clip"  : [0u, 0u, 0u, 0u], // Clip sub-image
-     *
-     *     "edges" : [0u, 0u],         // Nine-tiled x and y
-     *     "edges" : [0u, 0u, 0u, 0u], // Nine-tiled all edges separate
+     *     ]
+     * }]
      * }]
      */
 
@@ -84,15 +97,53 @@ namespace Kaixo::Theme {
 
             // ------------------------------------------------
 
-            ImageID id = NoImage;
-            View::State state = View::State::Default;
-            Rect<int> clip{ 0, 0, 0, 0 };
-            bool isTiled = false;
-            TiledDescription tiles{};
+            struct Layer {
+
+                // ------------------------------------------------
+
+                Layer(Theme* self) : self(self) {}
+
+                // ------------------------------------------------
+
+                Theme* self;
+
+                // ------------------------------------------------
+
+                ImageID id = NoImage;
+                Rect<int> clip{ 0, 0, 0, 0 };
+                bool isTiled = false;
+                TiledDescription tiles{};
+
+                // ------------------------------------------------
+
+                std::string text{};
+                Point<int> textOffset{ 0, 0 };
+                Align textAlign = Align::Center;
+                FontElement font{ self };
+                bool fillAlphaWithColor = false;
+                ColorElement textColor{ self };
+
+                // ------------------------------------------------
+
+                bool hasBackgroundColor = false;
+                ColorElement backgroundColor{ self };
+
+                // ------------------------------------------------
+
+                bool draw(juce::Graphics& g, const Rect<float>& pos, Align align = Align::Center) const;
+
+                // ------------------------------------------------
+
+            };
 
             // ------------------------------------------------
 
-            void interpret(const json& theme, ZoomMultiplier zoom);
+            std::vector<Layer> layers;
+            View::State state = View::State::Default;
+
+            // ------------------------------------------------
+
+            void interpret(const basic_json& theme);
             
             // ------------------------------------------------
 
@@ -104,17 +155,11 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
-        struct ZoomLevel {
-            std::vector<State> states{};
-        };
+        std::vector<State> states{};
 
         // ------------------------------------------------
 
-        std::map<ZoomMultiplier, ZoomLevel> zoomLevel{};
-
-        // ------------------------------------------------
-
-        void interpret(const json& theme) override;
+        void interpret(const basic_json& theme) override;
 
         // ------------------------------------------------
 
@@ -130,7 +175,7 @@ namespace Kaixo::Theme {
 
     // ------------------------------------------------
     
-    View::State interpretState(const json& theme);
+    std::vector<std::pair<std::string, View::State>> interpretState(const basic_json& theme);
 
     // ------------------------------------------------
 

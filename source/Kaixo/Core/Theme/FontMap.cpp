@@ -25,11 +25,6 @@ namespace Kaixo::Theme {
         return 0;
     }
 
-    float Font::charWidth(char c, char before, char after) const {
-        if (m_Graphics) return m_Graphics->charWidth(c, before, after);
-        return 0;
-    }
-
     // ------------------------------------------------
 
     void Font::draw(juce::Graphics& g, const Point<float>& pos, std::string_view str, Align align) const {
@@ -70,7 +65,7 @@ namespace Kaixo::Theme {
 
     // ------------------------------------------------
 
-    std::optional<json> getFontDescription(Theme* self, const std::string& description) {
+    std::optional<basic_json> getFontDescription(Theme* self, const std::string& description) {
         std::filesystem::path path = description;
         if (std::filesystem::exists(path) && std::filesystem::is_regular_file(path)) {
             auto abspath = std::filesystem::absolute(path);
@@ -78,7 +73,7 @@ namespace Kaixo::Theme {
             std::ifstream file{ abspath };
             if (!file.is_open()) return nullptr;
             
-            return json::parse(file_to_string(file));
+            return basic_json::parse(file_to_string(file));
         } else if (self->hasVariable(description)) {
             return self->variable(description);
         } else {
@@ -88,143 +83,118 @@ namespace Kaixo::Theme {
 
     // ------------------------------------------------
 
-    void FontElement::interpret(const json& theme) {
+    void FontElement::interpret(const basic_json& theme) {
         maxHeight = 0;
-        auto loadZoomLevel = [&](ZoomMultiplier zoom, const json& theme) {
-            zoomLevel[zoom].charMap.clear();
+        id = NoImage;
+        font = NoFont;
+        charMap.clear();
 
-            if (theme.contains("map", json::String)) { // Load font-map
-                zoomLevel[zoom].id = self->registerImage(theme["map"].as<json::string>());
-            }
+        if (theme.contains("font", basic_json::String)) { // Font file
+            font = self->registerFont(theme["font"].as<basic_json::string>());
+        }
+        
+        if (theme.contains("font-size", basic_json::Number)) { // Font file
+            size = theme["font-size"].as<float>();
+            maxHeight = size;
+        }
 
-            json json;
-            std::string description;
-            if (theme.contains("description", json::String)) { // Load description from file
-                description = theme["description"].as<json::string>();
-                auto optional_json = getFontDescription(self, description);
-                if (!optional_json) return;
-                json = optional_json.value();
-            } else if (theme.contains("description", json::Object)) { // Load description from json
-                json = theme["description"];
-            }
+        if (theme.contains("map", basic_json::String)) { // Load font-map
+            id = self->registerImage(theme["map"].as<basic_json::string>());
+        }
 
-            if (json.is(json::Object)) {
-                for (auto& [key, val] : json.as<json::object>()) {
-                    if (key.size() != 1) continue;
+        basic_json json;
+        std::string description;
+        if (theme.contains("description", basic_json::String)) { // Load description from file
+            description = theme["description"].as<basic_json::string>();
+            auto optional_json = getFontDescription(self, description);
+            if (!optional_json) return;
+            json = optional_json.value();
+        } else if (theme.contains("description", basic_json::Object)) { // Load description from json
+            json = theme["description"];
+        }
 
-                    Rect<int> clip{ 0, 0, 0, 0 };
-                    if (val.contains("location", json::Array) && val["location"].size() == 4 &&
-                        val["location"][0].is(json::Unsigned) && val["location"][1].is(json::Unsigned) &&
-                        val["location"][2].is(json::Unsigned) && val["location"][3].is(json::Unsigned))
-                    {
-                        clip = {
-                            static_cast<int>(val["location"][0].as<json::unsigned_integral>()),
-                            static_cast<int>(val["location"][1].as<json::unsigned_integral>()),
-                            static_cast<int>(val["location"][2].as<json::unsigned_integral>()),
-                            static_cast<int>(val["location"][3].as<json::unsigned_integral>()),
-                        };
-                    }
+        if (json.is(basic_json::Object)) {
+            for (auto& [key, val] : json.as<basic_json::object>()) {
+                if (key.size() != 1) continue;
 
-                    auto& mapped = zoomLevel[zoom].charMap[key[0]] = Letter{ .clip = clip, };
+                Rect<int> clip{ 0, 0, 0, 0 };
+                std::array<int, 4> arr4;
+                if (val.try_get("location", arr4)) {
+                    clip = { arr4[0], arr4[1], arr4[2], arr4[3] };
+                }
 
-                    if (maxHeight < clip.height() / zoom) {
-                        maxHeight = clip.height() / zoom;
-                    }
+                auto& mapped = charMap[key[0]] = Letter{ .clip = clip, };
 
-                    if (val.contains("pre-spacing")) {
-                        if (val["pre-spacing"].is(json::Integral)) mapped.preSpacing = val["pre-spacing"].as<json::integral>();
-                        if (val["pre-spacing"].is(json::Unsigned)) mapped.preSpacing = val["pre-spacing"].as<json::unsigned_integral>();
-                    }
+                if (maxHeight < clip.height()) {
+                    maxHeight = clip.height();
+                }
 
-                    if (val.contains("post-spacing")) {
-                        if (val["post-spacing"].is(json::Integral)) mapped.postSpacing = val["post-spacing"].as<json::integral>();
-                        if (val["post-spacing"].is(json::Unsigned)) mapped.postSpacing = val["post-spacing"].as<json::unsigned_integral>();
-                    }
+                val.try_get("pre-spacing", mapped.preSpacing);
+                val.try_get("post-spacing", mapped.postSpacing);
 
-                    if (val.contains("exceptions", json::Array)) {
-                        auto& arr = val["exceptions"].as<json::array>();
+                if (val.contains("exceptions", basic_json::Array)) {
+                    auto& arr = val["exceptions"].as<basic_json::array>();
 
-                        for (auto& e : arr) {
-                            if (!e.is(json::Object)) continue;
+                    for (auto& e : arr) {
+                        if (!e.is(basic_json::Object)) continue;
 
-                            auto& exception = mapped.exceptions.emplace_back();
+                        auto& exception = mapped.exceptions.emplace_back();
 
-                            if (e.contains("pre-spacing")) {
-                                if (e["pre-spacing"].is(json::Integral)) exception.preSpacing = e["pre-spacing"].as<json::integral>();
-                                if (e["pre-spacing"].is(json::Unsigned)) exception.preSpacing = e["pre-spacing"].as<json::unsigned_integral>();
-                            }
+                        e.try_get("pre-spacing", exception.preSpacing);
+                        e.try_get("post-spacing", exception.postSpacing);
 
-                            if (e.contains("post-spacing")) {
-                                if (e["post-spacing"].is(json::Integral)) exception.postSpacing = e["post-spacing"].as<json::integral>();
-                                if (e["post-spacing"].is(json::Unsigned)) exception.postSpacing = e["post-spacing"].as<json::unsigned_integral>();
-                            }
+                        if (e.contains("after", basic_json::Array)) {
+                            auto& arr = e["after"].as<basic_json::array>();
 
-                            if (e.contains("after", json::Array)) {
-                                auto& arr = e["after"].as<json::array>();
-
-                                for (auto& c : arr) {
-                                    if (c.is(json::String) && c.size() == 1) {
-                                        exception.after.emplace(c.as<json::string>()[0]);
-                                    }
+                            for (auto& c : arr) {
+                                if (c.is(basic_json::String) && c.size() == 1) {
+                                    exception.after.emplace(c.as<basic_json::string>()[0]);
                                 }
                             }
+                        }
 
-                            if (e.contains("before", json::Array)) {
-                                auto& arr = e["before"].as<json::array>();
+                        if (e.contains("before", basic_json::Array)) {
+                            auto& arr = e["before"].as<basic_json::array>();
 
-                                for (auto& c : arr) {
-                                    if (c.is(json::String) && c.size() == 1) {
-                                        exception.before.emplace(c.as<json::string>()[0]);
-                                    }
+                            for (auto& c : arr) {
+                                if (c.is(basic_json::String) && c.size() == 1) {
+                                    exception.before.emplace(c.as<basic_json::string>()[0]);
                                 }
                             }
                         }
                     }
                 }
             }
-        };
-
-        // ------------------------------------------------
-
-        zoomLevel.clear();
-
-        if (theme.is(json::Object)) {
-            loadZoomLevel(1, theme);
-        } else if (theme.is(json::Array)) {
-            auto& arr = theme.as<json::array>();
-            for (auto& el : arr) {
-                float zoom = el.contains("zoom", json::Floating) ? el["zoom"].as<json::floating>() : 1;
-                loadZoomLevel(zoom, el);
-            }
         }
     }
 
     // ------------------------------------------------
 
-    void FontElement::draw(juce::Graphics& g, const Point<float>& pos, std::string_view str, Align align) const {
-        if (auto _level = self->pickZoom(zoomLevel)) {
+    void FontElement::draw(juce::Graphics& g, const Point<float>& pos, std::string_view str, Align align, bool fillAlphaWithColor) const {
+        float height = maxHeight;
+        float width = stringWidth(str);
+        float x = pos.x();
+        float y = pos.y();
 
-            float height = maxHeight;
-            float width = stringWidth(str);
-            float x = pos.x();
-            float y = pos.y();
+        if ((align & X) == Left) x = pos.x();
+        if ((align & X) == Right) x = pos.x() - width;
+        if ((align & X) == CenterX) x = pos.x() - Math::trunc(width / 2);
+        if ((align & Y) == Top) y = pos.y();
+        if ((align & Y) == Bottom) y = pos.y() - height;
+        if ((align & Y) == CenterY) y = pos.y() - Math::trunc(height / 2);
 
-            if ((align & X) == Left) x = pos.x();
-            if ((align & X) == Right) x = pos.x() - width;
-            if ((align & X) == CenterX) x = pos.x() - Math::trunc(width / 2);
-            if ((align & Y) == Top) y = pos.y();
-            if ((align & Y) == Bottom) y = pos.y() - height;
-            if ((align & Y) == CenterY) y = pos.y() - Math::trunc(height / 2);
-
-            auto _image = self->image(_level->id);
-
+        if (font != NoFont) {
+            auto _font = self->font(font).withHeight(size);
+            g.setFont(_font);
+            g.drawSingleLineText(std::string(str), x, y + _font.getAscent());
+        } else if (auto _image = self->image(id)) {
             for (std::size_t i = 0; i < str.size(); ++i) {
                 auto _before = i > 0 ? str[i - 1] : '\0';
                 auto _c = str[i];
                 auto _after = i < str.size() - 1 ? str[i + 1] : '\0';
 
-                auto it = _level->charMap.find(_c);
-                if (it != _level->charMap.end()) {
+                auto it = charMap.find(_c);
+                if (it != charMap.end()) {
                     auto& _letter = it->second;
 
                     x += _letter.calcPreSpacing(_before, _after);
@@ -235,7 +205,8 @@ namespace Kaixo::Theme {
                         .position = { x, y, 
                             static_cast<float>(_letter.clip.width()), 
                             static_cast<float>(_letter.clip.height()) 
-                        }
+                        },
+                        .fillAlphaWithColor = fillAlphaWithColor
                     });
 
 
@@ -249,32 +220,11 @@ namespace Kaixo::Theme {
 
     // ------------------------------------------------
 
-    float FontElement::charWidth(char c, char before, char after) const {
-        if (zoomLevel.size() == 0) return 0;
-        auto& render = zoomLevel.at(1);
-
-        bool shouldSpace = before != '\0' && after != '\0';
-
-        float total = 0;
-        auto it = render.charMap.find(c);
-        if (it != render.charMap.end()) {
-            auto& letter = it->second;
-            if (shouldSpace) total += letter.calcPreSpacing(before, after);
-            else total += letter.preSpacing;
-            total += letter.clip.width();
-            if (shouldSpace) total += letter.calcPostSpacing(before, after);
-            else total += letter.postSpacing;
-        }
-
-        return total;
-    }
-
-    // ------------------------------------------------
-
     float FontElement::stringWidth(std::string_view str) const {
-        if (zoomLevel.size() == 0) return 0;
-
-        auto& render = zoomLevel.at(1);
+        if (font != NoFont) {
+            auto f = self->font(font).withHeight(size);
+            return f.getStringWidthFloat(juce::String(std::string(str)));
+        }
 
         float total = 0;
         float finalPostSpacing = 0;
@@ -283,8 +233,8 @@ namespace Kaixo::Theme {
             auto before = i > 0 ? str[i - 1] : '\0';
             auto c = str[i];
             auto after = i < str.size() - 1 ? str[i + 1] : '\0';
-            auto it = render.charMap.find(c);
-            if (it != render.charMap.end()) {
+            auto it = charMap.find(c);
+            if (it != charMap.end()) {
                 auto& letter = it->second;
                 total += letter.calcPreSpacing(before, after);
                 total += letter.clip.width();
@@ -330,10 +280,6 @@ namespace Kaixo::Theme {
 
             float stringWidth(std::string_view str) const override {
                 return self->stringWidth(str);
-            }
-
-            float charWidth(char c, char before = '\0', char after = '\0') const override {
-                return self->charWidth(c, before, after);
             }
 
             float fontSize() const override {

@@ -54,11 +54,13 @@ namespace Kaixo::Theme {
         Element(ElementAdder adder) : self(adder.create(this)) {}
 
         Element(const Element&) = delete;
+        Element(Element&&) = default;
         Element& operator=(const Element&) = delete;
+        Element& operator=(Element&&) = default;
 
         // ------------------------------------------------
 
-        virtual void interpret(const json&) = 0;
+        virtual void interpret(const basic_json&) = 0;
 
         // ------------------------------------------------
 

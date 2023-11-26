@@ -6,7 +6,7 @@ namespace Kaixo::Theme {
 
     // ------------------------------------------------
     
-    void drawTiledImage(juce::Graphics& g, const juce::Image& img, const Rect<float>& pos, const TiledDescription& tiles) {
+    void drawTiledImage(juce::Graphics& g, const juce::Image& img, const Rect<float>& pos, const TiledDescription& tiles, bool fillAlphaWithColor = false) {
 
         // ------------------------------------------------
 
@@ -33,17 +33,17 @@ namespace Kaixo::Theme {
         // ------------------------------------------------
 
         g.setOpacity(1.0);
-        g.drawImage(img, pos.x() + ox0, pos.y() + oy0, ow0, oh0, ox0, oy0, ow0, oh0); //    top left
-        g.drawImage(img, pos.x() + ox0, pos.y() + oy1, ow0, oh1, ox0, oy1, ow0, ih1); // middle left
-        g.drawImage(img, pos.x() + ox0, pos.y() + oy2, ow0, oh2, ox0, iy2, ow0, oh2); // bottom left
+        g.drawImage(img, pos.x() + ox0, pos.y() + oy0, ow0, oh0, ox0, oy0, ow0, oh0, fillAlphaWithColor); //    top left
+        g.drawImage(img, pos.x() + ox0, pos.y() + oy1, ow0, oh1, ox0, oy1, ow0, ih1, fillAlphaWithColor); // middle left
+        g.drawImage(img, pos.x() + ox0, pos.y() + oy2, ow0, oh2, ox0, iy2, ow0, oh2, fillAlphaWithColor); // bottom left
 
-        g.drawImage(img, pos.x() + ox1, pos.y() + oy0, ow1, oh0, ox1, oy0, iw1, oh0); //    top middle
-        g.drawImage(img, pos.x() + ox1, pos.y() + oy1, ow1, oh1, ox1, oy1, iw1, ih1); // middle middle
-        g.drawImage(img, pos.x() + ox1, pos.y() + oy2, ow1, oh2, ox1, iy2, iw1, oh2); // bottom middle
+        g.drawImage(img, pos.x() + ox1, pos.y() + oy0, ow1, oh0, ox1, oy0, iw1, oh0, fillAlphaWithColor); //    top middle
+        g.drawImage(img, pos.x() + ox1, pos.y() + oy1, ow1, oh1, ox1, oy1, iw1, ih1, fillAlphaWithColor); // middle middle
+        g.drawImage(img, pos.x() + ox1, pos.y() + oy2, ow1, oh2, ox1, iy2, iw1, oh2, fillAlphaWithColor); // bottom middle
 
-        g.drawImage(img, pos.x() + ox2, pos.y() + oy0, ow2, oh0, ix2, oy0, ow2, oh0); //    top right
-        g.drawImage(img, pos.x() + ox2, pos.y() + oy1, ow2, oh1, ix2, oy1, ow2, ih1); // middle right
-        g.drawImage(img, pos.x() + ox2, pos.y() + oy2, ow2, oh2, ix2, iy2, ow2, oh2); // bottom right
+        g.drawImage(img, pos.x() + ox2, pos.y() + oy0, ow2, oh0, ix2, oy0, ow2, oh0, fillAlphaWithColor); //    top right
+        g.drawImage(img, pos.x() + ox2, pos.y() + oy1, ow2, oh1, ix2, oy1, ow2, ih1, fillAlphaWithColor); // middle right
+        g.drawImage(img, pos.x() + ox2, pos.y() + oy2, ow2, oh2, ix2, iy2, ow2, oh2, fillAlphaWithColor); // bottom right
 
         // ------------------------------------------------
 
@@ -99,20 +99,20 @@ namespace Kaixo::Theme {
     void Image::draw(TiledInstruction i) const {
         auto _clipped = m_Image.getClippedImage(getClippedArea(i.clip, i.position));
 
-        drawTiledImage(i.graphics, _clipped, i.position, i.description);
+        drawTiledImage(i.graphics, _clipped, i.position, i.description, i.fillAlphaWithColor);
     }
 
     void Image::draw(ClippedInstruction i) const {
         auto _clipped = m_Image.getClippedImage(getClippedArea(i.clip, i.position));
 
         if (i.tiled) {
-            drawTiledImage(i.graphics, _clipped, i.position, *i.tiled);
+            drawTiledImage(i.graphics, _clipped, i.position, *i.tiled, i.fillAlphaWithColor);
         } else {
             i.graphics.setOpacity(1.0);
-            i.graphics.drawImage(_clipped, i.position, getPlacement(i.align));
+            i.graphics.drawImage(_clipped, i.position, getPlacement(i.align), i.fillAlphaWithColor);
         }
     }
-
+    
     void Image::draw(FrameInstruction i) const {
 
         int col = static_cast<int>(i.frame % i.description.framesPerRow);
@@ -129,10 +129,10 @@ namespace Kaixo::Theme {
 
         // Draw tiled frame
         if (i.tiled) {
-            drawTiledImage(i.graphics, _clipped, i.position, *i.tiled);
+            drawTiledImage(i.graphics, _clipped, i.position, *i.tiled, i.fillAlphaWithColor);
         } else {
             i.graphics.setOpacity(1.0);
-            i.graphics.drawImage(_clipped, i.position, getPlacement(i.align));
+            i.graphics.drawImage(_clipped, i.position, getPlacement(i.align), i.fillAlphaWithColor);
         }
 
     }

@@ -74,13 +74,6 @@ namespace Kaixo::Gui {
     void TextView::paint(juce::Graphics& g) {
         settings.background.draw(g, localDimensions());
 
-        auto v = paddedDimensions().topLeft().toFloat() - m_Offset;
-        auto lines = this->lines();
-        for (auto& line : lines) {
-            settings.font.draw(g, v, line);
-            v.y += settings.lineHeight;
-        }
-
         if (focused()) {
             std::int64_t begin = std::min(m_Caret, m_CaretEnd);
             std::int64_t end = std::max(m_Caret, m_CaretEnd);
@@ -120,6 +113,13 @@ namespace Kaixo::Gui {
                     settings.lineHeight
                 });
             }
+        }
+
+        auto v = paddedDimensions().topLeft().toFloat() - m_Offset;
+        auto lines = this->lines();
+        for (auto& line : lines) {
+            settings.font.draw(g, v, line);
+            v.y += settings.lineHeight;
         }
     }
 
@@ -365,10 +365,6 @@ namespace Kaixo::Gui {
         return settings.font.stringWidth(str);
     }
 
-    float TextView::charWidth(char c, char before, char after) const {
-        return settings.font.charWidth(c, before, after);
-    }
-
     std::int64_t TextView::yToLine(float y) const {
         auto v = paddedDimensions();
         auto localY = y - v.y() + m_Offset.y();
@@ -384,8 +380,8 @@ namespace Kaixo::Gui {
             auto c = line[i];
             auto after = i < line.size() - 1 ? line[i + 1] : '\0';
 
-            auto cw = charWidth(c, before, after);
-            width += cw;
+            width = stringWidth(line.substr(0, i + 1));
+            auto cw = width - stringWidth(line.substr(0, i));
             if (localX <= width - cw * 0.5) return i;
         }
 

@@ -22,7 +22,7 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
-        void interpret(const json& json);
+        void interpret(const basic_json& json);
 
         // ------------------------------------------------
 
@@ -36,7 +36,7 @@ namespace Kaixo::Theme {
     private:
         struct Entry {
             std::string_view name;
-            std::function<void(const json&)> interpret;
+            std::function<void(const basic_json&)> interpret;
         };
 
         std::vector<Entry> m_Elements{};
@@ -46,7 +46,7 @@ namespace Kaixo::Theme {
 
     template<class Ty>
     void Container::addElement(std::string_view name, Ty& obj) {
-        m_Elements.emplace_back(name, [obj = &obj](const json& val) { obj->interpret(val); });
+        m_Elements.emplace_back(name, [obj = &obj](const basic_json& val) { obj->interpret(val); });
     }
 
     // ------------------------------------------------

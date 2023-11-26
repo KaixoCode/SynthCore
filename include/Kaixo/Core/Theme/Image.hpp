@@ -44,6 +44,8 @@ namespace Kaixo::Theme {
 
         Rect<int>               clip     = { 0, 0, 0, 0 };
         Rect<float>             position = { 0, 0, 0, 0 };
+
+        bool                    fillAlphaWithColor = false;
     };
 
     // ------------------------------------------------
@@ -62,6 +64,8 @@ namespace Kaixo::Theme {
         Align                        align    = Align::TopLeft;
         std::size_t                  frame    = 0;
         Rect<float>                  position = { 0, 0, 0, 0 };
+
+        bool                         fillAlphaWithColor = false;
     };
 
     // ------------------------------------------------
@@ -73,6 +77,8 @@ namespace Kaixo::Theme {
         Rect<int>               clip     = { 0, 0, 0, 0 };
         Align                   align    = Align::TopLeft;
         Rect<float>             position = { 0, 0, 0, 0 };
+
+        bool                    fillAlphaWithColor = false;
     };
 
     // ------------------------------------------------
@@ -107,6 +113,34 @@ namespace Kaixo::Theme {
         juce::Image m_Image;
         ZoomMultiplier m_ZoomLevel;
     };
+
+    // ------------------------------------------------
+
+    inline Align alignFromString(std::string_view align) {
+        if (align == "top-left") return Align::TopLeft;
+        else if (align == "top-center") return Align::TopCenter;
+        else if (align == "top-right") return Align::TopRight;
+        else if (align == "center-left") return Align::CenterLeft;
+        else if (align == "center") return Align::Center;
+        else if (align == "center-right") return Align::CenterRight;
+        else if (align == "bottom-left") return Align::BottomLeft;
+        else if (align == "bottom-center") return Align::BottomCenter;
+        else if (align == "bottom-right") return Align::BottomRight;
+        return Align::Center;
+    }
+
+    inline Point<float> pointFromAlign(Align align, Rect<float> rect) {
+        if (align == Align::TopLeft) return rect.topLeft();
+        else if (align == Align::TopCenter) return rect.topCenter();
+        else if (align == Align::TopRight) return rect.topRight();
+        else if (align == Align::CenterLeft) return rect.centerLeft();
+        else if (align == Align::Center) return rect.center();
+        else if (align == Align::CenterRight) return rect.centerRight();
+        else if (align == Align::BottomLeft) return rect.bottomLeft();
+        else if (align == Align::BottomCenter) return rect.bottomCenter();
+        else if (align == Align::BottomRight) return rect.bottomRight();
+        return rect.center();
+    }
 
     // ------------------------------------------------
 

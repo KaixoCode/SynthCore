@@ -19,7 +19,7 @@ namespace Kaixo {
 
         // ------------------------------------------------
 
-        std::string_view name = "";                 // Parameter name
+        std::string_view name = "";              // Parameter name
         std::string_view shortName = name;       // Shortened parameter name
         std::string_view identifier = name;      // Full identifier (used as name in DAW)
         std::string_view shortIdentifier = name; // Shortened identifier
@@ -148,12 +148,12 @@ namespace Kaixo {
 
         // ------------------------------------------------
 
-        std::string_view name = "";                 // Parameter name
-        std::string_view shortName = name;       // Shortened parameter name
+        std::string_view name = "";              // Source name
+        std::string_view shortName = name;       // Shortened source name
         std::string_view identifier = name;      // Full identifier (used as name in DAW)
         std::string_view shortIdentifier = name; // Shortened identifier
-        std::string_view varName = name;         // Name of the variable in the global object
-        std::string_view fullVarName = name;     // Full name of the variable
+        std::string_view varName = name;         // Name of the source in the global object
+        std::string_view fullVarName = name;     // Full name of the source
         std::string_view description = "";
 
         // ------------------------------------------------

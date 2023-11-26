@@ -57,11 +57,11 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
-        Kaixo::Color color{};
+        Kaixo::Color color{ 0, 0, 0, 0, };
 
         // ------------------------------------------------
 
-        void interpret(const json& theme) override;
+        void interpret(const basic_json& theme) override;
 
         // ------------------------------------------------
 
