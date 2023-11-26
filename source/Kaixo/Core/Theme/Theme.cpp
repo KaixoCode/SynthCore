@@ -37,6 +37,7 @@ namespace Kaixo::Theme {
     // ------------------------------------------------
 
     void Theme::openDefault() {
+        findVariables(m_DefaultTheme);
         open(m_DefaultTheme, Default);
         m_OpenedPath = Default;
     }
@@ -63,8 +64,17 @@ namespace Kaixo::Theme {
         if (!_file.is_open()) return false;
 
         if (auto _json = basic_json::parse(file_to_string(_file))) {
+
             ScopedCurrentPath _{ path.parent_path() };
 
+            // First load all variables
+            findVariables(m_DefaultTheme);
+            findVariables(_json.value());
+
+            // Then open default theme as base
+            open(m_DefaultTheme, Default);
+
+            // Then open theme
             open(_json.value(), path.string());
 
             m_OpenedPath = path;
@@ -86,7 +96,7 @@ namespace Kaixo::Theme {
                 juce::File _file{ _absolutePath };
                 auto _image = juce::ImageFileFormat::loadFrom(_file);
                 if (!_image.isValid()) return NoImage;
-                ImageID id = m_LoadedImages.size();
+                ImageID id = nextImageID();
                 m_LoadedImagesByKey.emplace(std::move(_absolutePath), id);
                 m_LoadedImages[id] = { std::move(_image), zoom };
                 return id;
@@ -138,8 +148,8 @@ namespace Kaixo::Theme {
                 std::ifstream _file{ _absolutePath, std::ios::binary };
                 auto _data = file_to_string(_file);
                 auto _font = juce::Typeface::createSystemTypefaceFor(_data.data(), _data.size());
-                if (_font) return NoFont;
-                FontID id = m_LoadedFonts.size();
+                if (!_font) return NoFont;
+                FontID id = nextFontID();
                 m_LoadedFontsByKey.emplace(std::move(_absolutePath), id);
                 m_LoadedFonts[id] = std::move(_font);
                 return id;
@@ -203,7 +213,7 @@ namespace Kaixo::Theme {
         if (json.contains("variables", basic_json::Object)) {
             auto& obj = json["variables"].as<basic_json::object>();
             for (auto& [key, val] : obj) {
-                m_Variables.emplace(key, val);
+                m_Variables[key] = val;
             }
         }
 
@@ -223,6 +233,16 @@ namespace Kaixo::Theme {
                     registerFont(key, val.as<basic_json::string>());
                 }
             }
+        }
+    }
+
+    void Theme::open(basic_json& input, std::string_view name) {
+        basic_json json = input;
+
+        if (json.contains("theme-name", basic_json::String)) {
+            m_OpenedThemeName = json["theme-name"].as<basic_json::string>();
+        } else {
+            m_OpenedThemeName = name;
         }
 
         // Replace all occurences of variables
@@ -252,16 +272,7 @@ namespace Kaixo::Theme {
             }
             }
         });
-    }
 
-    void Theme::open(basic_json& json, std::string_view name) {
-        if (json.contains("theme-name", basic_json::String)) {
-            m_OpenedThemeName = json["theme-name"].as<basic_json::string>();
-        } else {
-            m_OpenedThemeName = name;
-        }
-
-        findVariables(json);
         interpret(json);
     }
 
