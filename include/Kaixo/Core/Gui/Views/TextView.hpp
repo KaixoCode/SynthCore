@@ -3,6 +3,7 @@
 #include "Kaixo/Core/Gui/View.hpp"
 #include "Kaixo/Core/Theme/Basic.hpp"
 #include "Kaixo/Core/Theme/FontMap.hpp"
+#include "Kaixo/Core/Theme/Color.hpp"
 
 // ------------------------------------------------
 
@@ -18,6 +19,8 @@ namespace Kaixo::Gui {
         struct Settings {
             Theme::Font font;
             Theme::Basic background;
+            Theme::Color textColor = Color{ 255, 255, 255 };
+            Theme::Color selectionColor = Color{ 255, 255, 255, 50 };
 
             Point<> padding{ 8, 8 };
 
@@ -125,7 +128,6 @@ namespace Kaixo::Gui {
         // ------------------------------------------------
 
         float stringWidth(std::string_view str) const;
-        float charWidth(char c, char before = '\0', char after = '\0') const;
 
         std::int64_t yToLine(float y) const;
         std::int64_t xToIndex(std::string_view line, float x) const;

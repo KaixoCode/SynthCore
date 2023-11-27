@@ -83,7 +83,7 @@ namespace Kaixo::Gui {
 
             auto v = paddedDimensions();
 
-            g.setColour(juce::Colour::fromRGBA(255u, 255u, 255u, 200u));
+            g.setColour(settings.selectionColor);
             if (beginPos.y() == endPos.y()) {
                 g.fillRect(Rect{
                     beginPos.x(),
@@ -117,6 +117,7 @@ namespace Kaixo::Gui {
 
         auto v = paddedDimensions().topLeft().toFloat() - m_Offset;
         auto lines = this->lines();
+        g.setColour(settings.textColor);
         for (auto& line : lines) {
             settings.font.draw(g, v, line);
             v.y += settings.lineHeight;

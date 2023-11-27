@@ -31,16 +31,18 @@ namespace Kaixo::Theme {
 
         Color() = default;
         Color(std::unique_ptr<Interface> graphics);
+        Color(Kaixo::Color color);
 
         // ------------------------------------------------
 
-        operator juce::Colour() const { return m_Graphics ? m_Graphics->get() : juce::Colour{}; }
-        operator bool() const { return (bool)m_Graphics; }
+        operator juce::Colour() const;
+        operator bool() const;
 
         // ------------------------------------------------
 
     private:
         std::unique_ptr<Interface> m_Graphics{};
+        Kaixo::Color m_DefaultColor{};
 
         // ------------------------------------------------
 

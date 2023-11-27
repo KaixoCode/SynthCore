@@ -11,6 +11,15 @@ namespace Kaixo::Theme {
         : m_Graphics(std::move(graphics))
     {}
 
+    Color::Color(Kaixo::Color color) 
+        : m_DefaultColor(color) 
+    {}
+
+    // ------------------------------------------------
+    
+    Color::operator juce::Colour() const { return m_Graphics ? m_Graphics->get() : m_DefaultColor; }
+    Color::operator bool() const { return (bool)m_Graphics; }
+
     // ------------------------------------------------
 
     void ColorElement::interpret(const basic_json& theme) {
