@@ -12,6 +12,7 @@ namespace Kaixo {
         // ------------------------------------------------
 
         constexpr std::string_view TouchMode = "TouchMode";
+        constexpr std::string_view LoadedTheme = "LoadedTheme";
 
         // ------------------------------------------------
 

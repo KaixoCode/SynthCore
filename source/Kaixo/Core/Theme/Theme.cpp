@@ -2,6 +2,10 @@
 
 // ------------------------------------------------
 
+#include "Kaixo/Core/Storage.hpp"
+
+// ------------------------------------------------
+
 #include <DefaultTheme.hpp>
 
 // ------------------------------------------------
@@ -36,18 +40,26 @@ namespace Kaixo::Theme {
 
     // ------------------------------------------------
 
+    void Theme::initialize() {
+        if (!m_IsThemeOpened) {
+            auto theme = Storage::getOrDefault<std::string>(Setting::LoadedTheme, Default);
+
+            if (theme == Default) {
+                openDefault();
+            } else {
+                open(theme);
+            }
+        }
+    }
+
     void Theme::openDefault() {
+        std::lock_guard _{ m_Mutex };
         findVariables(m_DefaultTheme);
         open(m_DefaultTheme, Default);
         m_OpenedPath = Default;
     }
 
     bool Theme::reopen() {
-        m_LoadedImagesByKey.clear();
-        m_LoadedImages.clear();
-        m_Variables.clear();
-        m_IsThemeOpened = false;
-
         if (name() == Default) {
             openDefault();
             return true;
@@ -59,6 +71,7 @@ namespace Kaixo::Theme {
     }
 
     bool Theme::open(const std::filesystem::path& path) {
+        std::lock_guard _{ m_Mutex };
         std::ifstream _file{ std::filesystem::absolute(path) };
         
         if (!_file.is_open()) return false;
@@ -131,6 +144,7 @@ namespace Kaixo::Theme {
     }
 
     Image Theme::image(ImageID id) const {
+        std::lock_guard _{ m_Mutex };
         if (id == NoImage) return {};
         if (!m_LoadedImages.contains(id)) return {};
         return m_LoadedImages.at(id);
@@ -184,6 +198,7 @@ namespace Kaixo::Theme {
     }
 
     juce::Font Theme::font(FontID id) const {
+        std::lock_guard _{ m_Mutex };
         if (id == NoFont) return {};
         if (!m_LoadedFonts.contains(id)) return {};
         return m_LoadedFonts.at(id);

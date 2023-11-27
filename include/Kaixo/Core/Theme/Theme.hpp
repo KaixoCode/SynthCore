@@ -34,6 +34,8 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
         
+        void initialize();
+
         void openDefault();
         bool reopen();
         bool open(const std::filesystem::path& path);
@@ -68,6 +70,7 @@ namespace Kaixo::Theme {
         // ------------------------------------------------
 
     private:
+        std::mutex m_Mutex{};
         basic_json m_DefaultTheme{};
         std::map<std::string, basic_json, std::less<>> m_Variables{};
         std::map<std::string, ImageID, std::less<void>> m_LoadedImagesByKey{};
