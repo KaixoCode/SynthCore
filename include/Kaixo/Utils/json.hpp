@@ -202,7 +202,7 @@ namespace Kaixo {
         }
 
         template<class Ty>
-        std::optional<basic_json> get(std::string_view key) const {
+        std::optional<Ty> get(std::string_view key) const {
             if (contains(key)) return operator[](key).template get<Ty>();
             else return {};
         }
