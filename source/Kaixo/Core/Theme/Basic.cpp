@@ -40,13 +40,6 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
-        if (in.contains("extends")) {
-            theme.merge(in["extends"]);
-            in["extends"].foreach([&](const basic_json& val) { theme.merge(val); });
-        }
-
-        // ------------------------------------------------
-
         if (theme.contains("image", basic_json::String)) {
             auto& path = theme["image"].as<basic_json::string>();
             id = self->registerImage(path);

@@ -43,7 +43,7 @@ namespace Kaixo::Theme {
         struct Interface {
             virtual float fontSize() const = 0;
             virtual float stringWidth(std::string_view) const = 0;
-            virtual void draw(juce::Graphics& g, const Point<float>& pos, std::string_view str, Align align = Align::TopLeft) const = 0;
+            virtual void draw(juce::Graphics& g, const Point<float>& pos, std::string_view str, Align align = Align::TopLeft, bool fillAlphaWithColor = false) const = 0;
         };
 
         // ------------------------------------------------
@@ -65,7 +65,7 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
-        void draw(juce::Graphics& g, const Point<float>& pos, std::string_view str, Align align = Align::TopLeft) const;
+        void draw(juce::Graphics& g, const Point<float>& pos, std::string_view str, Align align = Align::TopLeft, bool fillAlphaWithColor = false) const;
 
         // ------------------------------------------------
 

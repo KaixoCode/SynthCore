@@ -22,6 +22,7 @@ namespace Kaixo::Gui {
             Point<> position{ 0, 0 }; // Should be global position (screen)
             Point<> padding{ 4, 4 };
             Theme::Font font;
+            Theme::Color textColor;
             Theme::Basic background;
             Theme::Align align = Theme::Align::Center;
         };
@@ -40,6 +41,7 @@ namespace Kaixo::Gui {
         
         void font(Theme::Font font);
         void background(Theme::Basic bg);
+        void textColor(Theme::Color clr);
 
         // ------------------------------------------------
 
@@ -47,6 +49,7 @@ namespace Kaixo::Gui {
         Settings m_Settings{};
         Theme::Basic m_Background{};
         Theme::Font m_Font{};
+        Theme::Color m_TextColor{};
 
         // ------------------------------------------------
         

@@ -27,8 +27,8 @@ namespace Kaixo::Theme {
 
     // ------------------------------------------------
 
-    void Font::draw(juce::Graphics& g, const Point<float>& pos, std::string_view str, Align align) const {
-        if (m_Graphics) m_Graphics->draw(g, pos, str, align);
+    void Font::draw(juce::Graphics& g, const Point<float>& pos, std::string_view str, Align align, bool fillAlphaWithColor) const {
+        if (m_Graphics) m_Graphics->draw(g, pos, str, align, fillAlphaWithColor);
     }
 
     // ------------------------------------------------
@@ -212,6 +212,9 @@ namespace Kaixo::Theme {
 
                     x += _letter.clip.width() + _letter.calcPostSpacing(_before, _after);
                 } else {
+
+                    g.fillRect(Rect{ x, y, maxHeight * 0.6, maxHeight });
+                    x += Math::trunc(maxHeight * 0.6) + 2;
                     // TODO: missing character rendering
                 }
             }
@@ -274,8 +277,8 @@ namespace Kaixo::Theme {
 
             const FontElement* self;
 
-            void draw(juce::Graphics& g, const Point<float>& pos, std::string_view str, Align align = Align::TopLeft) const override {
-                self->draw(g, pos, str, align);
+            void draw(juce::Graphics& g, const Point<float>& pos, std::string_view str, Align align = Align::TopLeft, bool fillAlphaWithColor = false) const override {
+                self->draw(g, pos, str, align, fillAlphaWithColor);
             }
 
             float stringWidth(std::string_view str) const override {

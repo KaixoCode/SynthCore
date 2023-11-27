@@ -33,18 +33,22 @@ namespace Kaixo::Gui {
     void Tooltip::paint(juce::Graphics& g) {
         auto& font = m_Settings.font ? m_Settings.font : m_Font;
         auto& background = m_Settings.background ? m_Settings.background : m_Background;
+        auto& color = m_Settings.textColor ? m_Settings.textColor : m_TextColor;
+        bool useColor = m_Settings.textColor || m_TextColor;
 
+        if (useColor) g.setColour(color);
         background.draw(g, localDimensions());
         font.draw(g, { 
             m_Settings.padding.x(), 
             m_Settings.padding.y()
-        }, m_Settings.string, Theme::Align::TopLeft);
+        }, m_Settings.string, Theme::Align::TopLeft, useColor);
     }
 
     // ------------------------------------------------
 
     void Tooltip::font(Theme::Font font) { m_Font = std::move(font); updatePosition(); }
     void Tooltip::background(Theme::Basic bg) { m_Background = std::move(bg); }
+    void Tooltip::textColor(Theme::Color clr) { m_TextColor = std::move(clr); }
 
     // ------------------------------------------------
 
@@ -54,7 +58,7 @@ namespace Kaixo::Gui {
 
         auto& font = m_Settings.font ? m_Settings.font : m_Font;
         auto& background = m_Settings.background ? m_Settings.background : m_Background;
-
+        
         Point position = window->getLocalPoint(nullptr, m_Settings.position);
 
         float x = position.x();
