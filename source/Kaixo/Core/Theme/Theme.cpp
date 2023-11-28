@@ -72,7 +72,8 @@ namespace Kaixo::Theme {
 
     bool Theme::open(const std::filesystem::path& path) {
         std::lock_guard _{ m_Mutex };
-        std::ifstream _file{ std::filesystem::absolute(path) };
+        auto _absolute = std::filesystem::absolute(path);
+        std::ifstream _file{ _absolute };
         
         if (!_file.is_open()) return false;
 
@@ -91,6 +92,9 @@ namespace Kaixo::Theme {
             open(_json.value(), path.string());
 
             m_OpenedPath = path;
+
+            Storage::set<std::string>(Setting::LoadedTheme, _absolute.string());
+
             return true;
         }
 

@@ -355,300 +355,7 @@ namespace Kaixo::Generator {
         }
 
         // ------------------------------------------------
-
-        std::string schema() {
-            std::string result;
-
-            auto add = [&](std::string line = "", int indent = 0, bool newline = true) {
-                for (std::size_t i = 0; i < indent; ++i) result += "    ";
-                result += line;
-                if (newline) result += "\n";
-            };
-
-            result += R"~~({
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "type": "object",
-
-    "definitions": {
-        "point": {
-            "type": "array",
-            "items": { "type": "integer" },
-            "minItems": 2,
-            "maxItems": 2
-        },
-        "rect": {
-            "type": "array",
-            "items": { "type": "integer" },
-            "minItems": 4,
-            "maxItems": 4
-        },
-        "color": {
-            "type": "array",
-            "items": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 255
-            },
-            "minItems": 1,
-            "maxItems": 4
-        },
-        "imageable": {
-            "type": "object",
-            "properties": {
-                "image": {
-                    "type": "string",
-                    "pattern": "^(.+\\.png)$"
-                }
-            }
-        },
-        "clipable": {
-            "type": "object",
-            "properties": {
-                "offset": { "$ref": "#/definitions/point" },
-                "size": { "$ref": "#/definitions/point" },
-                "clip": { "$ref": "#/definitions/rect" },
-                "edges": {
-                    "oneOf": [
-                        { "$ref": "#/definitions/point" },
-                        { "$ref": "#/definitions/rect" }
-                    ]
-                }
-            }
-        },
-        "stateable": {
-            "type": "object",
-            "properties": {
-                "states": {
-                    "type": "array",
-                    "items": {
-                        "type": "string",
-                        "enum": ["hovering", "pressed", "selected", "disabled", "enabled", "focused"]
-                    }
-                }
-            }
-        },
-        "frameable": {
-            "type": "object",
-            "properties": {
-                "frames": {
-                    "type": "integer",
-                    "minimum": 1
-                },
-                "frames-per-row": {
-                    "type": "integer",
-                    "minimum": 1
-                }
-            },
-            "required": ["frames"]
-        },
-        "multi-frame": {
-            "oneOf": [{
-                    "type": "string"
-                },
-                {
-                    "type": "array",
-                    "items": {
-                        "allOf": [
-                            { "$ref": "#/definitions/imageable" },
-                            { "$ref": "#/definitions/stateable" },
-                            { "$ref": "#/definitions/clipable" },
-                            { "$ref": "#/definitions/frameable" }
-                        ],
-                        "oneOf": [
-                            { "required": ["size"] },
-                            { "required": ["clip"] }
-                        ]
-                    },
-                    "additionalProperties": false
-                },
-                {
-                    "type": "object",
-                    "allOf": [
-                        { "$ref": "#/definitions/imageable" },
-                        { "$ref": "#/definitions/stateable" },
-                        { "$ref": "#/definitions/clipable" },
-                        { "$ref": "#/definitions/frameable" }
-                    ],
-                    "oneOf": [
-                        { "required": ["size"] },
-                        { "required": ["clip"] }
-                    ],
-                    "additionalProperties": false
-                }
-            ]
-        },
-        "stateful": {
-            "oneOf": [{
-                    "type": "string"
-                },
-                {
-                    "type": "array",
-                    "items": {
-                        "allOf": [
-                            { "$ref": "#/definitions/imageable" },
-                            { "$ref": "#/definitions/stateable" },
-                            { "$ref": "#/definitions/clipable" }
-                        ]
-                    },
-                    "additionalProperties": false
-                },
-                {
-                    "type": "object",
-                    "allOf": [
-                        { "$ref": "#/definitions/imageable" },
-                        { "$ref": "#/definitions/stateable" },
-                        { "$ref": "#/definitions/clipable" }
-                    ],
-                    "additionalProperties": false
-                }
-            ]
-        },
-        "basic": {
-            "oneOf": [{
-                    "type": "string"
-                },
-                {
-                    "type": "array",
-                    "items": {
-                        "allOf": [
-                            { "$ref": "#/definitions/imageable" },
-                            { "$ref": "#/definitions/clipable" }
-                        ]
-                    },
-                    "additionalProperties": false
-                },
-                {
-                    "type": "object",
-                    "allOf": [
-                        { "$ref": "#/definitions/imageable" },
-                        { "$ref": "#/definitions/clipable" }
-                    ],
-                    "additionalProperties": false
-                }
-            ]
-        },
-        "font": {
-            "oneOf": [{
-                "type": "string"
-            }, {
-                "type": "object",
-                "properties": {
-                    "map": {
-                        "type": "string",
-                        "pattern": "^(.+\\.png)$"
-                    },
-                    "description": {
-                        "oneOf": [{
-                            "type": "string",
-                            "pattern": "^.+\\.json$"
-                        }, {
-                            "type": "object",
-                            "patternProperties": {
-                                "^.$": {
-                                    "type": "object",
-                                    "properties": {
-                                        "location": { "$ref": "#/definitions/rect" },
-                                        "pre-spacing": { "type": "integer" },
-                                        "post-spacing": { "type": "integer" },
-                                        "exceptions": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "object",
-                                                "properties": {
-                                                    "pre-spacing": { "type": "integer" },
-                                                    "post-spacing": { "type": "integer" },
-                                                    "after": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "type": "string",
-                                                            "pattern": "^.$"
-                                                        }
-                                                    },
-                                                    "before": {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "type": "string",
-                                                            "pattern": "^.$"
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    },
-                                    "additionalProperties": false
-                                }
-                            },
-                            "additionalProperties": false
-                        }]
-                    }
-                }
-            }]
-        }
-    },
-    "properties": {
-        "$schema": { "type": "string" },
-        "theme-name": { "type": "string" },
-        "variables": {
-            "type": "object",
-            "additionalProperties": {
-                "anyOf": [
-                    { "$ref": "#/definitions/color" },
-                    { "$ref": "#/definitions/stateful" },
-                    { "$ref": "#/definitions/basic" },
-                    { "$ref": "#/definitions/multi-frame" },
-                    { "$ref": "#/definitions/font" }
-                ]
-            }
-        },
-)~~";
-
-            auto recurse = [&](auto& self, Element& el, std::size_t indent = 0) -> void {
-                if (el.type.empty()) { // no type, recurse
-                    add("\"" + el.name + "\": {", indent);
-                    add("\"oneOf\": [{", indent + 1);
-                    add("\"type\": \"string\"", indent + 2);
-                    add("}, {", indent + 1);
-                    add("\"type\": \"object\",", indent + 2);
-                    add("\"properties\": {", indent + 2);
-                    bool first = true;
-                    std::string required;
-                    for (auto& child : el.elements) {
-                        if (!first) result += ",\n", required += ", ";
-                        self(self, child, indent + 3);
-                        required += "\"" + child.name + "\"";
-                        first = false;
-                    }
-                    result += "\n";
-                    add("},", indent + 2);
-                    if (!required.empty()) {
-                        add("\"additionalProperties\": false,", indent + 2);
-                        add("\"required\": ["+ required +"]", indent + 2);
-                    } else {
-                        add("\"additionalProperties\": false", indent + 2);
-                    }
-                    add("}]", indent + 1);
-                    add("}", indent, false);
-                } else {
-                    add("\"" + el.name + "\": { \"$ref\": \"#/definitions/" + el.type + "\" }", indent, false);
-                }
-            };
-
-            bool first = true;
-            for (auto& child : root.elements) {
-                if (!first) result += ",\n";
-                recurse(recurse, child, 2);
-                first = false;
-            }
-
-            result +="\n"
-                R"~~(    },)~~" "\n"
-                R"~~(    "required": ["theme-name"],)~~" "\n"
-                R"~~(    "additionalProperties": false)~~" "\n"
-                R"~~(})~~";
-
-            return result;
-        }
-        
+                
         std::string theme() {
             std::string result = "";
 
@@ -700,7 +407,7 @@ namespace Kaixo::Generator {
                     if (el.type == "color") className = "ColorElement";
                     if (el.type == "font") className = "FontElement";
                     if (el.type == "multi-frame") className = "MultiFrameElement";
-                    if (el.type == "pitch") className = "FontElement";
+                    if (el.type == "text-area") className = "TextAreaElement";
                     add(className + " " + nameToVar(el.name) + "{ add(\"" + el.name + "\") };", indent);
                 }
             };
@@ -740,15 +447,10 @@ namespace Kaixo::Generator {
         // ------------------------------------------------
 
         std::filesystem::path inputPath{ args[2] };
-        std::filesystem::path schemaPath{ args[3] };
         std::filesystem::path themePath{ args[4] };
 
         // ------------------------------------------------
 
-        if (!std::filesystem::exists(schemaPath.parent_path())) {
-            std::filesystem::create_directory(schemaPath.parent_path());
-        }
-        
         if (!std::filesystem::exists(themePath.parent_path())) {
             std::filesystem::create_directory(themePath.parent_path());
         }
@@ -756,7 +458,6 @@ namespace Kaixo::Generator {
         // ------------------------------------------------
 
         std::ifstream ifile{ inputPath };
-        std::ofstream sfile{ schemaPath };
         std::ofstream tfile{ themePath };
 
         // ------------------------------------------------
@@ -766,7 +467,6 @@ namespace Kaixo::Generator {
 
             generator.generate(res.value());
 
-            sfile << generator.schema();
             tfile << generator.theme();
         } else {
             std::cerr << "Failed to parse JSON file [" << inputPath << "]\n";

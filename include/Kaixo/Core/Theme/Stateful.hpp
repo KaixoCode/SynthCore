@@ -111,6 +111,7 @@ namespace Kaixo::Theme {
 
                 ImageID id = NoImage;
                 Rect<int> clip{ 0, 0, 0, 0 };
+                Point<int> imagePosition{ 0, 0 };
                 bool isTiled = false;
                 TiledDescription tiles{};
 

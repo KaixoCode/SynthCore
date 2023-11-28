@@ -648,23 +648,30 @@ namespace Kaixo {
             }
 
             void parseComment() {
-                auto _ = push();
-                _.commit();
+                while (true) {
+                    auto _ = push();
 
-                ignore(Whitespace);
-                if (consume('#')) { consume_while_not("\n"); return; }
-                if (consume("//")) { consume_while_not("\n"); return; }
-                if (consume("/*")) {
-                    while (!value.empty()) {
-                        consume_while_not("*");
-                        if (consume("*") && consume("/")) return;
-                    }
+                    ignore(Whitespace);
+                    if (consume('#')) { consume_while_not("\n"); }
+                    else if (consume("//")) { consume_while_not("\n"); }
+                    else if (consume("/*")) {
+                        bool closed = false;
+                        while (!value.empty()) {
+                            consume_while_not("*");
+                            if (consume("*") && consume("/")) {
+                                closed = true;
+                                break;
+                            }
+                        }
 
-                    _.revert();
-                    die("Expected end of multi-line comment");
+                        if (!closed) {
+                            _.revert();
+                            die("Expected end of multi-line comment");
+                        }
+                    } else return; // No more comments
+
+                    _.commit();
                 }
-
-                _.revert();
             }
             
             number parseNumber() {

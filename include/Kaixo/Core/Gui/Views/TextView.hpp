@@ -4,6 +4,7 @@
 #include "Kaixo/Core/Theme/Basic.hpp"
 #include "Kaixo/Core/Theme/FontMap.hpp"
 #include "Kaixo/Core/Theme/Color.hpp"
+#include "Kaixo/Core/Theme/TextArea.hpp"
 
 // ------------------------------------------------
 
@@ -17,10 +18,8 @@ namespace Kaixo::Gui {
         // ------------------------------------------------
 
         struct Settings {
-            Theme::Font font;
             Theme::Basic background;
-            Theme::Color textColor = Color{ 255, 255, 255 };
-            Theme::Color selectionColor = Color{ 255, 255, 255, 50 };
+            Theme::TextArea graphics;
 
             Point<> padding{ 8, 8 };
 

@@ -80,10 +80,10 @@ namespace Kaixo::Gui {
 
             Point beginPos = indexToPosition(begin);
             Point endPos = indexToPosition(end);
+            Point caretPos = m_Caret < m_CaretEnd ? beginPos : endPos;
 
             auto v = paddedDimensions();
-
-            g.setColour(settings.selectionColor);
+            g.setColour(settings.graphics.selectionColor);
             if (beginPos.y() == endPos.y()) {
                 g.fillRect(Rect{
                     beginPos.x(),
@@ -113,13 +113,16 @@ namespace Kaixo::Gui {
                     settings.lineHeight
                 });
             }
+            
+            g.setColour(settings.graphics.caretColor);
+            g.fillRect(Rect{ caretPos.x(), caretPos.y() - 2, 2, 2 + settings.lineHeight });
         }
 
         auto v = paddedDimensions().topLeft().toFloat() - m_Offset;
         auto lines = this->lines();
-        g.setColour(settings.textColor);
+        g.setColour(settings.graphics.textColor);
         for (auto& line : lines) {
-            settings.font.draw(g, v, line);
+            settings.graphics.font.draw(g, v, line);
             v.y += settings.lineHeight;
         }
     }
@@ -363,7 +366,7 @@ namespace Kaixo::Gui {
     // ------------------------------------------------
 
     float TextView::stringWidth(std::string_view str) const {
-        return settings.font.stringWidth(str);
+        return settings.graphics.font.stringWidth(str);
     }
 
     std::int64_t TextView::yToLine(float y) const {

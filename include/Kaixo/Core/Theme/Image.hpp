@@ -126,6 +126,10 @@ namespace Kaixo::Theme {
         else if (align == "bottom-left") return Align::BottomLeft;
         else if (align == "bottom-center") return Align::BottomCenter;
         else if (align == "bottom-right") return Align::BottomRight;
+        else if (align == "top") return Align::TopCenter;
+        else if (align == "bottom") return Align::BottomCenter;
+        else if (align == "left") return Align::CenterLeft;
+        else if (align == "right") return Align::CenterRight;
         return Align::Center;
     }
 
@@ -139,6 +143,10 @@ namespace Kaixo::Theme {
         else if (align == Align::BottomLeft) return rect.bottomLeft();
         else if (align == Align::BottomCenter) return rect.bottomCenter();
         else if (align == Align::BottomRight) return rect.bottomRight();
+        else if (align == Align::Top) return rect.topCenter();
+        else if (align == Align::Bottom) return rect.bottomCenter();
+        else if (align == Align::Left) return rect.centerLeft();
+        else if (align == Align::Right) return rect.centerRight();
         return rect.center();
     }
 

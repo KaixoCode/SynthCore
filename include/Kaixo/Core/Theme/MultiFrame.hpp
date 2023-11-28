@@ -127,6 +127,7 @@ namespace Kaixo::Theme {
                 ImageID id = NoImage;
                 MultiFrameDescription description{};
                 Rect<int> clip{ 0, 0, 0, 0 };
+                Rect<int> imagePosition{ 0, 0, 0, 0 };
                 bool isTiled = false;
                 TiledDescription tiles{};
 

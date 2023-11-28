@@ -8,6 +8,7 @@
 #include "Kaixo/Core/Theme/Stateful.hpp"
 #include "Kaixo/Core/Theme/MultiFrame.hpp"
 #include "Kaixo/Core/Theme/FontMap.hpp"
+#include "Kaixo/Core/Theme/TextArea.hpp"
 
 // ------------------------------------------------
 
@@ -70,7 +71,7 @@ namespace Kaixo::Theme {
         // ------------------------------------------------
 
     private:
-        mutable std::mutex m_Mutex{};
+        mutable std::recursive_mutex m_Mutex{};
         basic_json m_DefaultTheme{};
         std::map<std::string, basic_json, std::less<>> m_Variables{};
         std::map<std::string, ImageID, std::less<void>> m_LoadedImagesByKey{};

@@ -46,6 +46,14 @@ namespace Kaixo::Theme {
 
             // ------------------------------------------------
 
+            std::array<int, 2> arr2;
+            if (theme.try_get("image-position", arr2)) {
+                layer.imagePosition.x(arr2[0]);
+                layer.imagePosition.y(arr2[1]);
+            }
+
+            // ------------------------------------------------
+
             layer.clip = interpretClip(theme);
 
             // ------------------------------------------------
@@ -76,7 +84,6 @@ namespace Kaixo::Theme {
 
             // ------------------------------------------------
 
-            std::array<int, 2> arr2;
             if (theme.try_get("text-offset", arr2)) {
                 layer.textOffset.x(arr2[0]);
                 layer.textOffset.y(arr2[1]);
@@ -131,7 +138,11 @@ namespace Kaixo::Theme {
                 .tiled = isTiled ? &tiles : nullptr,
                 .clip = clip,
                 .align = align,
-                .position = pos
+                .position = Rect<float>{
+                    imagePosition.x() + pos.x(),
+                    imagePosition.y() + pos.y(),
+                    pos.width(), pos.height(),
+                },
             });
             didDraw = true;
         }
