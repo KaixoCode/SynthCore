@@ -385,7 +385,7 @@ namespace Kaixo::Generator {
             }
 
             if (!fullSourceIdentifiers.empty()) {
-                add(tab + "constexpr const ModulationSourceSettings& source(ParamID id) const {"s);
+                add(tab + "constexpr const ModulationSourceSettings& source(ModulationSourceID id) const {"s);
                 add(tab + (tab + "switch (id) {"s));
 
                 for (auto& [id, var] : fullSourceIdentifiers) {
@@ -603,10 +603,10 @@ namespace Kaixo::Generator {
         add();
         add("// ------------------------------------------------", 1);
         add();
-        add("constexpr const ParameterSettings& parameter(ParamID id) { return " + main.varName + ".param(id); }", 1);
-        add("constexpr const ModulationSourceSettings& modulationSource(ModulationSourceID id) { return " + main.varName + ".source(id); }", 1);
-        add("constexpr std::size_t nofParameters() { return " + main.varName + ".parameters; }", 1);
-        add("constexpr std::size_t nofSources() { return " + main.varName + ".modulationSources; }", 1);
+        if (!fullParameterIdentifiers.empty()) add("constexpr const ParameterSettings& parameter(ParamID id) { return " + main.varName + ".param(id); }", 1);
+        if (!fullSourceIdentifiers.empty()) add("constexpr const ModulationSourceSettings& modulationSource(ModulationSourceID id) { return " + main.varName + ".source(id); }", 1);
+        if (!fullParameterIdentifiers.empty()) add("constexpr std::size_t nofParameters() { return " + main.varName + ".parameters; }", 1);
+        if (!fullSourceIdentifiers.empty()) add("constexpr std::size_t nofSources() { return " + main.varName + ".modulationSources; }", 1);
         add();
         add("// ------------------------------------------------", 1);
         add();
