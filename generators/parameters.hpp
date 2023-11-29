@@ -149,6 +149,7 @@ namespace Kaixo::Generator {
         std::map<std::size_t, Source*> sources;
 
         std::string interfaceType{};
+        bool alwaysActive = false;
 
         // ------------------------------------------------
 

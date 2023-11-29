@@ -53,6 +53,7 @@ namespace Kaixo::Generator {
 
     void ParameterGenerator::generate(basic_xml& xml) {
         interfaceType = xml.attributeOr("interface", "none");
+        alwaysActive = xml.attributeOr("always-active", "false") != "false";
         parseModule(main, xml, {}, true);
         generateModule(main, true);
         instantiateModule(main);
@@ -738,16 +739,20 @@ namespace Kaixo::Generator {
             add("case " + idstr + ": { // Parameter: " + param->fullVarName, 2);
             if (param->steps == "0" && param->smooth != "false") {
                 add("auto& p = database.parameter(" + idstr + ");", 3);
-                add("if (database.self().isActive()) {", 3);
-                add("p.goal = val;", 4);
-                add("database.setChanging(" + idstr + ");", 4);
-                add("} else {", 3);
-                add("p.access = p.value = p.goal = val;", 4);
-                add("p.add = 0;", 4);
-                if (!accessor.empty()) add(accessor + ";", 4);
-                add("}", 3);
-            }
-            else {
+                if (alwaysActive) {
+                    add("p.goal = val;", 3);
+                    add("database.setChanging(" + idstr + ");", 3);
+                } else {
+                    add("if (database.self().isActive()) {", 3);
+                    add("p.goal = val;", 4);
+                    add("database.setChanging(" + idstr + ");", 4);
+                    add("} else {", 3);
+                    add("p.access = p.value = p.goal = val;", 4);
+                    add("p.add = 0;", 4);
+                    if (!accessor.empty()) add(accessor + ";", 4);
+                    add("}", 3);
+                }
+            } else {
                 add("auto& p = database.parameter(" + idstr + ");", 3);
                 add("p.access = p.value = p.goal = val;", 3);
                 add("p.add = 0;", 3);

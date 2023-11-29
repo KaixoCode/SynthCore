@@ -94,9 +94,12 @@ namespace Kaixo::Processing {
             for (ParamID id = 0; id < Parameters; ++id) {
                 m_Parameters[id].value = m_Parameters[id].access = m_Parameters[id].goal;
                 m_Parameters[id].add = 0;
+
+#ifdef KAIXO_INTERNAL_MODULATION
                 if (m_LinkedModulationDatabase->modulated(id)) {
                     m_Changing.set(id);
                 }
+#endif
             }
         }
 

@@ -30,6 +30,10 @@ namespace Kaixo::Processing {
         virtual void noteOff(Note note, double velocity) {}
 
         // ------------------------------------------------
+        
+        virtual bool isActive() const { return true; }
+
+        // ------------------------------------------------
 
         virtual void init() override {}
         virtual json serialize() override { return {}; }
