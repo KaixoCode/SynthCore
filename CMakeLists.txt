@@ -46,6 +46,8 @@ juce_add_plugin(${NAME}
     BUNDLE_ID ${BUNDLE_IDENTIFIER}
     PLUGIN_MANUFACTURER_CODE ${COMPANY_CODE}
     PLUGIN_CODE ${PLUGIN_CODE}
+    IS_SYNTH ${IS_SYNTH}
+    NEEDS_MIDI_INPUT ${IS_SYNTH}
     FORMATS AU VST3 Standalone)
 
 juce_generate_juce_header(${NAME})
