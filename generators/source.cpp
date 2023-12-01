@@ -210,7 +210,7 @@ namespace Kaixo::Generator {
                 } else {
                     std::size_t index = 0;
                     for (std::size_t i = 0; i < line.size(); i += 2048) {
-                        std::string str{ line.begin() + i, std::min(line.begin() + i + 2048, line.end()) };
+                        std::string str{ line.begin() + i, line.begin() + std::min(i + 2048, line.size()) };
                         result += "R\"~(" + str + ")~\", \n";
                         bytes += trim(str).size();
                     }
