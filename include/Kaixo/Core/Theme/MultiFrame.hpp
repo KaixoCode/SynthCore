@@ -2,6 +2,7 @@
 #include "Kaixo/Core/Definitions.hpp"
 #include "Kaixo/Core/Gui/View.hpp"
 #include "Kaixo/Core/Theme/Element.hpp"
+#include "Kaixo/Core/Theme/Container.hpp"
 #include "Kaixo/Core/Theme/Image.hpp"
 #include "Kaixo/Core/Theme/Stateful.hpp"
 #include "Kaixo/Core/Theme/FontMap.hpp"
@@ -230,6 +231,26 @@ namespace Kaixo::Theme {
     // ------------------------------------------------
     
     MultiFrameDescription interpretMultiFrame(const basic_json& theme);
+
+    // ------------------------------------------------
+
+    template<>
+    inline DynamicElement::operator MultiFrame() {
+        if (auto multiframe = dynamic_cast<MultiFrameElement*>(m_Element)) {
+            return *multiframe;
+        }
+
+        return {};
+    }
+
+    inline Stateful DynamicElement::operator[](std::size_t index) {
+        if (auto multiframe = dynamic_cast<MultiFrameElement*>(m_Element)) {
+            return (*multiframe)[index];
+        }
+
+        return {};
+    }
+
 
     // ------------------------------------------------
 

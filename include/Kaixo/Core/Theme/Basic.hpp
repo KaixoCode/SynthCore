@@ -2,6 +2,7 @@
 #include "Kaixo/Core/Definitions.hpp"
 #include "Kaixo/Core/Gui/View.hpp"
 #include "Kaixo/Core/Theme/Element.hpp"
+#include "Kaixo/Core/Theme/Container.hpp"
 #include "Kaixo/Core/Theme/Image.hpp"
 #include "Kaixo/Core/Theme/ZoomMultiplier.hpp"
 
@@ -93,6 +94,17 @@ namespace Kaixo::Theme {
     
     Rect<int> interpretClip(const basic_json& theme);
     std::optional<TiledDescription> interpretTiles(const basic_json& theme);
+
+    // ------------------------------------------------
+
+    template<>
+    inline DynamicElement::operator Basic() {
+        if (auto basic = dynamic_cast<BasicElement*>(m_Element)) {
+            return *basic;
+        }
+
+        return {};
+    }
 
     // ------------------------------------------------
 

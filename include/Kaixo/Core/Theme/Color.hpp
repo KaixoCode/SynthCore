@@ -1,6 +1,7 @@
 #pragma once
 #include "Kaixo/Core/Definitions.hpp"
 #include "Kaixo/Core/Theme/Element.hpp"
+#include "Kaixo/Core/Theme/Container.hpp"
 #include "Kaixo/Core/Theme/ZoomMultiplier.hpp"
 
 // ------------------------------------------------
@@ -77,6 +78,17 @@ namespace Kaixo::Theme {
         // ------------------------------------------------
 
     };
+
+    // ------------------------------------------------
+    
+    template<>
+    inline DynamicElement::operator Color() {
+        if (auto color = dynamic_cast<ColorElement*>(m_Element)) {
+            return *color;
+        }
+
+        return {};
+    }
 
     // ------------------------------------------------
 

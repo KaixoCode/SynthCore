@@ -377,8 +377,15 @@ namespace Kaixo::Generator {
 
             auto recurse = [&](auto& self, Element& el, std::size_t indent = 0, bool main = false) -> void {
                 if (el.type.empty()) { // no type, recurse
-                    if (main) add("struct " + nameToClass(el.name) + " : Theme {", indent);
-                    else add("struct " + nameToClass(el.name) + " : Container {", indent);
+                    if (main) {
+                        add("struct " + nameToClass(el.name) + " : Theme {", indent);
+                    } else {
+                        add("struct " + nameToClass(el.name) + " : Container {", indent);
+                        add();
+                        add("// ------------------------------------------------", indent + 1);
+                        add();
+                        add("using Container::Container;", indent + 1);
+                    }
                     add();
                     add("// ------------------------------------------------", indent + 1);
                     add();

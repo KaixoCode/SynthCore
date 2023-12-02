@@ -7,18 +7,50 @@
 namespace Kaixo::Theme {
 
     // ------------------------------------------------
+    
+    class Container;
+    class Stateful;
 
-    class Container {
+    // ------------------------------------------------
+    
+    struct DynamicElement {
+
+        // ------------------------------------------------
+
+        template<class Ty> requires requires() { typename Ty::Interface; }
+        operator Ty();
+
+        // ------------------------------------------------
+        
+        DynamicElement operator[](std::string_view name);
+        
+        Stateful operator[](std::size_t index);
+
+        // ------------------------------------------------
+
+    private:
+        Element* m_Element;
+
+        // ------------------------------------------------
+        
+        DynamicElement(Element* el) : m_Element(el) {}
+
+        // ------------------------------------------------
+        
+        friend class Container;
+
+        // ------------------------------------------------
+
+    };
+
+    // ------------------------------------------------
+
+    class Container : public Element {
     public:
 
         // ------------------------------------------------
         
-        Theme* self;
-
-        // ------------------------------------------------
-
-        Container(Theme* self) : self(self) {}
-        Container(ElementAdder adder) : self(adder.create(this)) {}
+        using Element::Element;
 
         // ------------------------------------------------
 
@@ -28,34 +60,31 @@ namespace Kaixo::Theme {
 
         ElementAdder add(std::string_view name) { return { self, this, name }; }
 
-        template<class Ty>
-        void addElement(std::string_view name, Ty& obj);
+        // ------------------------------------------------
+        
+        DynamicElement operator[](std::string_view name);
 
         // ------------------------------------------------
 
     private:
         struct Entry {
             std::string_view name;
-            std::function<void(const basic_json&)> interpret;
+            Element* element;
         };
 
         std::vector<Entry> m_Elements{};
+
+        // ------------------------------------------------
+
+        void addElement(std::string_view name, Element* el);
+
+        // ------------------------------------------------
+
+        friend class ElementAdder;
+
+        // ------------------------------------------------
+
     };
-
-    // ------------------------------------------------
-
-    template<class Ty>
-    void Container::addElement(std::string_view name, Ty& obj) {
-        m_Elements.emplace_back(name, [obj = &obj](const basic_json& val) { obj->interpret(val); });
-    }
-
-    // ------------------------------------------------
-
-    template<class Ty>
-    Theme* ElementAdder::create(Ty* obj) {
-        m_AddTo->addElement(m_Name, *obj);
-        return m_Self;
-    }
 
     // ------------------------------------------------
 

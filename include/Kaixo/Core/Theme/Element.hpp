@@ -11,6 +11,7 @@ namespace Kaixo::Theme {
 
     class Theme;
     class Container;
+    class Element;
 
     // ------------------------------------------------
 
@@ -19,8 +20,7 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
-        template<class Ty>
-        Theme* create(Ty* obj);
+        Theme* create(Element* obj);
 
         // ------------------------------------------------
 
@@ -31,8 +31,7 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
-        ElementAdder(Theme* self, Container* me, std::string_view name)
-            :m_Self(self), m_AddTo(me), m_Name(name) {}
+        ElementAdder(Theme* self, Container* me, std::string_view name);
 
         // ------------------------------------------------
 

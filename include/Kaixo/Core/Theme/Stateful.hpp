@@ -2,6 +2,7 @@
 #include "Kaixo/Core/Definitions.hpp"
 #include "Kaixo/Core/Gui/View.hpp"
 #include "Kaixo/Core/Theme/Element.hpp"
+#include "Kaixo/Core/Theme/Container.hpp"
 #include "Kaixo/Core/Theme/Image.hpp"
 #include "Kaixo/Core/Theme/FontMap.hpp"
 #include "Kaixo/Core/Theme/Color.hpp"
@@ -177,6 +178,17 @@ namespace Kaixo::Theme {
     // ------------------------------------------------
     
     std::vector<std::pair<std::string, View::State>> interpretState(const basic_json& theme);
+
+    // ------------------------------------------------
+
+    template<>
+    inline DynamicElement::operator Stateful() {
+        if (auto stateful = dynamic_cast<StatefulElement*>(m_Element)) {
+            return *stateful;
+        }
+
+        return {};
+    }
 
     // ------------------------------------------------
 

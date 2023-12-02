@@ -1,6 +1,7 @@
 #pragma once
 #include "Kaixo/Core/Definitions.hpp"
 #include "Kaixo/Core/Theme/Element.hpp"
+#include "Kaixo/Core/Theme/Container.hpp"
 #include "Kaixo/Core/Theme/ZoomMultiplier.hpp"
 #include "Kaixo/Core/Theme/FontMap.hpp"
 #include "Kaixo/Core/Theme/Color.hpp"
@@ -12,6 +13,10 @@ namespace Kaixo::Theme {
      // ------------------------------------------------
 
     struct TextArea {
+
+        // ------------------------------------------------
+        
+        using Interface = void; // No interface, just collection of other element
 
         // ------------------------------------------------
 
@@ -51,6 +56,17 @@ namespace Kaixo::Theme {
         // ------------------------------------------------
 
     };
+
+    // ------------------------------------------------
+
+    template<>
+    inline DynamicElement::operator TextArea() {
+        if (auto textarea = dynamic_cast<TextAreaElement*>(m_Element)) {
+            return *textarea;
+        }
+
+        return {};
+    }
 
     // ------------------------------------------------
 
