@@ -9,7 +9,7 @@ namespace Kaixo::Gui {
     
     // ------------------------------------------------
 
-    class Button : public View {
+    class Button : public View, public ParameterListener {
     public:
 
         // ------------------------------------------------
@@ -45,6 +45,10 @@ namespace Kaixo::Gui {
         // ------------------------------------------------
 
         Button(Context c, Settings settings = {});
+
+        // ------------------------------------------------
+
+        void parameterChanged(ParamID id, ParamValue value) override;
 
         // ------------------------------------------------
 

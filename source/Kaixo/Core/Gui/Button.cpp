@@ -21,6 +21,15 @@ namespace Kaixo::Gui {
 
     // ------------------------------------------------
 
+    void Button::parameterChanged(ParamID id, ParamValue value) {
+        if (settings.param == id) {
+            selected(value > 0.5);
+            repaint();
+        }
+    }
+
+    // ------------------------------------------------
+
     void Button::mouseEnter(const juce::MouseEvent& event) {
         View::mouseEnter(event);
         if (trigger() == OnHover) {
