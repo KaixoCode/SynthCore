@@ -10,6 +10,7 @@ namespace Kaixo::Gui {
         : View(c), settings(std::move(s))
     {
         setWantsKeyboardFocus(true);
+        setMouseCursor(juce::MouseCursor::IBeamCursor);
     }
     
     // ------------------------------------------------
@@ -89,7 +90,7 @@ namespace Kaixo::Gui {
                     beginPos.x(),
                     beginPos.y() - 2,
                     endPos.x() - beginPos.x() + 2,
-                    endPos.y() - beginPos.y() + 2 + settings.lineHeight
+                    settings.lineHeight + 2
                 });
             } else {
                 g.fillRect(Rect{

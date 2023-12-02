@@ -289,6 +289,10 @@ namespace Kaixo::Theme {
                 }
                 break;
             }
+            case basic_json::Array: {
+                value.foreach([&](basic_json& val) { self(key, val); });
+                break;
+            }
             }
         });
 

@@ -1,6 +1,7 @@
 #include "Kaixo/Core/Controller.hpp"
 #include "Kaixo/Core/Gui/Window.hpp"
 #include "Kaixo/Core/Processing/Processor.hpp"
+#include "Kaixo/Core/Theme/Theme.hpp"
 
 // ------------------------------------------------
 
@@ -14,6 +15,12 @@ namespace Kaixo {
             .withInput("Input", juce::AudioChannelSet::stereo(), true)
         ), m_Processor(Processing::createProcessor())
     {
+        // ------------------------------------------------
+
+        Gui::T.initialize();
+
+        // ------------------------------------------------
+
         constexpr std::size_t count = Kaixo::nofParameters();
         m_Processor->m_ParameterValues.resize(count, -1);
         m_Processor->setController(this);
@@ -21,6 +28,13 @@ namespace Kaixo {
             addParameter(m_Parameters.emplace_back(new Parameter{ Kaixo::parameter(i) }));
             m_Processor->receiveParameterValue(i, m_Parameters[i]->value());
         }
+
+        // ------------------------------------------------
+        
+        init();
+        
+        // ------------------------------------------------
+
     }
 
     Controller::~Controller() { }
@@ -116,7 +130,7 @@ namespace Kaixo {
         for (const auto& raw : midiMessages) {
             const auto& message = raw.getMessage();
 
-            if (message.isControllerOfType(0) && m_ModWheelLinkedParameter != NoParam) {
+            if (message.isControllerOfType(1) && m_ModWheelLinkedParameter != NoParam) {
                 m_Processor->param(m_ModWheelLinkedParameter, message.getControllerValue() / 127.);
                 continue;
             }

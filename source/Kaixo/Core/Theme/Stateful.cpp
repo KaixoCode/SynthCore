@@ -27,13 +27,6 @@ namespace Kaixo::Theme {
         basic_json theme = in;
 
         // ------------------------------------------------
-
-        if (in.contains("extends")) {
-            theme.merge(in["extends"]);
-            in["extends"].foreach([&](const basic_json& val) { theme.merge(val); });
-        }
-
-        // ------------------------------------------------
         
         auto layer = [&](const basic_json& theme) {
 
