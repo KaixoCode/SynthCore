@@ -43,7 +43,7 @@ namespace Kaixo::Processing {
             }
         }
 
-        double get(ParamID id, ModulationSourceID source) {
+        float get(ParamID id, ModulationSourceID source) const {
             for (std::size_t i = 0; i < m_Modulations[id].size(); ++i) {
                 if (m_Modulations[id][i].source == source) {
                     return m_Modulations[id][i].amount;

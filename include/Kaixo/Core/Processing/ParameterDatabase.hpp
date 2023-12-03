@@ -118,9 +118,14 @@ namespace Kaixo::Processing {
 
 #ifdef KAIXO_INTERNAL_MODULATION
         constexpr Source& source(ModulationSourceID id) { return m_Sources[id]; }
+        constexpr const Source& source(ModulationSourceID id) const { return m_Sources[id]; }
 
         constexpr void loopOverSources(ParamID id, auto fun) const {
             m_LinkedModulationDatabase->foreach(id, fun);
+        }
+
+        constexpr float modulationAmount(ParamID id, ModulationSourceID source) const {
+            return m_LinkedModulationDatabase->get(id, source);
         }
 #endif
 

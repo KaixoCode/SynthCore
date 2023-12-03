@@ -45,6 +45,10 @@ namespace Kaixo::Processing {
         void registerInterface();
 
         // ------------------------------------------------
+        
+        ParamValue paramValue(ParamID id) const { return m_ParameterValues[id]; }
+
+        // ------------------------------------------------
 
     private:
         std::vector<ParamValue> m_ParameterValues{};

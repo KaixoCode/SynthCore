@@ -19,6 +19,7 @@ namespace Kaixo::Processing {
 
         // ------------------------------------------------
 
+        Note fromNote = -1;
         Note note = -1;
         float velocity = 0;
         float releaseVelocity = 0;
@@ -35,6 +36,8 @@ namespace Kaixo::Processing {
 
         virtual void trigger(bool legato) = 0;
         virtual void release() = 0;
+
+        virtual float currentNote() const { return note; }
 
         // ------------------------------------------------
 

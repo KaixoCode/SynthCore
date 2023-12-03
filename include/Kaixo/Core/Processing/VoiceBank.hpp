@@ -30,7 +30,16 @@ namespace Kaixo::Processing {
 
         // ------------------------------------------------
 
-        void setMaxVoices(std::size_t active) { m_MaxVoices = Math::clamp(active, 1ull, Count); }
+        void maxVoices(std::size_t active) { 
+            active = Math::clamp(active, 1ull, Count);
+            if (m_MaxVoices != active) {
+                m_MaxVoices = active;
+                m_PressedInOrder.clear();
+            }
+        }
+
+        void alwaysLegato(bool v) { m_AlwaysLegato = v; }
+        void threading(bool v) { m_UseThreading = v; }
 
         // ------------------------------------------------
 
@@ -69,6 +78,8 @@ namespace Kaixo::Processing {
         // ------------------------------------------------
         
         void process() override {
+            m_LastNote = lastTriggered().currentNote();
+
             for (auto& voice : m_Voices) {
                 voice.output.prepare(outputBuffer().size());
                 voice.process();
@@ -133,6 +144,9 @@ namespace Kaixo::Processing {
 
         std::size_t m_LastTriggered = 0;
         std::size_t m_MaxVoices = Count;
+        bool m_AlwaysLegato = false;
+        bool m_UseThreading = false;
+        float m_LastNote = -1;
 
         // ------------------------------------------------
 
@@ -141,7 +155,7 @@ namespace Kaixo::Processing {
                 auto& _history = m_OverridenNoteHistory[i];
                 if (_history.note == note) {
                     m_OverridenNoteHistory.erase_index(i);
-                } ++i;
+                } else ++i;
             }
         }
 
@@ -182,9 +196,10 @@ namespace Kaixo::Processing {
         }
         
         void triggerVoice(std::size_t i, Note note, double velocity, bool legato) {
+            m_Voices[i].fromNote = legato ? m_Voices[i].currentNote() : (m_AlwaysLegato ? m_LastNote : note);
             m_Voices[i].note = note;
             m_Voices[i].velocity = velocity;
-            m_Voices[i].trigger(legato);
+            m_Voices[i].trigger(m_AlwaysLegato || (legato && m_Voices[i].pressed));
             m_Voices[i].pressed = true;
             m_PressedVoices.remove(i);
             m_PressedVoices.push_back(i);
