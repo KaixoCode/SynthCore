@@ -18,16 +18,16 @@ namespace Kaixo::Theme {
      * [{
      *     "layers": [{
      *         "image": "relative/path/to/image.png",
-     * 
+     *
      *         "offset": [0u, 0u],         // Offset in image
      *         "size"  : [0u, 0u],         // Size of sub-image (and also frame)
      *         "clip"  : [0u, 0u, 0u, 0u], // Clip sub-image
-     *         
+     *
      *         "edges" : [0u, 0u],         // Nine-tiled x and y
      *         "edges" : [0u, 0u, 0u, 0u], // Nine-tiled all edges separate
-     * 
+     *
      *         "background-color": some color, // background fill color
-     * 
+     *
      *         "text": [ "some string", "$value", "$name", "$short-name" ], // variables are related to linked param
      *         "font": some font,
      *         "text-color": some color,  // Color of the text
@@ -40,36 +40,46 @@ namespace Kaixo::Theme {
      *         "frames"         : 0u, // Number of frames in multi-frame
      *         "frames-per-row" : 0u, // Number of frames per row
      *     }],
-     * 
+     *
      *     "states" : [    // This image is selected when all these states match
-     *         "hovering", 
-     *         "pressed", 
-     *         "selected", 
-     *         "disabled", 
-     *         "enabled", 
-     *         "focused", 
+     *         "hovering",
+     *         "pressed",
+     *         "selected",
+     *         "disabled",
+     *         "enabled",
+     *         "focused",
      *     ]
      * }]
-     * 
+     *
      */
 
-    // ------------------------------------------------
+     // ------------------------------------------------
 
-    class MultiFrame {
+    class Drawable {
     public:
+
+        // ------------------------------------------------
+        
+        struct Instruction {
+            juce::Graphics& graphics;
+            Rect<float> position;
+            ParamValue value = -1; // Range must be [0, inf), -1 means not set
+            std::size_t index = npos;
+            View::State state = View::State::Default;
+            Align align = Align::TopLeft;
+        };
 
         // ------------------------------------------------
 
         struct Interface {
-            virtual void draw(juce::Graphics& g, ParamValue i, const Rect<float>& pos, View::State state = View::State::Default, Align align = Align::TopLeft) const = 0;
-            virtual void draw(juce::Graphics& g, std::size_t i, const Rect<float>& pos, View::State state = View::State::Default, Align align = Align::TopLeft) const = 0;
+            virtual void draw(Instruction) const = 0;
             virtual void link(ParamID id) = 0;
         };
 
         // ------------------------------------------------
 
-        MultiFrame() = default;
-        MultiFrame(std::unique_ptr<Interface> graphics);
+        Drawable() = default;
+        Drawable(std::unique_ptr<Interface> graphics) : m_Graphics(graphics) {}
 
         // ------------------------------------------------
 
@@ -77,12 +87,8 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
-        void draw(juce::Graphics& g, ParamValue i, const Rect<float>& pos, View::State state = View::State::Default, Align align = Align::TopLeft) const;
-        void draw(juce::Graphics& g, std::size_t i, const Rect<float>& pos, View::State state = View::State::Default, Align align = Align::TopLeft) const;
-
-        // ------------------------------------------------
-        
-        void link(ParamID id);
+        void draw(Instruction instr) const { if (m_Graphics) m_Graphics->draw(std::move(instr)); }
+        void link(ParamID id) { if (m_Graphics) m_Graphics->link(id); }
 
         // ------------------------------------------------
 
@@ -95,7 +101,7 @@ namespace Kaixo::Theme {
 
     // ------------------------------------------------
 
-    class MultiFrameElement : Element {
+    class DrawableElement : Element {
     public:
 
         // ------------------------------------------------
@@ -111,16 +117,16 @@ namespace Kaixo::Theme {
             Theme* self;
 
             // ------------------------------------------------
-            
+
             struct Layer {
 
                 // ------------------------------------------------
-                
-                Layer(Theme* self, MultiFrameElement* parent) : self(self), parent(parent) {}
+
+                Layer(Theme* self, DrawableElement* parent) : self(self), parent(parent) {}
 
                 // ------------------------------------------------
 
-                MultiFrameElement* parent;
+                DrawableElement* parent;
                 Theme* self;
 
                 // ------------------------------------------------
@@ -159,10 +165,10 @@ namespace Kaixo::Theme {
             std::vector<Layer> layers;
             View::State state = View::State::Default;
             std::size_t frames = 1;
-            
+
             // ------------------------------------------------
 
-            void interpret(const basic_json& theme, MultiFrameElement* parent);
+            void interpret(const basic_json& theme, DrawableElement* parent);
 
             // ------------------------------------------------
 
@@ -189,7 +195,7 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
-        operator MultiFrame();
+        operator Drawable();
 
         // ------------------------------------------------
 
@@ -207,17 +213,17 @@ namespace Kaixo::Theme {
             // ------------------------------------------------
 
         private:
-            const MultiFrameElement* m_Self;
+            const DrawableElement* m_Self;
             std::size_t m_Index;
 
             // ------------------------------------------------
 
-            Index(const MultiFrameElement* self, std::size_t index)
+            Index(const DrawableElement* self, std::size_t index)
                 : m_Self(self), m_Index(index) {}
 
             // ------------------------------------------------
 
-            friend class MultiFrameElement;
+            friend class DrawableElement;
         };
 
         // ------------------------------------------------
@@ -229,28 +235,27 @@ namespace Kaixo::Theme {
     };
 
     // ------------------------------------------------
-    
+
     MultiFrameDescription interpretMultiFrame(const basic_json& theme);
 
     // ------------------------------------------------
 
     template<>
-    inline DynamicElement::operator MultiFrame() {
-        if (auto multiframe = dynamic_cast<MultiFrameElement*>(m_Element)) {
+    inline DynamicElement::operator Drawable() {
+        if (auto multiframe = dynamic_cast<DrawableElement*>(m_Element)) {
             return *multiframe;
         }
 
         return {};
     }
 
-    inline Stateful DynamicElement::operator[](std::size_t index) {
-        if (auto multiframe = dynamic_cast<MultiFrameElement*>(m_Element)) {
-            return (*multiframe)[index];
-        }
+    //inline Stateful DynamicElement::operator[](std::size_t index) {
+    //    if (auto multiframe = dynamic_cast<DrawableElement*>(m_Element)) {
+    //        return (*multiframe)[index];
+    //    }
 
-        return {};
-    }
-
+    //    return {};
+    //}
 
     // ------------------------------------------------
 
