@@ -54,7 +54,7 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
-        void interpret(const basic_json& json);
+        void interpret(const basic_json& json) override;
 
         // ------------------------------------------------
 

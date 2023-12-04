@@ -15,42 +15,39 @@ namespace Kaixo::Theme {
     // ------------------------------------------------
 
     /*
-     * [{
-     *     "layers": [{
-     *         "image": "relative/path/to/image.png",
-     *
-     *         "offset": [0u, 0u],         // Offset in image
-     *         "size"  : [0u, 0u],         // Size of sub-image (and also frame)
-     *         "clip"  : [0u, 0u, 0u, 0u], // Clip sub-image
-     *
-     *         "edges" : [0u, 0u],         // Nine-tiled x and y
-     *         "edges" : [0u, 0u, 0u, 0u], // Nine-tiled all edges separate
-     *
-     *         "background-color": some color, // background fill color
-     *
-     *         "text": [ "some string", "$value", "$name", "$short-name" ], // variables are related to linked param
-     *         "font": some font,
-     *         "text-color": some color,  // Color of the text
-     *         "text-offset": [0u, 0u],
-     *         "text-align": "top-left | top-right | top-center | center-left | center | center-right | bottom-left | bottom-center | bottom-left",
-     *
-     *         "start-angle": 0,       // Rotate the layer starting with this angle
-     *         "end-angle": 360,       // and ending with this angle (degrees)
-     *
-     *         "frames"         : 0u, // Number of frames in multi-frame
-     *         "frames-per-row" : 0u, // Number of frames per row
-     *     }],
-     *
-     *     "states" : [    // This image is selected when all these states match
-     *         "hovering",
-     *         "pressed",
-     *         "selected",
-     *         "disabled",
-     *         "enabled",
-     *         "focused",
-     *     ]
-     * }]
-     *
+     * {
+     *   layers: {
+     *     0:    { // recursive }
+     *     name: { // recursive } 
+     *     etc.
+     *   }
+     *   
+     *   image: {                    // object or string with path
+     *     source: image.png         // path
+     *     clip: [0, 0, 0, 0]        // part of image to display
+     *     frames: 100               // nmr of frames in image
+     *     frames-per-row: 1         // nmr of frames per row
+     *     edges: [0, 0, 0, 0]       // nine-tiled edges
+     *     position: [0, 0]          // relative position of image in drawable
+     *     align: top-left           // image align relative to position
+     *   }                           
+     *                               
+     *   text: {                     
+     *     content: [ "" ]           // array of strings, or single string
+     *     font: $font               // font
+     *     color: [0, 0, 0]          // text color
+     *     position: [0, 0]          // relative position of text in drawable
+     *     align: top-left           // text alignment relative to position
+     *   }
+     * 
+     *   background-color: [0, 0, 0] // Background color
+     *   
+     *   hovering: // recursive
+     *   pressed:  // recursive
+     *   selected: // recursive
+     *   etc.
+     * }
+     * 
      */
 
      // ------------------------------------------------
@@ -66,7 +63,6 @@ namespace Kaixo::Theme {
             ParamValue value = -1; // Range must be [0, inf), -1 means not set
             std::size_t index = npos;
             View::State state = View::State::Default;
-            Align align = Align::TopLeft;
         };
 
         // ------------------------------------------------
@@ -79,7 +75,7 @@ namespace Kaixo::Theme {
         // ------------------------------------------------
 
         Drawable() = default;
-        Drawable(std::unique_ptr<Interface> graphics) : m_Graphics(graphics) {}
+        Drawable(std::unique_ptr<Interface> graphics) : m_Graphics(std::move(graphics)) {}
 
         // ------------------------------------------------
 
@@ -110,70 +106,26 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
-        struct State {
+        struct ImageElement {
 
             // ------------------------------------------------
 
-            Theme* self;
+            DrawableElement* self;
 
             // ------------------------------------------------
 
-            struct Layer {
-
-                // ------------------------------------------------
-
-                Layer(Theme* self, DrawableElement* parent) : self(self), parent(parent) {}
-
-                // ------------------------------------------------
-
-                DrawableElement* parent;
-                Theme* self;
-
-                // ------------------------------------------------
-
-                ImageID id = NoImage;
-                MultiFrameDescription description{};
-                Rect<int> clip{ 0, 0, 0, 0 };
-                Rect<int> imagePosition{ 0, 0, 0, 0 };
-                bool isTiled = false;
-                TiledDescription tiles{};
-
-                // ------------------------------------------------
-
-                std::vector<std::string> text{};
-                Point<int> textOffset{ 0, 0 };
-                Align textAlign = Align::Center;
-                FontElement font{ self };
-                bool fillAlphaWithColor = false;
-                ColorElement textColor{ self };
-
-                // ------------------------------------------------
-
-                bool hasBackgroundColor = false;
-                ColorElement backgroundColor{ self };
-
-                // ------------------------------------------------
-
-                bool draw(juce::Graphics& g, ParamValue i, const Rect<float>& pos, Align align = Align::Center) const;
-
-                // ------------------------------------------------
-
-            };
+            std::optional<ImageID> image{};
+            std::optional<Rect<int>> clip{};
+            std::optional<Point<int>> position{};
+            std::optional<Align> align{};
+            std::optional<MultiFrameDescription> multiframe{};
+            std::optional<TiledDescription> tiled{};
 
             // ------------------------------------------------
+            
+            void interpret(const basic_json& json) {
 
-            std::vector<Layer> layers;
-            View::State state = View::State::Default;
-            std::size_t frames = 1;
-
-            // ------------------------------------------------
-
-            void interpret(const basic_json& theme, DrawableElement* parent);
-
-            // ------------------------------------------------
-
-            bool draw(juce::Graphics& g, ParamValue i, const Rect<float>& pos, Align align = Align::Center) const;
-            bool draw(juce::Graphics& g, std::size_t i, const Rect<float>& pos, Align align = Align::Center) const;
+            }
 
             // ------------------------------------------------
 
@@ -181,62 +133,138 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
-        std::vector<State> states{};
+        struct TextElement {
+
+            // ------------------------------------------------
+
+            DrawableElement* self;
+
+            // ------------------------------------------------
+
+            std::optional<std::vector<std::string>> text{};
+            std::optional<Point<int>> position{};
+            std::optional<Align> align{};
+            std::optional<ColorElement> color{};
+            std::optional<FontElement> font{};
+
+            // ------------------------------------------------
+
+            void interpret(const basic_json& json) {
+
+            }
+
+            // ------------------------------------------------
+
+        };
+        
+        // ------------------------------------------------
+
+        struct Layer {
+
+            // ------------------------------------------------
+
+            DrawableElement* self;
+
+            // ------------------------------------------------
+
+            std::string identifier{}; // used for identifying the layer
+
+            // ------------------------------------------------
+
+            std::optional<ImageElement> image{};
+            std::optional<TextElement> text{};
+            std::optional<ColorElement> backgroundColor{};
+
+            // ------------------------------------------------
+
+            void interpret(const basic_json& theme) {
+
+
+            }
+
+            // ------------------------------------------------
+
+        };
+
+        struct State {
+
+            // ------------------------------------------------
+            
+            DrawableElement* self;
+
+            // ------------------------------------------------
+
+            View::State state = View::State::Default;
+            std::vector<Layer> layers{};
+            
+            // ------------------------------------------------
+
+            void interpret(const basic_json& theme) {
+                
+
+            
+            }
+
+            // ------------------------------------------------
+
+        };
+
+        // ------------------------------------------------
+        
+        std::vector<State> states;
+
+        // ------------------------------------------------
+
         ParamID parameter = NoParam;
 
         // ------------------------------------------------
 
-        void interpret(const basic_json& theme) override;
+        void interpret(const basic_json& theme) override {
+
+            // ------------------------------------------------
+
+            if (!theme.is(basic_json::Object)) return;
+
+            // ------------------------------------------------
+
+            states.clear();
+
+            // ------------------------------------------------
+
+            states.emplace_back(View::State::Default, this).interpret(theme);
+
+            // ------------------------------------------------
+
+            theme.foreach([&](std::string_view key, const basic_json& theme) {
+                View::State state = View::State::Default;
+                if (key.contains("hovering")) state |= View::State::Hovering;
+                if (key.contains("disabled")) state |= View::State::Disabled;
+                if (key.contains("selected")) state |= View::State::Selected;
+                if (key.contains("pressed")) state |= View::State::Pressed;
+                if (key.contains("focused")) state |= View::State::Focused;
+                if (key.contains("enabled")) state |= View::State::Enabled;
+                states.emplace_back(state, this).interpret(theme);
+            });
+
+            // ------------------------------------------------
+
+        }
 
         // ------------------------------------------------
 
-        void draw(juce::Graphics& g, ParamValue i, const Rect<float>& pos, View::State state = View::State::Default, Align align = Align::Center) const;
-        void draw(juce::Graphics& g, std::size_t i, const Rect<float>& pos, View::State state = View::State::Default, Align align = Align::Center) const;
+        void draw(Drawable::Instruction instr) const {}
 
         // ------------------------------------------------
 
-        operator Drawable();
+        operator Drawable() {}
 
         // ------------------------------------------------
 
-        class Index {
-        public:
-
-            // ------------------------------------------------
-
-            void draw(juce::Graphics& g, const Rect<float>& pos, View::State state = View::State::Default, Align align = Align::Center) const;
-
-            // ------------------------------------------------
-
-            operator Stateful() const;
-
-            // ------------------------------------------------
-
-        private:
-            const DrawableElement* m_Self;
-            std::size_t m_Index;
-
-            // ------------------------------------------------
-
-            Index(const DrawableElement* self, std::size_t index)
-                : m_Self(self), m_Index(index) {}
-
-            // ------------------------------------------------
-
-            friend class DrawableElement;
-        };
-
-        // ------------------------------------------------
-
-        Index operator[](std::size_t i) const { return { this, i }; }
+        Drawable operator[](std::size_t i) const { }
 
         // ------------------------------------------------
 
     };
-
-    // ------------------------------------------------
-
-    MultiFrameDescription interpretMultiFrame(const basic_json& theme);
 
     // ------------------------------------------------
 
