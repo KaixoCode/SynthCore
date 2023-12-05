@@ -97,6 +97,100 @@ namespace Kaixo::Theme {
 
     // ------------------------------------------------
 
+    template<class Ty>
+    union Property {
+        enum class Type { Reference, Value, Empty } m_Type;
+    public:
+
+        // ------------------------------------------------
+
+        Property() : m_Reference(Type::Empty, nullptr) {}
+        Property(std::nullptr_t) : Property() {}
+
+        Property(Ty&& value) : m_Value(Type::Value, std::move(value)) {}
+        Property(const Ty& value) : m_Value(Type::Value, value) {}
+
+        Property(Property&& other) : m_Reference(other.ref()) {}
+        Property(const Property& other) : m_Reference(other.ref()) {}
+
+        Property& operator=(std::nullptr_t) { clean(); m_Reference = { Type::Empty, nullptr }; return *this; }
+
+        Property& operator=(Property&& other) { clean(); m_Reference = other.ref(); return *this; }
+        Property& operator=(const Property& other) { clean(); m_Reference = other.ref(); return *this; }
+
+        // ------------------------------------------------
+
+        ~Property() { clean(); }
+
+        // ------------------------------------------------
+        
+        const Ty* get() const {
+            switch (m_Type) {
+            case Type::Reference: return m_Reference.value;
+            case Type::Value: return &m_Value.value;
+            default: return nullptr;
+            }
+        }
+
+        const Ty& valueOrDefault(const Ty& value) {
+            if (auto val = get()) return *val;
+            else return value;
+        }
+
+        // ------------------------------------------------
+
+        bool hasValue() const { return get() == nullptr; }
+
+        // ------------------------------------------------
+        
+    private:
+        
+        // ------------------------------------------------
+
+        struct Reference {
+            Type type = Type::Reference;
+            const Ty* value = nullptr;
+        } m_Reference;
+
+        Reference ref() const { return { hasValue() ? Type::Empty : Type::Reference, get() }; }
+
+        // ------------------------------------------------
+
+        struct Value {
+            Type type = Type::Value;
+            Ty value{};
+        } m_Value;
+
+        // ------------------------------------------------
+        
+        void clean() { if (m_Type == Type::Value) m_Value.~Value(); }
+
+        // ------------------------------------------------
+
+    };
+
+    // ------------------------------------------------
+
+    struct TestProperty {
+
+
+        Property<int> value;
+
+    };
+
+    void testp() {
+
+        TestProperty prop;
+        prop.value = 1;
+
+        TestProperty prop2;
+
+        prop2 = prop;
+
+    }
+
+    // ------------------------------------------------
+
     class DrawableElement : Element {
     public:
 
