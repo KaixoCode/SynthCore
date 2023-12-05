@@ -3,7 +3,7 @@
 #include "Kaixo/Core/Storage.hpp"
 #include "Kaixo/Core/Gui/View.hpp"
 #include "Kaixo/Core/Gui/Tooltip.hpp"
-#include "Kaixo/Core/Theme/MultiFrame.hpp"
+#include "Kaixo/Core/Theme/Drawable.hpp"
 
 // ------------------------------------------------
 
@@ -28,8 +28,7 @@ namespace Kaixo::Gui {
             // ------------------------------------------------
 
             std::function<void(ParamValue)> callback{};
-            Theme::MultiFrame graphics{};
-            Theme::Align align = Theme::Align::Center;
+            Theme::Drawable graphics{};
             Type type = Type::Vertical;
             float speed = 1;
             bool moveCursorWithValue = false;

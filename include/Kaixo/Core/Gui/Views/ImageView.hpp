@@ -4,7 +4,7 @@
 
 #include "Kaixo/Core/Definitions.hpp"
 #include "Kaixo/Core/Gui/View.hpp"
-#include "Kaixo/Core/Theme/Basic.hpp"
+#include "Kaixo/Core/Theme/Drawable.hpp"
 
 // ------------------------------------------------
 
@@ -21,7 +21,7 @@ namespace Kaixo::Gui {
 
             // ------------------------------------------------
 
-            Theme::Basic image;
+            Theme::Drawable image;
 
             // ------------------------------------------------
 

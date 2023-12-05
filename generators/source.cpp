@@ -414,6 +414,7 @@ namespace Kaixo::Generator {
                     if (el.type == "color") className = "ColorElement";
                     if (el.type == "font") className = "FontElement";
                     if (el.type == "multi-frame") className = "MultiFrameElement";
+                    if (el.type == "drawable") className = "DrawableElement";
                     if (el.type == "text-area") className = "TextAreaElement";
                     add(className + " " + nameToVar(el.name) + "{ add(\"" + el.name + "\") };", indent);
                 }

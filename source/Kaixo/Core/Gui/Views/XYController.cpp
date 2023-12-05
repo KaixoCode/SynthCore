@@ -89,7 +89,11 @@ namespace Kaixo::Gui {
             settings.handleSize
         };
 
-        settings.graphics.draw(g, pos, state(), settings.align);
+        settings.graphics.draw({ 
+            .graphics = g, 
+            .position = pos, 
+            .state = state() 
+        });
     }
 
     // ------------------------------------------------

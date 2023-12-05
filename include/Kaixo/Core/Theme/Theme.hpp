@@ -9,6 +9,7 @@
 #include "Kaixo/Core/Theme/MultiFrame.hpp"
 #include "Kaixo/Core/Theme/FontMap.hpp"
 #include "Kaixo/Core/Theme/TextArea.hpp"
+#include "Kaixo/Core/Theme/Drawable.hpp"
 
 // ------------------------------------------------
 

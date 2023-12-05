@@ -37,7 +37,7 @@ namespace Kaixo::Gui {
         bool useColor = m_Settings.textColor || m_TextColor;
 
         if (useColor) g.setColour(color);
-        background.draw(g, localDimensions());
+        background.draw({ .graphics = g, .position = localDimensions() });
         font.draw(g, { 
             m_Settings.padding.x(), 
             m_Settings.padding.y()
@@ -47,7 +47,7 @@ namespace Kaixo::Gui {
     // ------------------------------------------------
 
     void Tooltip::font(Theme::Font font) { m_Font = std::move(font); updatePosition(); }
-    void Tooltip::background(Theme::Basic bg) { m_Background = std::move(bg); }
+    void Tooltip::background(Theme::Drawable bg) { m_Background = std::move(bg); }
     void Tooltip::textColor(Theme::Color clr) { m_TextColor = std::move(clr); }
 
     // ------------------------------------------------

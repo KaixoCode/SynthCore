@@ -1,7 +1,7 @@
 #pragma once
 #include "Kaixo/Core/Definitions.hpp"
 #include "Kaixo/Core/Gui/View.hpp"
-#include "Kaixo/Core/Theme/Basic.hpp"
+#include "Kaixo/Core/Theme/Drawable.hpp"
 #include "Kaixo/Core/Theme/FontMap.hpp"
 #include "Kaixo/Core/Theme/Color.hpp"
 #include "Kaixo/Core/Theme/TextArea.hpp"
@@ -18,7 +18,7 @@ namespace Kaixo::Gui {
         // ------------------------------------------------
 
         struct Settings {
-            Theme::Basic background;
+            Theme::Drawable background;
             Theme::TextArea graphics;
 
             Point<> padding{ 8, 8 };

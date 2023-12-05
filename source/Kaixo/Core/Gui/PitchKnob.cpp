@@ -65,9 +65,26 @@ namespace Kaixo::Gui {
         std::size_t detune = 100 * (pitch - transpose);
         std::size_t sign = float(value() * (settings.max - settings.min) + settings.min < -0.001);
 
-        settings.sign.draw(g, sign, settings.signLocation(localDimensions()), state(), Knob::settings.align);
-        settings.transpose.draw(g, transpose, settings.transposeLocation(localDimensions()), state(), Knob::settings.align);
-        settings.detune.draw(g, detune, settings.detuneLocation(localDimensions()), state(), Knob::settings.align);
+        settings.sign.draw({
+            .graphics = g, 
+            .position = settings.signLocation(localDimensions()),
+            .index = sign, 
+            .state = state()
+        });
+
+        settings.transpose.draw({
+            .graphics = g, 
+            .position = settings.transposeLocation(localDimensions()),
+            .index = transpose, 
+            .state = state()
+        });
+
+        settings.detune.draw({
+            .graphics = g, 
+            .position = settings.detuneLocation(localDimensions()),
+            .index = detune, 
+            .state = state()
+        });
     }
 
     // ------------------------------------------------

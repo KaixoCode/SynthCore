@@ -3,7 +3,7 @@
 #include "Kaixo/Core/Gui/View.hpp"
 #include "Kaixo/Core/Gui/Tooltip.hpp"
 #include "Kaixo/Core/Gui/Knob.hpp"
-#include "Kaixo/Core/Theme/MultiFrame.hpp"
+#include "Kaixo/Core/Theme/Drawable.hpp"
 
 // ------------------------------------------------
 
@@ -30,9 +30,9 @@ namespace Kaixo::Gui {
 
             // ------------------------------------------------
 
-            Theme::MultiFrame sign;
-            Theme::MultiFrame transpose;
-            Theme::MultiFrame detune;
+            Theme::Drawable sign;
+            Theme::Drawable transpose;
+            Theme::Drawable detune;
 
             // ------------------------------------------------
 

@@ -160,7 +160,10 @@ namespace Kaixo::Gui {
     // ------------------------------------------------
 
     void PointsDisplay::paint(juce::Graphics& g) {
-        settings.background.draw(g, localDimensions());
+        settings.background.draw({
+            .graphics = g,
+            .position = localDimensions() 
+        });
 
         auto v = paddedDimensions();
 
@@ -234,7 +237,11 @@ namespace Kaixo::Gui {
                     if (m_UIPoints[i].dragging) state |= Pressed;
                     if (m_UIPoints[i].hovering) state |= Hovering;
                 }
-                settings.mainPoint.draw(g, handleRectAt(positionOfPoint(i)), state);
+                settings.mainPoint.draw({
+                    .graphics = g,
+                    .position = handleRectAt(positionOfPoint(i)),
+                    .state = state 
+                });
             }
 
             if (shouldIgnoreCurve(i)) continue;
@@ -246,7 +253,11 @@ namespace Kaixo::Gui {
                     if (m_UIPoints[i].hovering) state |= Hovering;
                 }
 
-                settings.curvePoint.draw(g, handleRectAt(positionOfCurvePoint(i)), state);
+                settings.curvePoint.draw({
+                    .graphics = g,
+                    .position = handleRectAt(positionOfCurvePoint(i)),
+                    .state = state 
+                });
             }
         }
     }

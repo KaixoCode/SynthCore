@@ -1,7 +1,7 @@
 #pragma once
 #include "Kaixo/Core/Definitions.hpp"
 #include "Kaixo/Core/Gui/View.hpp"
-#include "Kaixo/Core/Theme/Stateful.hpp"
+#include "Kaixo/Core/Theme/Drawable.hpp"
 
 // ------------------------------------------------
 
@@ -25,8 +25,7 @@ namespace Kaixo::Gui {
             // ------------------------------------------------
 
             std::function<void(bool)> callback{};
-            Theme::Stateful graphics{};
-            Theme::Align align = Theme::Align::Center;
+            Theme::Drawable graphics{};
 
             // ------------------------------------------------
 

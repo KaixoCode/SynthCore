@@ -73,7 +73,10 @@ namespace Kaixo::Gui {
     // ------------------------------------------------
 
     void TextView::paint(juce::Graphics& g) {
-        settings.background.draw(g, localDimensions());
+        settings.background.draw({
+            .graphics = g, 
+            .position = localDimensions() 
+        });
 
         if (focused()) {
             std::int64_t begin = std::min(m_Caret, m_CaretEnd);

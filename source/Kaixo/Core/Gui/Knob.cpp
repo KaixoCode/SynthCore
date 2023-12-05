@@ -163,7 +163,14 @@ namespace Kaixo::Gui {
             v = normalToIndex(v, steps()) / (steps() - 1.);
         }
 
-        settings.graphics.draw(g, v, localDimensions(), state(), settings.align);
+        settings.graphics.draw({
+            .graphics = g,
+            .position = localDimensions(),
+            .parameter = settings.param,
+            .value = v,
+            .index = steps() == 0 ? npos : normalToIndex(v, steps()),
+            .state = state(),
+        });
     }
 
     // ------------------------------------------------

@@ -2,8 +2,7 @@
 #include "Kaixo/Core/Definitions.hpp"
 #include "Kaixo/Core/Gui/View.hpp"
 #include "Kaixo/Core/Gui/Tooltip.hpp"
-#include "Kaixo/Core/Theme/Basic.hpp"
-#include "Kaixo/Core/Theme/Stateful.hpp"
+#include "Kaixo/Core/Theme/Drawable.hpp"
 
 // ------------------------------------------------
 
@@ -20,9 +19,8 @@ namespace Kaixo::Gui {
 
             // ------------------------------------------------
             
-            Theme::Basic background;
-            Theme::Stateful graphics;
-            Theme::Align align = Theme::Align::Center;
+            Theme::Drawable background;
+            Theme::Drawable graphics;
 
             // ------------------------------------------------
             

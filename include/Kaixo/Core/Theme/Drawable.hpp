@@ -38,6 +38,7 @@ namespace Kaixo::Theme {
      *     color: [0, 0, 0]          // text color
      *     position: [0, 0]          // relative position of text in drawable
      *     align: top-left           // text alignment relative to position
+     *     frames: 1                 // used for $frame variable
      *   }
      * 
      *   background-color: [0, 0, 0] // Background color
@@ -60,6 +61,7 @@ namespace Kaixo::Theme {
         struct Instruction {
             juce::Graphics& graphics;
             Rect<float> position;
+            ParamID parameter = NoParam;
             ParamValue value = -1; // Range must be [0, inf), -1 means not set
             std::size_t index = npos;
             View::State state = View::State::Default;
@@ -69,7 +71,6 @@ namespace Kaixo::Theme {
 
         struct Interface {
             virtual void draw(Instruction) const = 0;
-            virtual void link(ParamID id) = 0;
         };
 
         // ------------------------------------------------
@@ -84,7 +85,6 @@ namespace Kaixo::Theme {
         // ------------------------------------------------
 
         void draw(Instruction instr) const { if (m_Graphics) m_Graphics->draw(std::move(instr)); }
-        void link(ParamID id) { if (m_Graphics) m_Graphics->link(id); }
 
         // ------------------------------------------------
 
@@ -100,59 +100,15 @@ namespace Kaixo::Theme {
     template<class Ty>
     union Property {
         enum class Type { Reference, Value, Empty } m_Type;
-    public:
 
-        // ------------------------------------------------
-
-        Property() : m_Reference(Type::Empty, nullptr) {}
-        Property(std::nullptr_t) : Property() {}
-
-        Property(Ty&& value) : m_Value(Type::Value, std::move(value)) {}
-        Property(const Ty& value) : m_Value(Type::Value, value) {}
-
-        Property(Property&& other) : m_Reference(other.ref()) {}
-        Property(const Property& other) : m_Reference(other.ref()) {}
-
-        Property& operator=(std::nullptr_t) { clean(); m_Reference = { Type::Empty, nullptr }; return *this; }
-
-        Property& operator=(Property&& other) { clean(); m_Reference = other.ref(); return *this; }
-        Property& operator=(const Property& other) { clean(); m_Reference = other.ref(); return *this; }
-
-        // ------------------------------------------------
-
-        ~Property() { clean(); }
-
-        // ------------------------------------------------
-        
-        const Ty* get() const {
-            switch (m_Type) {
-            case Type::Reference: return m_Reference.value;
-            case Type::Value: return &m_Value.value;
-            default: return nullptr;
-            }
-        }
-
-        const Ty& valueOrDefault(const Ty& value) {
-            if (auto val = get()) return *val;
-            else return value;
-        }
-
-        // ------------------------------------------------
-
-        bool hasValue() const { return get() == nullptr; }
-
-        // ------------------------------------------------
-        
-    private:
-        
         // ------------------------------------------------
 
         struct Reference {
             Type type = Type::Reference;
-            const Ty* value = nullptr;
+            Ty* value = nullptr;
         } m_Reference;
 
-        Reference ref() const { return { hasValue() ? Type::Empty : Type::Reference, get() }; }
+        Reference ref() { return { hasValue() ? Type::Reference : Type::Empty, get() }; }
 
         // ------------------------------------------------
 
@@ -162,32 +118,84 @@ namespace Kaixo::Theme {
         } m_Value;
 
         // ------------------------------------------------
+
+    public:
+
+        // ------------------------------------------------
+
+        Property() : m_Reference(Type::Empty, nullptr) {}
+        Property(std::nullptr_t) : Property() {}
+        Property(Ty&& value) : m_Value(Type::Value, std::move(value)) {}
+        Property(const Ty& value) : m_Value(Type::Value, value) {}
+        Property(Property& other) : m_Reference(other.ref()) {}
+        Property(const Property&) = delete;
+        Property(Property&& other) { 
+            switch (other.m_Type) {
+            case Type::Reference: new (&m_Reference) Reference{ std::move(other.m_Reference) };
+            case Type::Value: new (&m_Value) Value{ std::move(other.m_Value) };
+            case Type::Empty: new (&m_Reference) Reference{ Type::Empty, nullptr };
+            }
+            other.clean();
+            new (&other.m_Reference) Reference { Type::Empty, nullptr };
+        }
+
+        Property& operator=(std::nullptr_t) { clean(); new (&m_Reference) Reference { Type::Empty, nullptr }; return *this; }
+        Property& operator=(Ty&& value) { clean(); new(&m_Value) Value { Type::Value, std::move(value) }; return *this; }
+        Property& operator=(const Ty& value) { clean(); new (&m_Value) Value { Type::Value, value }; return *this; }
+        Property& operator=(Property& other) {
+            if (!other.hasValue()) return *this; 
+            clean(); 
+            new (&m_Reference) Reference{ other.ref() };
+            return *this;
+        }
+
+        // ------------------------------------------------
+
+        ~Property() { clean(); }
+
+        // ------------------------------------------------
+        
+        Ty* get() {
+            switch (m_Type) {
+            case Type::Reference: return m_Reference.value;
+            case Type::Value: return &m_Value.value;
+            default: return nullptr;
+            }
+        }
+        
+        const Ty* get() const {
+            switch (m_Type) {
+            case Type::Reference: return m_Reference.value;
+            case Type::Value: return &m_Value.value;
+            default: return nullptr;
+            }
+        }
+
+        Ty* operator->() { return get(); }
+        const Ty* operator->() const { return get(); }
+        
+        Ty* operator&() { return get(); }
+        const Ty* operator&() const { return get(); }
+        
+        Ty& operator*() { return *get(); }
+        const Ty& operator*() const { return *get(); }
+
+        // ------------------------------------------------
+
+        bool hasValue() const { return get() != nullptr; }
+        operator bool() const { return hasValue(); }
+
+        // ------------------------------------------------
+        
+    private:
+        
+        // ------------------------------------------------
         
         void clean() { if (m_Type == Type::Value) m_Value.~Value(); }
 
         // ------------------------------------------------
 
     };
-
-    // ------------------------------------------------
-
-    struct TestProperty {
-
-
-        Property<int> value;
-
-    };
-
-    void testp() {
-
-        TestProperty prop;
-        prop.value = 1;
-
-        TestProperty prop2;
-
-        prop2 = prop;
-
-    }
 
     // ------------------------------------------------
 
@@ -204,22 +212,20 @@ namespace Kaixo::Theme {
 
             // ------------------------------------------------
 
-            DrawableElement* self;
-
-            // ------------------------------------------------
-
-            std::optional<ImageID> image{};
-            std::optional<Rect<int>> clip{};
-            std::optional<Point<int>> position{};
-            std::optional<Align> align{};
-            std::optional<MultiFrameDescription> multiframe{};
-            std::optional<TiledDescription> tiled{};
+            Property<ImageID> image{};
+            Property<Rect<int>> clip{};
+            Property<Point<int>> position{};
+            Property<Align> align{};
+            Property<MultiFrameDescription> multiframe{};
+            Property<TiledDescription> tiled{};
 
             // ------------------------------------------------
             
-            void interpret(const basic_json& json) {
+            void interpret(Theme& self, const basic_json& json);
 
-            }
+            // ------------------------------------------------
+
+            bool draw(Theme& self, Drawable::Instruction instr);
 
             // ------------------------------------------------
 
@@ -231,21 +237,25 @@ namespace Kaixo::Theme {
 
             // ------------------------------------------------
 
-            DrawableElement* self;
+            struct Content {
+                bool wasArray = false;
+                std::vector<std::string> text;
+            };
+
+            Property<Content> content{};
+            Property<Point<int>> position{};
+            Property<std::size_t> frames{};
+            Property<Align> align{};
+            Property<ColorElement> color{};
+            Property<FontElement> font{};
 
             // ------------------------------------------------
 
-            std::optional<std::vector<std::string>> text{};
-            std::optional<Point<int>> position{};
-            std::optional<Align> align{};
-            std::optional<ColorElement> color{};
-            std::optional<FontElement> font{};
+            void interpret(Theme& self, const basic_json& json);
 
             // ------------------------------------------------
 
-            void interpret(const basic_json& json) {
-
-            }
+            bool draw(Theme& self, Drawable::Instruction instr);
 
             // ------------------------------------------------
 
@@ -253,11 +263,27 @@ namespace Kaixo::Theme {
         
         // ------------------------------------------------
 
-        struct Layer {
+        struct BackgroundColorElement {
 
             // ------------------------------------------------
 
-            DrawableElement* self;
+            Property<ColorElement> color{};
+
+            // ------------------------------------------------
+
+            void interpret(Theme& self, const basic_json& json);
+
+            // ------------------------------------------------
+
+            bool draw(Theme& self, Drawable::Instruction instr);
+
+            // ------------------------------------------------
+
+        };
+
+        // ------------------------------------------------
+
+        struct Layer {
 
             // ------------------------------------------------
 
@@ -265,16 +291,17 @@ namespace Kaixo::Theme {
 
             // ------------------------------------------------
 
-            std::optional<ImageElement> image{};
-            std::optional<TextElement> text{};
-            std::optional<ColorElement> backgroundColor{};
+            ImageElement image{};
+            TextElement text{};
+            BackgroundColorElement backgroundColor{};
 
             // ------------------------------------------------
 
-            void interpret(const basic_json& theme) {
+            void interpret(Theme& self, const basic_json& theme);
 
-
-            }
+            // ------------------------------------------------
+            
+            bool draw(Theme& self, Drawable::Instruction instr);
 
             // ------------------------------------------------
 
@@ -283,21 +310,13 @@ namespace Kaixo::Theme {
         struct State {
 
             // ------------------------------------------------
-            
-            DrawableElement* self;
-
-            // ------------------------------------------------
 
             View::State state = View::State::Default;
             std::vector<Layer> layers{};
             
             // ------------------------------------------------
 
-            void interpret(const basic_json& theme) {
-                
-
-            
-            }
+            void interpret(Theme& self, const basic_json& theme);
 
             // ------------------------------------------------
 
@@ -309,52 +328,19 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
-        ParamID parameter = NoParam;
+        void interpret(const basic_json& theme) override;
 
         // ------------------------------------------------
 
-        void interpret(const basic_json& theme) override {
-
-            // ------------------------------------------------
-
-            if (!theme.is(basic_json::Object)) return;
-
-            // ------------------------------------------------
-
-            states.clear();
-
-            // ------------------------------------------------
-
-            states.emplace_back(View::State::Default, this).interpret(theme);
-
-            // ------------------------------------------------
-
-            theme.foreach([&](std::string_view key, const basic_json& theme) {
-                View::State state = View::State::Default;
-                if (key.contains("hovering")) state |= View::State::Hovering;
-                if (key.contains("disabled")) state |= View::State::Disabled;
-                if (key.contains("selected")) state |= View::State::Selected;
-                if (key.contains("pressed")) state |= View::State::Pressed;
-                if (key.contains("focused")) state |= View::State::Focused;
-                if (key.contains("enabled")) state |= View::State::Enabled;
-                states.emplace_back(state, this).interpret(theme);
-            });
-
-            // ------------------------------------------------
-
-        }
+        void draw(Drawable::Instruction instr);
 
         // ------------------------------------------------
 
-        void draw(Drawable::Instruction instr) const {}
+        operator Drawable();
 
         // ------------------------------------------------
 
-        operator Drawable() {}
-
-        // ------------------------------------------------
-
-        Drawable operator[](std::size_t i) const { }
+        Drawable operator[](std::size_t i);
 
         // ------------------------------------------------
 
@@ -364,20 +350,12 @@ namespace Kaixo::Theme {
 
     template<>
     inline DynamicElement::operator Drawable() {
-        if (auto multiframe = dynamic_cast<DrawableElement*>(m_Element)) {
-            return *multiframe;
+        if (auto drawable = dynamic_cast<DrawableElement*>(m_Element)) {
+            return *drawable;
         }
 
         return {};
     }
-
-    //inline Stateful DynamicElement::operator[](std::size_t index) {
-    //    if (auto multiframe = dynamic_cast<DrawableElement*>(m_Element)) {
-    //        return (*multiframe)[index];
-    //    }
-
-    //    return {};
-    //}
 
     // ------------------------------------------------
 

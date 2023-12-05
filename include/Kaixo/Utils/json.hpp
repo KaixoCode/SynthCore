@@ -234,7 +234,7 @@ namespace Kaixo {
             std::size_t index = 0;
             foreach([&](auto& v) {
                 if (v.is(value_type_alias<Ty>::value)) {
-                    if (index == N) return false; // too make elements
+                    if (index == N) return false; // too many elements
                     result[index] = v.template as<Ty>();
                     ++index;
                 }

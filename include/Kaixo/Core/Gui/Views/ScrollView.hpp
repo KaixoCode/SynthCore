@@ -1,8 +1,7 @@
 #pragma once
 #include "Kaixo/Core/Definitions.hpp"
 #include "Kaixo/Core/Gui/View.hpp"
-#include "Kaixo/Core/Theme/Stateful.hpp"
-#include "Kaixo/Core/Theme/Basic.hpp"
+#include "Kaixo/Core/Theme/Drawable.hpp"
 
 // ------------------------------------------------
 
@@ -21,8 +20,8 @@ namespace Kaixo::Gui {
 
         struct Settings {
             Type type = Type::Vertical;
-            Theme::Basic background;
-            Theme::Stateful scrollbar;
+            Theme::Drawable background;
+            Theme::Drawable scrollbar;
             Rect<> margin{ 4, 4, 4, 4 };     // Margin around the contained views
             Coord gap = 4;                   // Gap between contained views
             Coord minSize = 20;              // Minimum scroll bar size

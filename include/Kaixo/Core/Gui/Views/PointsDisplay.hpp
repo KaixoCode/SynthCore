@@ -2,8 +2,7 @@
 #include "Kaixo/Core/Definitions.hpp"
 #include "Kaixo/Core/Gui/View.hpp"
 #include "Kaixo/Core/Theme/Color.hpp"
-#include "Kaixo/Core/Theme/Stateful.hpp"
-#include "Kaixo/Core/Theme/Basic.hpp"
+#include "Kaixo/Core/Theme/Drawable.hpp"
 
 // ------------------------------------------------
 
@@ -80,14 +79,14 @@ namespace Kaixo::Gui {
 
             // ------------------------------------------------
             
-            Theme::Basic background{};
+            Theme::Drawable background{};
 
             // ------------------------------------------------
 
             const std::size_t maxPoints = std::numeric_limits<std::size_t>::max(); // Initially no max nof points
 
-            Theme::Stateful mainPoint{};
-            Theme::Stateful curvePoint{};
+            Theme::Drawable mainPoint{};
+            Theme::Drawable curvePoint{};
 
             float size = 20;     // Size of the points
             float maxCurve = 10; // Maximum curve value of line between points
