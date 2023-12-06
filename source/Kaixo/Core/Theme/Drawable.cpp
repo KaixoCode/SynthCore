@@ -108,7 +108,7 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
-        if (auto img = self.image(image)) {
+        if (auto img = self.image(*image)) {
 
             // ------------------------------------------------
 
