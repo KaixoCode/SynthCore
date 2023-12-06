@@ -150,11 +150,8 @@ namespace Kaixo::Theme {
                 .clip = clip,
                 .align = imageAlign,
                 .frame = normalToIndex(i, description.numFrames),
-                .position = Rect<float>{
-                    imagePosition.x() + pos.x(),
-                    imagePosition.y() + pos.y(),
-                    pos.width(), pos.height(),
-                },
+                .position = imagePosition.topLeft(),
+                .bounds = pos,
             });
             didDraw = true;
         }

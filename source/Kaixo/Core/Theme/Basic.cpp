@@ -68,7 +68,7 @@ namespace Kaixo::Theme {
                 .graphics = g,
                 .description = tiles,
                 .clip = clip,
-                .position = pos
+                .bounds = pos
             });
         }
     }

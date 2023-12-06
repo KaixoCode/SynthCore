@@ -60,7 +60,7 @@ namespace Kaixo::Theme {
         
         struct Instruction {
             juce::Graphics& graphics;
-            Rect<float> position;
+            Rect<float> bounds;
             ParamID parameter = NoParam;
             ParamValue value = -1; // Range must be [0, inf), -1 means not set
             std::size_t index = npos;

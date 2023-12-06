@@ -202,7 +202,7 @@ namespace Kaixo::Theme {
                     _image.draw(ClippedInstruction{
                         .graphics = g,
                         .clip = _letter.clip,
-                        .position = { x, y, 
+                        .bounds = { x, y, 
                             static_cast<float>(_letter.clip.width()), 
                             static_cast<float>(_letter.clip.height()) 
                         },

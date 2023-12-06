@@ -30,7 +30,8 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
-        if (json.try_get("image", str) ||
+        if (json.try_get(str) || 
+            json.try_get("image", str) ||
             containsImage && json["image"].try_get("source", str)) 
         {
             image = self.registerImage(str);
@@ -142,15 +143,12 @@ namespace Kaixo::Theme {
                     .clip = _clip,
                     .align = _align,
                     .frame = _index,
-                    .position = Rect<float>{
-                        _position.x() + instr.position.x(),
-                        _position.y() + instr.position.y(),
-                        instr.position.width(), instr.position.height(),
-                    },
+                    .position = _position,
+                    .bounds = instr.bounds
                 });
 
                 // ------------------------------------------------
-
+            
             } else {
 
                 // ------------------------------------------------
@@ -163,17 +161,23 @@ namespace Kaixo::Theme {
 
                 // ------------------------------------------------
 
-                img.draw(ClippedInstruction{
-                    .graphics = instr.graphics,
-                    .tiled = tiled.get(),
-                    .clip = _clip,
-                    .align = _align,
-                    .position = Rect<float>{
-                        _position.x() + instr.position.x(),
-                        _position.y() + instr.position.y(),
-                        instr.position.width(), instr.position.height(),
-                    },
-                });
+                if (tiled) {
+                    img.draw(TiledInstruction{
+                        .graphics = instr.graphics,
+                        .description = *tiled,
+                        .clip = _clip,
+                        .bounds = instr.bounds
+                    });
+                } else {
+                    img.draw(ClippedInstruction{
+                        .graphics = instr.graphics,
+                        .tiled = nullptr,
+                        .clip = _clip,
+                        .align = _align,
+                        .position = _position,
+                        .bounds = instr.bounds,
+                    });
+                }
 
                 // ------------------------------------------------
 
@@ -333,7 +337,7 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
-        Point<float> at = pointFromAlign(_align, instr.position) + _position.toFloat();
+        Point<float> at = pointFromAlign(_align, instr.bounds) + _position.toFloat();
 
         // ------------------------------------------------
 
@@ -367,7 +371,7 @@ namespace Kaixo::Theme {
     bool DrawableElement::BackgroundColorElement::draw(Theme& self, Drawable::Instruction instr) {
         if (!color) return false;
         instr.graphics.setColour(*color);
-        instr.graphics.fillRect(instr.position);
+        instr.graphics.fillRect(instr.bounds);
         return true;
     }
 

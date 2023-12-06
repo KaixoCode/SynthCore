@@ -91,7 +91,7 @@ namespace Kaixo::Gui {
 
         settings.graphics.draw({ 
             .graphics = g, 
-            .position = pos, 
+            .bounds = pos, 
             .state = state() 
         });
     }

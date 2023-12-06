@@ -165,7 +165,7 @@ namespace Kaixo::Gui {
 
         settings.graphics.draw({
             .graphics = g,
-            .position = localDimensions(),
+            .bounds = localDimensions(),
             .parameter = settings.param,
             .value = v,
             .index = steps() == 0 ? npos : normalToIndex(v, steps()),

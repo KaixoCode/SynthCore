@@ -43,7 +43,7 @@ namespace Kaixo::Theme {
         const TiledDescription& description;
 
         Rect<int>               clip     = { 0, 0, 0, 0 };
-        Rect<float>             position = { 0, 0, 0, 0 };
+        Rect<float>             bounds   = { 0, 0, 0, 0 };
 
         bool                    fillAlphaWithColor = false;
     };
@@ -63,7 +63,8 @@ namespace Kaixo::Theme {
         Rect<int>                    clip     = { 0, 0, 0, 0 };
         Align                        align    = Align::TopLeft;
         std::size_t                  frame    = 0;
-        Rect<float>                  position = { 0, 0, 0, 0 };
+        Point<float>                 position = { 0, 0 };
+        Rect<float>                  bounds   = { 0, 0, 0, 0 };
 
         bool                         fillAlphaWithColor = false;
     };
@@ -76,7 +77,8 @@ namespace Kaixo::Theme {
         const TiledDescription* tiled    = nullptr;
         Rect<int>               clip     = { 0, 0, 0, 0 };
         Align                   align    = Align::TopLeft;
-        Rect<float>             position = { 0, 0, 0, 0 };
+        Point<float>            position = { 0, 0 };
+        Rect<float>             bounds   = { 0, 0, 0, 0 };
 
         bool                    fillAlphaWithColor = false;
     };

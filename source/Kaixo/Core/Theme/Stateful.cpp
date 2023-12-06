@@ -131,11 +131,8 @@ namespace Kaixo::Theme {
                 .tiled = isTiled ? &tiles : nullptr,
                 .clip = clip,
                 .align = align,
-                .position = Rect<float>{
-                    imagePosition.x() + pos.x(),
-                    imagePosition.y() + pos.y(),
-                    pos.width(), pos.height(),
-                },
+                .position = imagePosition,
+                .bounds = pos,
             });
             didDraw = true;
         }

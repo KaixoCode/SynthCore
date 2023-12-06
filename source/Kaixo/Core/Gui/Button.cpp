@@ -66,7 +66,7 @@ namespace Kaixo::Gui {
     void Button::paint(juce::Graphics& g)  {
         settings.graphics.draw({
             .graphics = g,
-            .position = localDimensions(),
+            .bounds = localDimensions(),
             .parameter = settings.param,
             .state = state(),
         });

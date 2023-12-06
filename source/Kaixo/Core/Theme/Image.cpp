@@ -97,19 +97,24 @@ namespace Kaixo::Theme {
     // ------------------------------------------------
 
     void Image::draw(TiledInstruction i) const {
-        auto _clipped = m_Image.getClippedImage(getClippedArea(i.clip, i.position));
+        auto _clipped = m_Image.getClippedImage(getClippedArea(i.clip, i.bounds));
 
-        drawTiledImage(i.graphics, _clipped, i.position, i.description, i.fillAlphaWithColor);
+        drawTiledImage(i.graphics, _clipped, i.bounds, i.description, i.fillAlphaWithColor);
     }
 
     void Image::draw(ClippedInstruction i) const {
-        auto _clipped = m_Image.getClippedImage(getClippedArea(i.clip, i.position));
+        auto _clipped = m_Image.getClippedImage(getClippedArea(i.clip, i.bounds));
 
         if (i.tiled) {
-            drawTiledImage(i.graphics, _clipped, i.position, *i.tiled, i.fillAlphaWithColor);
+            drawTiledImage(i.graphics, _clipped, i.bounds, *i.tiled, i.fillAlphaWithColor);
         } else {
             i.graphics.setOpacity(1.0);
-            i.graphics.drawImage(_clipped, i.position, getPlacement(i.align), i.fillAlphaWithColor);
+            i.graphics.saveState(); // Save state before clip
+            i.graphics.reduceClipRegion(i.bounds.getSmallestIntegerContainer());
+            // TODO: add proper placement using align and position
+            // alignment should be relative to position, which itself is relative to bounds
+            i.graphics.drawImage(_clipped, i.bounds + i.position, getPlacement(i.align), i.fillAlphaWithColor);
+            i.graphics.restoreState();
         }
     }
     
@@ -129,10 +134,15 @@ namespace Kaixo::Theme {
 
         // Draw tiled frame
         if (i.tiled) {
-            drawTiledImage(i.graphics, _clipped, i.position, *i.tiled, i.fillAlphaWithColor);
+            drawTiledImage(i.graphics, _clipped, i.bounds, *i.tiled, i.fillAlphaWithColor);
         } else {
             i.graphics.setOpacity(1.0);
-            i.graphics.drawImage(_clipped, i.position, getPlacement(i.align), i.fillAlphaWithColor);
+            i.graphics.saveState(); // Save state before clip
+            i.graphics.reduceClipRegion(i.bounds.getSmallestIntegerContainer());
+            // TODO: add proper placement using align and position
+            // alignment should be relative to position, which itself is relative to bounds
+            i.graphics.drawImage(_clipped, i.bounds + i.position, getPlacement(i.align), i.fillAlphaWithColor);
+            i.graphics.restoreState();
         }
 
     }

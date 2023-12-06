@@ -15,7 +15,7 @@ namespace Kaixo::Gui {
     void ImageView::paint(juce::Graphics& g) {
         settings.image.draw({
             .graphics = g,
-            .position = localDimensions() 
+            .bounds = localDimensions() 
         });
     }
 

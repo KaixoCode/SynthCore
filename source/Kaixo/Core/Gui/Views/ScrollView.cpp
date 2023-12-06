@@ -75,7 +75,7 @@ namespace Kaixo::Gui {
     void ScrollView::paint(juce::Graphics& g) {
         settings.background.draw({ 
             .graphics = g, 
-            .position = localDimensions() 
+            .bounds = localDimensions() 
         });
     }
 
@@ -83,7 +83,7 @@ namespace Kaixo::Gui {
         if (scrollbarNecessary()) {
             settings.scrollbar.draw({ 
                 .graphics = g,
-                .position = scrollbar(),
+                .bounds = scrollbar(),
                 .state = state() 
             });
         }

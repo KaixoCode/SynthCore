@@ -162,7 +162,7 @@ namespace Kaixo::Gui {
     void PointsDisplay::paint(juce::Graphics& g) {
         settings.background.draw({
             .graphics = g,
-            .position = localDimensions() 
+            .bounds = localDimensions() 
         });
 
         auto v = paddedDimensions();
@@ -239,7 +239,7 @@ namespace Kaixo::Gui {
                 }
                 settings.mainPoint.draw({
                     .graphics = g,
-                    .position = handleRectAt(positionOfPoint(i)),
+                    .bounds = handleRectAt(positionOfPoint(i)),
                     .state = state 
                 });
             }
@@ -255,7 +255,7 @@ namespace Kaixo::Gui {
 
                 settings.curvePoint.draw({
                     .graphics = g,
-                    .position = handleRectAt(positionOfCurvePoint(i)),
+                    .bounds = handleRectAt(positionOfCurvePoint(i)),
                     .state = state 
                 });
             }

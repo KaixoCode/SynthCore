@@ -67,21 +67,21 @@ namespace Kaixo::Gui {
 
         settings.sign.draw({
             .graphics = g, 
-            .position = settings.signLocation(localDimensions()),
+            .bounds = settings.signLocation(localDimensions()),
             .index = sign, 
             .state = state()
         });
 
         settings.transpose.draw({
             .graphics = g, 
-            .position = settings.transposeLocation(localDimensions()),
+            .bounds = settings.transposeLocation(localDimensions()),
             .index = transpose, 
             .state = state()
         });
 
         settings.detune.draw({
             .graphics = g, 
-            .position = settings.detuneLocation(localDimensions()),
+            .bounds = settings.detuneLocation(localDimensions()),
             .index = detune, 
             .state = state()
         });

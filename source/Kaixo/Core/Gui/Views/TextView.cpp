@@ -75,7 +75,7 @@ namespace Kaixo::Gui {
     void TextView::paint(juce::Graphics& g) {
         settings.background.draw({
             .graphics = g, 
-            .position = localDimensions() 
+            .bounds = localDimensions() 
         });
 
         if (focused()) {

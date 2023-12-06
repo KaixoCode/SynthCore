@@ -37,7 +37,7 @@ namespace Kaixo::Gui {
         bool useColor = m_Settings.textColor || m_TextColor;
 
         if (useColor) g.setColour(color);
-        background.draw({ .graphics = g, .position = localDimensions() });
+        background.draw({ .graphics = g, .bounds = localDimensions() });
         font.draw(g, { 
             m_Settings.padding.x(), 
             m_Settings.padding.y()
