@@ -245,7 +245,8 @@ namespace Kaixo::Theme {
         // ------------------------------------------------
         
         std::size_t num;
-        if (containsText && json["text"].try_get("frames", num))
+        if (json.try_get("frames", str) || 
+            containsText && json["text"].try_get("frames", num))
         {
             frames = num;
         }
@@ -395,10 +396,14 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
-        return
-            backgroundColor.draw(self, instr) |
-            image.draw(self, instr) |
-            text.draw(self, instr);
+        bool didDraw = false;
+        didDraw |= backgroundColor.draw(self, instr);
+        didDraw |= image.draw(self, instr);
+        didDraw |= text.draw(self, instr);
+
+        // ------------------------------------------------
+        
+        return didDraw;
 
         // ------------------------------------------------
 
