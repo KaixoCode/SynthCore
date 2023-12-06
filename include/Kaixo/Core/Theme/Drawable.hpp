@@ -4,7 +4,6 @@
 #include "Kaixo/Core/Theme/Element.hpp"
 #include "Kaixo/Core/Theme/Container.hpp"
 #include "Kaixo/Core/Theme/Image.hpp"
-#include "Kaixo/Core/Theme/Stateful.hpp"
 #include "Kaixo/Core/Theme/FontMap.hpp"
 #include "Kaixo/Core/Theme/Color.hpp"
 

@@ -1,7 +1,6 @@
 #pragma once
 #include "Kaixo/Core/Gui/View.hpp"
 #include "Kaixo/Core/Theme/Theme.hpp"
-#include "Kaixo/Core/Theme/Basic.hpp"
 #include "Kaixo/Core/Theme/FontMap.hpp"
 
 namespace Kaixo::Gui {

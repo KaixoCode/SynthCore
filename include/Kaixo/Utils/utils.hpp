@@ -79,6 +79,16 @@ namespace Kaixo {
     KAIXO_ENUM_OP(*);
     KAIXO_ENUM_OP(%);
 #undef KAIXO_ENUM_OP
+    
+#define KAIXO_ENUM_UNARY_OP(op)\
+    template<enum_ A>\
+    constexpr A operator op(A a) {\
+        using underlying = std::underlying_type_t<A>;\
+        return static_cast<A>(op static_cast<underlying>(a));\
+    }
+
+    KAIXO_ENUM_UNARY_OP(~);
+#undef KAIXO_ENUM_OP
 
 #define KAIXO_ENUM_ASSIGN_OP(op)\
     template<enum_ A>\

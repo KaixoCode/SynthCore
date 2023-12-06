@@ -79,21 +79,29 @@ namespace Kaixo {
             
             // ------------------------------------------------
 
-            void insert(value_type value) {
+            basic_json& insert(value_type value) {
+                if (contains(value.first)) {
+                    return operator[](value.first) = std::move(value.second);
+                } else {
+                    return m_Values.emplace_back(value).second;
+                }
+            }
+            
+            // Inserts at iterator if not exists yet
+            void insert(value_type value, iterator where) {
                 if (contains(value.first)) {
                     operator[](value.first) = std::move(value.second);
                 } else {
-                    m_Values.emplace_back(value);
+                    m_Values.insert(where, value);
                 }
             }
 
             // ------------------------------------------------
             
-            void erase(std::string_view value) {
+            iterator erase(std::string_view value) {
                 for (auto it = begin(); it != end(); ++it) {
                     if (it->first == value) {
-                        m_Values.erase(it);
-                        return;
+                        return m_Values.erase(it);
                     }
                 }
             }
@@ -344,13 +352,13 @@ namespace Kaixo {
 
         // ------------------------------------------------
         
-        // Won't override existing values
+
         void merge(const basic_json& other) {
             switch (type()) {
             case Object: {
                 other.foreach([&](const string& key, const basic_json& val) {
                     if (!contains(key)) {
-                        operator[](key) = val;
+                        as<object>().insert({ key, val });
                     } else if (val.is(Object)) {
                         operator[](key).merge(val);
                     }
@@ -363,6 +371,25 @@ namespace Kaixo {
             }
             default: return; // Can't merge other types
             }
+        }
+
+        // Won't override existing values
+        object::iterator merge(const basic_json& other, object::iterator where) {
+            switch (type()) {
+            case Object:
+                other.foreach([&](const string& key, const basic_json& val) {
+                    if (!contains(key)) {
+                        as<object>().insert({ key, val }, where++);
+                    } else if (val.is(Object)) {
+                        operator[](key).merge(val);
+                    }
+                });
+                break;
+            case Null:
+                *this = other;
+                break;
+            }
+            return where;
         }
 
         // ------------------------------------------------

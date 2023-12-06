@@ -381,10 +381,6 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
-        if (!theme.is(basic_json::Object)) return;
-
-        // ------------------------------------------------
-
         image.interpret(self, theme);
         text.interpret(self, theme);
         backgroundColor.interpret(self, theme);
@@ -414,10 +410,6 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
-        if (!theme.is(basic_json::Object)) return;
-
-        // ------------------------------------------------
-
         layers.emplace_back("__base").interpret(self, theme);
 
         // ------------------------------------------------
@@ -439,13 +431,6 @@ namespace Kaixo::Theme {
         // ------------------------------------------------
 
         states.clear();
-
-        // ------------------------------------------------
-
-        if (!theme.is(basic_json::Object)) return;
-
-        // ------------------------------------------------
-
         states.emplace_back(View::State::Default).interpret(*self, theme);
 
         // ------------------------------------------------
@@ -476,8 +461,7 @@ namespace Kaixo::Theme {
         std::vector<Layer> toDraw;
 
         for (auto& state : states) {
-
-            bool matches = state.state & instr.state || state.state == View::State::Default;
+            bool matches = (state.state & instr.state) == state.state;
             if (!matches) continue;
 
             for (auto& layer : state.layers) {

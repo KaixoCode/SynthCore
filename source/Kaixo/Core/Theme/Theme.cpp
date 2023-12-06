@@ -283,9 +283,9 @@ namespace Kaixo::Theme {
                 // Merge with extended variables
                 while (value.contains("extends")) {
                     basic_json extends = value["extends"];
-                    value.as<basic_json::object>().erase("extends"); // Remove after extending
-                    value.merge(extends);
-                    extends.foreach([&](const basic_json& val) { value.merge(val); });
+                    auto at = value.as<basic_json::object>().erase("extends"); // Remove after extending
+                    at = value.merge(extends, at); // Merge, and insert at iterator where 'extends' was
+                    extends.foreach([&](const basic_json& val) { at = value.merge(val, at); });
                 }
                 break;
             }
