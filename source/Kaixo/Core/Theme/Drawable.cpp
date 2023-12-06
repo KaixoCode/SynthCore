@@ -71,7 +71,19 @@ namespace Kaixo::Theme {
         if (json.try_get("image-clip", arr4) ||
             containsImage && json["image"].try_get("clip", arr4)) 
         {
-            clip = Rect{ arr4[0], arr4[1], arr4[2], arr4[3] };
+            offset = Point{ arr4[0], arr4[1] };
+            size = Point{ arr4[2], arr4[3] };
+        } else {
+            if (json.try_get("image-offset", arr2) ||
+                containsImage && json["image"].try_get("offset", arr2))
+            {
+                offset = Point{ arr2[0], arr2[1] };
+            }
+            if (json.try_get("image-size", arr2) ||
+                containsImage && json["image"].try_get("size", arr2))
+            {
+                size = Point{ arr2[0], arr2[1] };
+            }
         }
 
         // ------------------------------------------------
@@ -111,7 +123,9 @@ namespace Kaixo::Theme {
 
                 int _width = img->getWidth() / multiframe->framesPerRow;
                 int _height = img->getHeight() / Math::ceil(multiframe->numFrames / static_cast<float>(multiframe->framesPerRow));
-                auto _clip = clip ? *clip : Rect{ 0, 0, _width, _height };
+                auto _offset = offset ? *offset : Point{ 0, 0 };
+                auto _size = size ? *size : Point{ _width, _height };
+                auto _clip = Rect{ _offset.x(), _offset.y(), _size.x(), _size.y() };
 
                 // ------------------------------------------------
 
@@ -143,7 +157,9 @@ namespace Kaixo::Theme {
 
                 int _width = img->getWidth();
                 int _height = img->getHeight();
-                auto _clip = clip ? *clip : Rect{ 0, 0, _width, _height };
+                auto _offset = offset ? *offset : Point{ 0, 0 };
+                auto _size = size ? *size : Point{ _width, _height };
+                auto _clip = Rect{ _offset.x(), _offset.y(), _size.x(), _size.y() };
 
                 // ------------------------------------------------
 

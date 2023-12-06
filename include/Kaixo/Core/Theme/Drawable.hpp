@@ -213,7 +213,8 @@ namespace Kaixo::Theme {
             // ------------------------------------------------
 
             Property<ImageID> image{};
-            Property<Rect<int>> clip{};
+            Property<Point<int>> offset{};
+            Property<Point<int>> size{};
             Property<Point<int>> position{};
             Property<Align> align{};
             Property<MultiFrameDescription> multiframe{};
