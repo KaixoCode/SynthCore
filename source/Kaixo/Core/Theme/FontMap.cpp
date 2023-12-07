@@ -212,10 +212,8 @@ namespace Kaixo::Theme {
 
                     x += _letter.clip.width() + _letter.calcPostSpacing(_before, _after);
                 } else {
-
                     g.fillRect(Rect{ x, y, maxHeight * 0.6, maxHeight });
                     x += Math::trunc(maxHeight * 0.6) + 2;
-                    // TODO: missing character rendering
                 }
             }
         }
@@ -243,6 +241,9 @@ namespace Kaixo::Theme {
                 total += letter.clip.width();
                 finalPostSpacing = letter.calcPostSpacing(before, after);
                 total += finalPostSpacing;
+            } else {
+                total += Math::trunc(maxHeight * 0.6) + 2;
+                finalPostSpacing = 2;
             }
         }
 
