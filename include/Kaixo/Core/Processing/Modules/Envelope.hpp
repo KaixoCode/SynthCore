@@ -63,6 +63,7 @@ namespace Kaixo::Processing {
         // ------------------------------------------------
 
         bool idle() const { return m_State == State::Idle; }
+        bool active() const override { return !idle(); }
 
         // ------------------------------------------------
 

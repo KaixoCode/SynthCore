@@ -59,7 +59,7 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
-        virtual void interpret(const basic_json&) = 0;
+        virtual void interpret(const basic_json&) {};
 
         // ------------------------------------------------
 

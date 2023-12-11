@@ -10,14 +10,28 @@ namespace Kaixo {
 
         // ------------------------------------------------
 
-        std::uint8_t r;
-        std::uint8_t g;
-        std::uint8_t b;
-        std::uint8_t a;
+        float r = 0;
+        float g = 0;
+        float b = 0;
+        float a = 0;
 
         // ------------------------------------------------
 
-        operator juce::Colour() const { return juce::Colour::fromRGBA(r, g, b, a); }
+        operator juce::Colour() const { 
+            return juce::Colour::fromRGBA(
+                static_cast<std::uint8_t>(std::clamp(r, 0.f, 255.f)),
+                static_cast<std::uint8_t>(std::clamp(g, 0.f, 255.f)), 
+                static_cast<std::uint8_t>(std::clamp(b, 0.f, 255.f)), 
+                static_cast<std::uint8_t>(std::clamp(a, 0.f, 255.f))
+            );
+        }
+
+        // ------------------------------------------------
+        
+        friend Color operator+(Color a, Color b) { return { a.r + b.r, a.g + b.g, a.b + b.b, a.a + b.a }; };
+        friend Color operator-(Color a, Color b) { return { a.r - b.r, a.g - b.g, a.b - b.b, a.a - b.a }; };
+        friend Color operator*(Color a, float n) { return { a.r * n, a.g * n, a.b * n, a.a * n }; };
+        friend Color operator*(float n, Color a) { return { a.r * n, a.g * n, a.b * n, a.a * n }; };
 
         // ------------------------------------------------
 

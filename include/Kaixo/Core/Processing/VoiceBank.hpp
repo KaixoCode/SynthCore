@@ -48,7 +48,7 @@ namespace Kaixo::Processing {
             std::size_t _firstAvailableVoice = 0;
             for (std::size_t i = 0; i < Count; ++i) {
                 auto& _voice = m_Voices[i];
-                if (_voice.isActive()) _activeVoices++;
+                if (_voice.active()) _activeVoices++;
                 else {
                     _firstAvailableVoice = i;
                     break;
@@ -173,7 +173,19 @@ namespace Kaixo::Processing {
         }
         
         void overrideVoice(Note note, double velocity) {
-            auto _toKill = m_PressedInOrder.front(); // kill oldest active note
+            std::size_t _toKill = npos;
+            // Kill oldest not pressed note
+            for (auto& pressed : m_PressedInOrder) {
+                if (!m_Voices[pressed].pressed) {
+                    _toKill = pressed;
+                    break;
+                }
+            }
+
+            // If all notes pressed, just kill oldest
+            if (_toKill == npos) {
+                _toKill = m_PressedInOrder.front();
+            }
 
             // If none removed from pressed, no need to override, just kill
             // the voice that is in release-mode.

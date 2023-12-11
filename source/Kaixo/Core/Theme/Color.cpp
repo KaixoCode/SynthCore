@@ -20,78 +20,109 @@ namespace Kaixo::Theme {
     Color::operator juce::Colour() const { return m_Graphics ? m_Graphics->get() : m_DefaultColor; }
     Color::operator bool() const { return (bool)m_Graphics; }
 
+    juce::Colour Color::get(View::State state) const { return m_Graphics ? m_Graphics->get(state) : m_DefaultColor; }
+
     // ------------------------------------------------
 
+    void ColorElement::interpret(const basic_json& theme, View::State state) {
+        
+        // ------------------------------------------------
+        
+        auto parseColor = [&](Kaixo::Color& color, const basic_json& theme) -> bool {
+
+            // ------------------------------------------------
+
+            if (!theme.is(basic_json::Array)) return false;
+
+            // ------------------------------------------------
+
+            float red = 0, green = 0, blue = 0, alpha = 0;
+
+            // ------------------------------------------------
+
+            auto& arr = theme.as<basic_json::array>();
+
+            // ------------------------------------------------
+
+            if (arr.size() == 1 &&
+                arr[0].is(basic_json::Number))
+            {
+                red = arr[0].as<float>();
+                green = arr[0].as<float>();
+                blue = arr[0].as<float>();
+                alpha = 255;
+            }
+
+            // ------------------------------------------------
+
+            else if (arr.size() == 2 &&
+                arr[0].is(basic_json::Number) &&
+                arr[1].is(basic_json::Number))
+            {
+                red = arr[0].as<float>();
+                green = arr[0].as<float>();
+                blue = arr[0].as<float>();
+                alpha = arr[1].as<float>();
+            }
+
+            // ------------------------------------------------
+
+            else if (arr.size() == 3 &&
+                arr[0].is(basic_json::Number) &&
+                arr[1].is(basic_json::Number) &&
+                arr[2].is(basic_json::Number))
+            {
+                red = arr[0].as<float>();
+                green = arr[1].as<float>();
+                blue = arr[2].as<float>();
+                alpha = 255;
+            }
+
+            // ------------------------------------------------
+
+            else if (arr.size() == 4 &&
+                arr[0].is(basic_json::Number) &&
+                arr[1].is(basic_json::Number) &&
+                arr[2].is(basic_json::Number) &&
+                arr[3].is(basic_json::Number))
+            {
+                red = arr[0].as<float>();
+                green = arr[1].as<float>();
+                blue = arr[2].as<float>();
+                alpha = arr[3].as<float>();
+            }
+
+            // ------------------------------------------------
+
+            else return false;
+
+            // ------------------------------------------------
+            
+            color = { red, green, blue, alpha };
+            
+            // ------------------------------------------------
+            
+            return true;
+
+            // ------------------------------------------------
+
+        };
+
+        // ------------------------------------------------
+        
+        color.interpret(theme, [&](Kaixo::Color& color, const basic_json& theme) {
+            if (parseColor(color, theme)) return true;
+            if (theme.contains("color") && parseColor(color, theme["color"])) return true;
+            return false;
+        }, state);
+
+        // ------------------------------------------------
+
+    }
+
     void ColorElement::interpret(const basic_json& theme) {
-
-        // ------------------------------------------------
-
-        if (!theme.is(basic_json::Array)) return;
-
-        // ------------------------------------------------
-
-        std::uint8_t red = 0, green = 0, blue = 0, alpha = 0;
-
-        // ------------------------------------------------
-
-        auto& arr = theme.as<basic_json::array>();
-
-        // ------------------------------------------------
-
-        if (arr.size() == 1 &&
-            arr[0].is(basic_json::Number))
-        {
-            red = arr[0].as<std::uint8_t>();
-            green = arr[0].as<std::uint8_t>();
-            blue = arr[0].as<std::uint8_t>();
-            alpha = 255;
-        } 
-
-        // ------------------------------------------------
-
-        else if (arr.size() == 2 &&
-            arr[0].is(basic_json::Number) &&
-            arr[1].is(basic_json::Number))
-        {
-            red = arr[0].as<std::uint8_t>();
-            green = arr[0].as<std::uint8_t>();
-            blue = arr[0].as<std::uint8_t>();
-            alpha = arr[1].as<std::uint8_t>();
-        } 
-
-        // ------------------------------------------------
-
-        else if (arr.size() == 3 &&
-            arr[0].is(basic_json::Number) &&
-            arr[1].is(basic_json::Number) &&
-            arr[2].is(basic_json::Number)) 
-        {
-            red = arr[0].as<std::uint8_t>();
-            green = arr[1].as<std::uint8_t>();
-            blue = arr[2].as<std::uint8_t>();
-            alpha = 255;
-        }
-
-        // ------------------------------------------------
-
-        else if (arr.size() == 4 &&
-            arr[0].is(basic_json::Number) &&
-            arr[1].is(basic_json::Number) &&
-            arr[2].is(basic_json::Number) &&
-            arr[3].is(basic_json::Number)) 
-        {
-            red = arr[0].as<std::uint8_t>();
-            green = arr[1].as<std::uint8_t>();
-            blue = arr[2].as<std::uint8_t>();
-            alpha = arr[3].as<std::uint8_t>();
-        }
-
-        // ------------------------------------------------
-
-        color = { red, green, blue, alpha };
-
-        // ------------------------------------------------
-
+        color.reset();
+        interpret(theme, View::State::Default);
     }
 
     // ------------------------------------------------
@@ -101,8 +132,18 @@ namespace Kaixo::Theme {
             Implementation(const ColorElement* self) : self(self) {}
 
             const ColorElement* self;
+            Animated<Kaixo::Color> color;
+            View::State state = static_cast<View::State>(-1);
 
-            juce::Colour get() const override { return *self; }
+            juce::Colour get(View::State s = View::State::Default) override {
+                if (state != s) {
+                    color = self->color[s];
+                    state = s;
+                }
+                return color.get();
+            }
+
+            bool changing() const override { return color.changing(); }
         };
 
         return { std::make_unique<Implementation>(this) };

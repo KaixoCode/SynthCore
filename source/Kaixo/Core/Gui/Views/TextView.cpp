@@ -11,6 +11,7 @@ namespace Kaixo::Gui {
     {
         setWantsKeyboardFocus(true);
         setMouseCursor(juce::MouseCursor::IBeamCursor);
+        animation(settings.graphics);
     }
     
     // ------------------------------------------------
@@ -87,7 +88,7 @@ namespace Kaixo::Gui {
             Point caretPos = m_Caret < m_CaretEnd ? beginPos : endPos;
 
             auto v = paddedDimensions();
-            g.setColour(settings.graphics.selectionColor);
+            g.setColour(settings.graphics.selectionColor.get(state()));
             if (beginPos.y() == endPos.y()) {
                 g.fillRect(Rect{
                     beginPos.x(),
@@ -118,15 +119,15 @@ namespace Kaixo::Gui {
                 });
             }
             
-            g.setColour(settings.graphics.caretColor);
+            g.setColour(settings.graphics.caretColor.get(state()));
             g.fillRect(Rect{ caretPos.x(), caretPos.y() - 2, 2, 2 + settings.lineHeight });
         }
 
         auto v = paddedDimensions().topLeft().toFloat() - m_Offset;
         auto lines = this->lines();
-        g.setColour(settings.graphics.textColor);
+        g.setColour(settings.graphics.textColor.get(state()));
         for (auto& line : lines) {
-            settings.graphics.font.draw(g, v, line);
+            settings.graphics.font.draw(g, v, line, Theme::TopLeft, true);
             v.y += settings.lineHeight;
         }
     }

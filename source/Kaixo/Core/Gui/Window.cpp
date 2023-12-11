@@ -16,6 +16,9 @@ namespace Kaixo::Gui {
           m_Controller(p), 
           m_Tooltip(std::make_unique<Tooltip>(Context{ *this })),
           m_BaseComponent(createBaseView(Context{ *this }))
+#if HAS_INLIDE_UI_EDITOR
+        , m_Editor(std::make_unique<Editor::Editor>(*this))
+#endif
     {
 
         if (auto l = dynamic_cast<Listener*>(m_BaseComponent.get())) {

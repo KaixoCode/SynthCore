@@ -17,6 +17,8 @@ namespace Kaixo::Gui {
         if (settings.param != NoParam) {
             context.description(parameter(settings.param).description);
         }
+
+        animation(settings.graphics);
     }
 
     // ------------------------------------------------

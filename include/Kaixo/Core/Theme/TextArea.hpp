@@ -12,7 +12,7 @@ namespace Kaixo::Theme {
 
      // ------------------------------------------------
 
-    struct TextArea {
+    struct TextArea : Animation {
 
         // ------------------------------------------------
         
@@ -24,6 +24,10 @@ namespace Kaixo::Theme {
         Color textColor;
         Color selectionColor;
         Color caretColor;
+
+        // ------------------------------------------------
+        
+        bool changing() const override;
 
         // ------------------------------------------------
 

@@ -15,6 +15,8 @@ namespace Kaixo::Gui {
         } else {
             m_Value = settings.resetValue;
         }
+
+        animation(settings.graphics);
     }
 
     Knob::~Knob() {}

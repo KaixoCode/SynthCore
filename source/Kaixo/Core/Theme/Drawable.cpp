@@ -14,7 +14,7 @@ namespace Kaixo::Theme {
 
     // ------------------------------------------------
 
-    void DrawableElement::ImageElement::interpret(Theme& self, const basic_json& json) {
+    void DrawableElement::ImagePart::interpret(const basic_json& json, View::State state) {
 
         // ------------------------------------------------
 
@@ -30,70 +30,113 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
-        if (json.try_get(str) || 
-            json.try_get("image", str) ||
-            containsImage && json["image"].try_get("source", str)) 
-        {
-            image = self.registerImage(str);
-        }
+        image.interpret(json, [&](auto& image, const basic_json& json) {
+            if (json.try_get(str) || 
+                json.try_get("image", str) ||
+                containsImage && json["image"].try_get("source", str)) 
+            {
+                image = self->registerImage(str);
+                return true;
+            }
+
+            return false;
+        }, state);
 
         // ------------------------------------------------
 
-        if (json.contains("frames", basic_json::Number)) {
-            std::size_t frames = json["frames"].as<std::size_t>();
-            std::size_t fprow = 1;
-            json.try_get("frames-per-row", fprow);
-            multiframe = MultiFrameDescription{ frames, fprow };
-        } else if (containsImage && json["image"].contains("frames", basic_json::Number)) {
-            std::size_t frames = json["image"]["frames"].as<std::size_t>();
-            std::size_t fprow = 1;
-            json["image"].try_get("frames-per-row", fprow);
-            multiframe = MultiFrameDescription{ frames, fprow };
-        }
+        multiframe.interpret(json, [&](auto& multiframe, const basic_json& json) {
+            if (json.contains("frames", basic_json::Number)) {
+                std::size_t frames = json["frames"].as<std::size_t>();
+                std::size_t fprow = 1;
+                json.try_get("frames-per-row", fprow);
+                multiframe = MultiFrameDescription{ frames, fprow };
+                return true;
+            } else if (containsImage && json["image"].contains("frames", basic_json::Number)) {
+                std::size_t frames = json["image"]["frames"].as<std::size_t>();
+                std::size_t fprow = 1;
+                json["image"].try_get("frames-per-row", fprow);
+                multiframe = MultiFrameDescription{ frames, fprow };
+                return true;
+            }
+
+            return false;
+        }, state);
         
         // ------------------------------------------------
 
-        if (json.try_get("edges", edg2)) {
-            tiled = TiledDescription{ edg2[0], edg2[1], edg2[0], edg2[1] };
-        } else if (json.try_get("edges", edg4)) {
-            tiled = TiledDescription{ edg4[0], edg4[1], edg4[2], edg4[3] };
-        }
-
-        // ------------------------------------------------
-
-        if (json.try_get("image-position", arr2) || 
-            containsImage && json["image"].try_get("position", arr2)) 
-        {
-            position = Point{ arr2[0], arr2[1] };
-        }
-
-        // ------------------------------------------------
-
-        if (json.try_get("image-clip", arr4) ||
-            containsImage && json["image"].try_get("clip", arr4)) 
-        {
-            offset = Point{ arr4[0], arr4[1] };
-            size = Point{ arr4[2], arr4[3] };
-        } else {
-            if (json.try_get("image-offset", arr2) ||
-                containsImage && json["image"].try_get("offset", arr2))
-            {
-                offset = Point{ arr2[0], arr2[1] };
+        tiled.interpret(json, [&](auto& tiled, const basic_json& json) {
+            if (json.try_get("edges", edg2)) {
+                tiled = TiledDescription{ edg2[0], edg2[1], edg2[0], edg2[1] };
+                return true;
+            } else if (json.try_get("edges", edg4)) {
+                tiled = TiledDescription{ edg4[0], edg4[1], edg4[2], edg4[3] };
+                return true;
             }
-            if (json.try_get("image-size", arr2) ||
-                containsImage && json["image"].try_get("size", arr2))
-            {
-                size = Point{ arr2[0], arr2[1] };
-            }
-        }
+
+            return false;
+        }, state);
 
         // ------------------------------------------------
 
-        if (json.try_get("image-align", str) ||
-            containsImage && json["image"].try_get("align", str))
-        {
-            align = alignFromString(str);
-        }
+        position.interpret(json, [&](auto& position, const basic_json& json) {
+            if (json.try_get("image-position", arr2) || 
+                containsImage && json["image"].try_get("position", arr2)) 
+            {
+                position = Point{ arr2[0], arr2[1] };
+                return true;
+            }
+
+            return false;
+        }, state);
+
+        // ------------------------------------------------
+
+        offset.interpret(json, [&](auto& offset, const basic_json& json) {
+            if (json.try_get("image-clip", arr4) ||
+                containsImage && json["image"].try_get("clip", arr4)) 
+            {
+                offset = Point{ arr4[0], arr4[1] };
+                return true;
+            } else {
+                if (json.try_get("image-offset", arr2) ||
+                    containsImage && json["image"].try_get("offset", arr2))
+                {
+                    offset = Point{ arr2[0], arr2[1] };
+                    return true;
+                }
+            }
+            return false;
+        }, state);
+        
+        size.interpret(json, [&](auto& size, const basic_json& json) {
+            if (json.try_get("image-clip", arr4) ||
+                containsImage && json["image"].try_get("clip", arr4)) 
+            {
+                size = Point{ arr4[2], arr4[3] };
+                return true;
+            } else {
+                if (json.try_get("image-size", arr2) ||
+                    containsImage && json["image"].try_get("size", arr2))
+                {
+                    size = Point{ arr2[0], arr2[1] };
+                    return true;
+                }
+            }
+            return false;
+        }, state);
+
+        // ------------------------------------------------
+
+        align.interpret(json, [&](Align& align, const basic_json& json) {
+            if (json.try_get("image-align", str) ||
+                containsImage && json["image"].try_get("align", str))
+            {
+                align = alignFromString(str);
+                return true;
+            }
+
+            return false;
+        }, state);
 
         // ------------------------------------------------
 
@@ -101,20 +144,38 @@ namespace Kaixo::Theme {
 
     // ------------------------------------------------
 
-    bool DrawableElement::ImageElement::draw(Theme& self, Drawable::Instruction instr) {
+    void DrawableElement::ImagePart::reset() {
+        image = { NoImage };
+        offset = { { 0, 0 } };
+        size = {};
+        position = { { 0, 0 } };
+        align = { Align::TopLeft };
+        multiframe = {};
+        tiled = {};
+    }
+
+    // ------------------------------------------------
+
+    void DrawableElement::ImageDrawable::link(ImagePart& part) {
+    }
+
+    // ------------------------------------------------
+
+    void DrawableElement::ImageDrawable::draw(Drawable::Instruction instr, Theme& self, ImagePart& part) {
 
         // ------------------------------------------------
         
-        if (!image) return false;
+        auto& image = part.image[instr.state];
+        auto& align = part.align[instr.state];
+        auto& position = part.position[instr.state];
+        auto& multiframe = part.multiframe[instr.state];
+        auto& tiled = part.tiled[instr.state];
+        auto& offset = part.offset[instr.state];
+        auto& size = part.size[instr.state];
 
         // ------------------------------------------------
 
-        if (auto img = self.image(*image)) {
-
-            // ------------------------------------------------
-
-            auto _align = align ? *align : Align::TopLeft;
-            auto _position = position ? *position : Point{ 0, 0 };
+        if (auto img = self.image(image)) {
 
             // ------------------------------------------------
 
@@ -124,9 +185,8 @@ namespace Kaixo::Theme {
 
                 int _width = img->getWidth() / multiframe->framesPerRow;
                 int _height = img->getHeight() / Math::ceil(multiframe->numFrames / static_cast<float>(multiframe->framesPerRow));
-                auto _offset = offset ? *offset : Point{ 0, 0 };
                 auto _size = size ? *size : Point{ _width, _height };
-                auto _clip = Rect{ _offset.x(), _offset.y(), _size.x(), _size.y() };
+                auto _clip = Rect{ offset.x(), offset.y(), _size.x(), _size.y() };
 
                 // ------------------------------------------------
 
@@ -139,11 +199,11 @@ namespace Kaixo::Theme {
                 img.draw(FrameInstruction{
                     .graphics = instr.graphics,
                     .description = *multiframe,
-                    .tiled = tiled.get(),
+                    .tiled = tiled ? &tiled.value() : nullptr,
                     .clip = _clip,
-                    .align = _align,
+                    .align = align,
                     .frame = _index,
-                    .position = _position,
+                    .position = position,
                     .bounds = instr.bounds
                 });
 
@@ -155,9 +215,8 @@ namespace Kaixo::Theme {
 
                 int _width = img->getWidth();
                 int _height = img->getHeight();
-                auto _offset = offset ? *offset : Point{ 0, 0 };
                 auto _size = size ? *size : Point{ _width, _height };
-                auto _clip = Rect{ _offset.x(), _offset.y(), _size.x(), _size.y() };
+                auto _clip = Rect{ offset.x(), offset.y(), _size.x(), _size.y() };
 
                 // ------------------------------------------------
 
@@ -173,8 +232,8 @@ namespace Kaixo::Theme {
                         .graphics = instr.graphics,
                         .tiled = nullptr,
                         .clip = _clip,
-                        .align = _align,
-                        .position = _position,
+                        .align = align,
+                        .position = position,
                         .bounds = instr.bounds,
                     });
                 }
@@ -182,93 +241,118 @@ namespace Kaixo::Theme {
                 // ------------------------------------------------
 
             }
-
-            return true;
         }
-
-        return false;
     }
 
     // ------------------------------------------------
 
-    void DrawableElement::TextElement::interpret(Theme& self, const basic_json& json) {
+    bool DrawableElement::ImageDrawable::changing() const { return false; };
+
+    // ------------------------------------------------
+
+    void DrawableElement::TextPart::interpret(const basic_json& json, View::State state) {
 
         // ------------------------------------------------
-        
+
         bool containsText = json.contains("text", basic_json::Object);
 
         // ------------------------------------------------
+        
+        bool contentWasArray = false;
+        content.interpret(json, [&](auto& content, const basic_json& json) {
+            auto parseContent = [&](const basic_json& json) {
+                switch (json.type()) {
+                case basic_json::Array:
+                    contentWasArray = true;
+                    content = Content(true);
+                    json.foreach([&](const basic_json& text) {
+                        if (text.is(basic_json::String)) {
+                            content.text.push_back(text.as<basic_json::string>());
+                        }
+                    });
+                    break;
+                case basic_json::String:
+                    content = Content(false);
+                    content.text.push_back(json.as<basic_json::string>());
+                    break;
+                }
+            };
 
-        auto parseContent = [&](const basic_json& json) {
-            switch (json.type()) {
-            case basic_json::Array:
-                content = Content(true);
-                json.foreach([&](const basic_json& text) {
-                    if (text.is(basic_json::String)) {
-                        content->text.push_back(text.as<basic_json::string>());
-                    }
-                });
-                break;
-            case basic_json::String:
-                content = Content(false);
-                content->text.push_back(json.as<basic_json::string>());
-                break;
+            if (json.contains("text", basic_json::String) || 
+                json.contains("text", basic_json::Array)) 
+            {
+                parseContent(json["text"]);
+                return true;
+            } else if (containsText && json["text"].contains("content")) {
+                parseContent(json["text"]["content"]);
+                return true;
             }
-        };
 
-        if (json.contains("text", basic_json::String) || 
-            json.contains("text", basic_json::Array)) 
-        {
-            parseContent(json["text"]);
-        } else if (containsText && json["text"].contains("content")) {
-            parseContent(json["text"]["content"]);
-        }
-
+            contentWasArray = false;
+            return false;
+        }, state);
+        
         // ------------------------------------------------
-
+        
         std::array<int, 2> arr2{};
-        if (json.try_get("text-position", arr2) || 
-            containsText && json["text"].try_get("position", arr2))
-        {
-            position = Point{ arr2[0], arr2[1] };
-        }
+        std::string str;
+        std::size_t num;
+
+        // ------------------------------------------------
+
+        position.interpret(json, [&](auto& position, const basic_json& json) {
+            if (json.try_get("text-position", arr2) || 
+                containsText && json["text"].try_get("position", arr2))
+            {
+                position = Point{ arr2[0], arr2[1] };
+                return true;
+            }
+
+            return false;
+        }, state);
 
         // ------------------------------------------------
         
-        std::string str;
-        if (json.try_get("text-align", str) ||
-            containsText && json["text"].try_get("align", str))
-        {
-            align = alignFromString(str);
-        }
+        align.interpret(json, [&](auto& align, const basic_json& json) {
+            if (json.try_get("text-align", str) ||
+                containsText && json["text"].try_get("align", str))
+            {
+                align = alignFromString(str);
+                return true;
+            }
+
+            return false;
+        }, state);
+        
         
         // ------------------------------------------------
         
-        std::size_t num;
-        if (json.try_get("frames", str) || 
-            containsText && json["text"].try_get("frames", num))
-        {
-            frames = num;
-        }
+        frames.interpret(json, [&](auto& frames, const basic_json& json) {
+            if (json.try_get("frames", str) ||
+                containsText && json["text"].try_get("frames", num))
+            {
+                frames = num;
+                return true;
+            }
+
+            return false;
+        }, state);
+
 
         // ------------------------------------------------
         
         if (json.contains("text-color")) {
-            color = ColorElement{ &self };
-            color->interpret(json["text-color"]);
+            color.interpret(json["text-color"], state);
         } else if (containsText && json["text"].contains("color")) {
-            color = ColorElement{ &self };
-            color->interpret(json["text"]["color"]);
+            color.interpret(json["text"]["color"], state);
         }
 
         // ------------------------------------------------
                 
         if (json.contains("font")) {
-            font = FontElement{ &self };
-            font->interpret(json["font"]);
+            font.interpret(json["font"]);
         } else if (containsText && json["text"].contains("font")) {
-            font = FontElement{ &self };
-            font->interpret(json["text"]["font"]);
+            font.interpret(json["text"]["font"]);
         }
 
         // ------------------------------------------------
@@ -277,22 +361,31 @@ namespace Kaixo::Theme {
 
     // ------------------------------------------------
 
-    bool DrawableElement::TextElement::draw(Theme& self, Drawable::Instruction instr) {
+    void DrawableElement::TextDrawable::link(TextPart& part) {
+        color = part.color;
+        font = part.font;
+    }
+
+    // ------------------------------------------------
+
+    void DrawableElement::TextDrawable::draw(Drawable::Instruction instr, Theme& self, TextPart& part) {
 
         // ------------------------------------------------
-
-        if (!(font && content)) return false;
+        
+        auto& content = part.content[instr.state];
+        auto& align = part.align[instr.state];
+        auto& position = part.position[instr.state];
+        auto& frames = part.frames[instr.state];
 
         // ------------------------------------------------
-
-        auto _align = align ? *align : Align::Center;
-        auto _position = position ? *position : Point{ 0, 0 };
+        
+        if (content.text.empty()) return;
 
         // ------------------------------------------------
 
         auto _frames = 1ull;
         if (frames) _frames = *frames;
-        else if (content->wasArray) _frames = content->text.size();
+        else if (content.wasArray) _frames = content.text.size();
 
         // ------------------------------------------------
 
@@ -308,9 +401,9 @@ namespace Kaixo::Theme {
         // ------------------------------------------------
                 
         auto _text = 0;
-        if (content->wasArray) {
-            if (instr.index != npos) _text = Math::clamp(instr.index, 0, content->text.size() - 1);
-            else _text = normalToIndex(_value, content->text.size());
+        if (content.wasArray) {
+            if (instr.index != npos) _text = Math::clamp(instr.index, 0, content.text.size() - 1);
+            else _text = normalToIndex(_value, content.text.size());
         }
 
         // ------------------------------------------------
@@ -334,33 +427,45 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
-        if (color) instr.graphics.setColour(*color);
+        instr.graphics.setColour(color.get(instr.state));
 
         // ------------------------------------------------
 
-        Point<float> at = pointFromAlign(_align, instr.bounds) + _position.toFloat();
+        Point<float> at = pointFromAlign(align, instr.bounds) + position.toFloat();
 
         // ------------------------------------------------
 
-        font->draw(instr.graphics, at, format(content->text[_text]), _align, color.hasValue());
-
-        // ------------------------------------------------
-        
-        return true;
+        font.draw(instr.graphics, at, format(content.text[_text]), align, true);
 
         // ------------------------------------------------
 
     }
 
     // ------------------------------------------------
+    
+    void DrawableElement::TextPart::reset() {
+        font = { self };
+        color = { self };
+        content = {};
+        position = { { 0, 0 } };
+        frames = {};
+        align = { Align::Center };
+    }
 
-    void DrawableElement::BackgroundColorElement::interpret(Theme& self, const basic_json& json) {
+    // ------------------------------------------------
+
+    bool DrawableElement::TextDrawable::changing() const { 
+        return color.changing();
+    }
+
+    // ------------------------------------------------
+
+    void DrawableElement::BackgroundColorPart::interpret(const basic_json& json, View::State state) {
 
         // ------------------------------------------------
 
         if (json.contains("background-color")) {
-            color = ColorElement{ &self };
-            color->interpret(json["background-color"]);
+            color.interpret(json["background-color"], state);
         }
 
         // ------------------------------------------------
@@ -369,77 +474,45 @@ namespace Kaixo::Theme {
 
     // ------------------------------------------------
 
-    bool DrawableElement::BackgroundColorElement::draw(Theme& self, Drawable::Instruction instr) {
-        if (!color) return false;
-        instr.graphics.setColour(*color);
+    void DrawableElement::BackgroundColorPart::reset() {
+        color = { self };
+    }
+
+    // ------------------------------------------------
+
+    void DrawableElement::BackgroundColorDrawable::link(BackgroundColorPart& part) {
+        color = part.color;
+    }
+
+    // ------------------------------------------------
+
+    void DrawableElement::BackgroundColorDrawable::draw(Drawable::Instruction instr, Theme& self, BackgroundColorPart& part) {
+        instr.graphics.setColour(color.get(instr.state));
         instr.graphics.fillRect(instr.bounds);
-        return true;
     }
 
     // ------------------------------------------------
 
-    void DrawableElement::Layer::interpret(Theme& self, const basic_json& theme) {
-
-        // ------------------------------------------------
-
-        image.interpret(self, theme);
-        text.interpret(self, theme);
-        backgroundColor.interpret(self, theme);
-
-        // ------------------------------------------------
-
+    bool DrawableElement::BackgroundColorDrawable::changing() const {
+        return color.changing();
     }
 
     // ------------------------------------------------
-            
-    bool DrawableElement::Layer::draw(Theme& self, Drawable::Instruction instr) {
+
+    void DrawableElement::Layer::interpret(const basic_json& theme) {
 
         // ------------------------------------------------
 
-        bool didDraw = false;
-        didDraw |= backgroundColor.draw(self, instr);
-        didDraw |= image.draw(self, instr);
-        didDraw |= text.draw(self, instr);
+        image.reset();
+        text.reset();
+        backgroundColor.reset();
+
+        image.interpret(theme);
+        text.interpret(theme);
+        backgroundColor.interpret(theme);
 
         // ------------------------------------------------
         
-        return didDraw;
-
-        // ------------------------------------------------
-
-    }
-
-    // ------------------------------------------------
-
-    void DrawableElement::State::interpret(Theme& self, const basic_json& theme) {
-
-        // ------------------------------------------------
-
-        layers.emplace_back("__base").interpret(self, theme);
-
-        // ------------------------------------------------
-                
-        if (theme.contains("layers")) {
-            theme["layers"].foreach([&](std::string_view key, const basic_json& layer) {
-                layers.emplace_back(std::string(key)).interpret(self, layer);
-            });
-        }
-
-        // ------------------------------------------------
-
-    }
-
-    // ------------------------------------------------
-        
-    void DrawableElement::interpret(const basic_json& theme) {
-
-        // ------------------------------------------------
-
-        states.clear();
-        states.emplace_back(View::State::Default).interpret(*self, theme);
-
-        // ------------------------------------------------
-
         theme.foreach([&](std::string_view key, const basic_json& theme) {
             View::State state = View::State::Default;
             if (key.contains("hovering")) state |= View::State::Hovering;
@@ -449,7 +522,9 @@ namespace Kaixo::Theme {
             if (key.contains("focused")) state |= View::State::Focused;
             if (key.contains("enabled")) state |= View::State::Enabled;
             if (state != View::State::Default) {
-                states.emplace_back(state).interpret(*self, theme);
+                image.interpret(theme, state);
+                text.interpret(theme, state);
+                backgroundColor.interpret(theme, state);
             }
         });
 
@@ -459,37 +534,54 @@ namespace Kaixo::Theme {
 
     // ------------------------------------------------
 
-    void DrawableElement::draw(Drawable::Instruction instr) {
+    void DrawableElement::LayerDrawable::link(Layer& part) {
+        identifier = part.identifier;
+        backgroundColor.link(part.backgroundColor);
+        image.link(part.image);
+        text.link(part.text);
+    }
+
+    // ------------------------------------------------
+            
+    void DrawableElement::LayerDrawable::draw(Drawable::Instruction instr, Theme& self, Layer& part) {
 
         // ------------------------------------------------
 
-        std::vector<Layer> toDraw;
-
-        for (auto& state : states) {
-            bool matches = (state.state & instr.state) == state.state;
-            if (!matches) continue;
-
-            for (auto& layer : state.layers) {
-
-                bool layerAlreadyExists = false;
-                for (auto& drawLayer : toDraw) {
-                    if (drawLayer.identifier == layer.identifier) {
-                        drawLayer = layer;
-                        layerAlreadyExists = true;
-                        break;
-                    }
-                }
-
-                if (!layerAlreadyExists) {
-                    toDraw.emplace_back() = layer;
-                }
-            }
-        }
+        backgroundColor.draw(instr, self, part.backgroundColor);
+        image.draw(instr, self, part.image);
+        text.draw(instr, self, part.text);
 
         // ------------------------------------------------
 
-        for (auto& drawLayer : toDraw) {
-            drawLayer.draw(*self, instr);
+    }
+
+    // ------------------------------------------------
+    
+    bool DrawableElement::LayerDrawable::changing() const {
+        return backgroundColor.changing()
+            || image.changing()
+            || text.changing();
+    }
+
+    // ------------------------------------------------
+
+    void DrawableElement::interpret(const basic_json& theme) {
+
+        // ------------------------------------------------
+
+        layers.clear();
+        auto& l = layers.emplace_back(self); 
+        l.identifier = "__base";
+        l.interpret(theme);
+
+        // ------------------------------------------------
+                
+        if (theme.contains("layers")) {
+            theme["layers"].foreach([&](std::string_view key, const basic_json& layer) {
+                auto& l = layers.emplace_back(self);
+                l.identifier = key;
+                l.interpret(layer);
+            });
         }
 
         // ------------------------------------------------
@@ -498,34 +590,71 @@ namespace Kaixo::Theme {
 
     // ------------------------------------------------
 
+    struct Implementation : public Drawable::Interface {
+        Implementation(DrawableElement* self) 
+            : self(self) 
+        {}
+
+        DrawableElement* self;
+        std::vector<DrawableElement::LayerDrawable> layers{};
+
+        void resync() {
+            bool changed = layers.size() != self->layers.size();
+
+            if (!changed) {
+                for (std::size_t i = 0; i < self->layers.size(); ++i) {
+                    if (self->layers[i].identifier != layers[i].identifier) {
+                        changed = true;
+                        break;
+                    }
+                }
+            }
+
+            if (changed) {
+                layers.clear();
+
+                for (auto& layer : self->layers) {
+                    layers.emplace_back().link(layer);
+                }
+            }
+        }
+
+        void draw(Drawable::Instruction instr) override {
+            resync();
+            for (std::size_t i = 0; i < self->layers.size(); ++i) {
+                layers[i].draw(instr, *self->self, self->layers[i]);
+            }
+        }
+
+        bool changing() const override { 
+            for (auto& layer : layers) {
+                if (layer.changing()) return true;
+            }
+            return false;
+        }
+    };
+
     DrawableElement::operator Drawable() {
-        struct Implementation : public Drawable::Interface {
-            Implementation(DrawableElement* self) : self(self) {}
-
-            DrawableElement* self;
-
-            void draw(Drawable::Instruction instr) const override { self->draw(instr); }
-        };
-
         return { std::make_unique<Implementation>(this) };
     }
 
     // ------------------------------------------------
 
+    struct Implementation2 : public Implementation {
+        Implementation2(DrawableElement* self, std::size_t index) 
+            : Implementation(self), index(index) 
+        {}
+
+        std::size_t index;
+
+        void draw(Drawable::Instruction instr) override {
+            instr.index = index; // Override index
+            Implementation::draw(instr);
+        }
+    };
+
     Drawable DrawableElement::operator[](std::size_t i) {
-        struct Implementation : public Drawable::Interface {
-            Implementation(DrawableElement* self, std::size_t index) : self(self), index(index) {}
-
-            std::size_t index;
-            DrawableElement* self;
-
-            void draw(Drawable::Instruction instr) const override { 
-                instr.index = index; // Override index
-                self->draw(instr); 
-            }
-        };
-
-        return { std::make_unique<Implementation>(this, i) };
+        return { std::make_unique<Implementation2>(this, i) };
     }
 
     // ------------------------------------------------

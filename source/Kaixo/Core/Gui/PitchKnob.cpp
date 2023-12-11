@@ -6,8 +6,13 @@ namespace Kaixo::Gui {
 
     // ------------------------------------------------
 
-    PitchKnob::PitchKnob(Context c, Settings settings)
-        : Knob(c, std::move(settings.knob)), settings(std::move(settings)) {}
+    PitchKnob::PitchKnob(Context c, Settings s)
+        : Knob(c, std::move(s.knob)), settings(std::move(s)) 
+    {
+        animation(settings.detune);
+        animation(settings.sign);
+        animation(settings.transpose);
+    }
 
     // ------------------------------------------------
 

@@ -6,6 +6,14 @@
 namespace Kaixo::Theme {
 
     // ------------------------------------------------
+    
+    bool TextArea::changing() const {
+        return textColor.changing() 
+            || caretColor.changing() 
+            || selectionColor.changing();
+    }
+
+    // ------------------------------------------------
 
     void TextAreaElement::interpret(const basic_json& theme) {
         if (theme.contains("font")) font.interpret(theme["font"]);
@@ -17,12 +25,12 @@ namespace Kaixo::Theme {
     // ------------------------------------------------
 
     TextAreaElement::operator TextArea() const {
-        return TextArea{ 
-            .font = font,
-            .textColor = textColor,
-            .selectionColor = selectionColor,
-            .caretColor = caretColor,
-        };
+        TextArea result;
+        result.font = font;
+        result.textColor = textColor;
+        result.selectionColor = selectionColor;
+        result.caretColor = caretColor;
+        return result;
     }
 
     // ------------------------------------------------

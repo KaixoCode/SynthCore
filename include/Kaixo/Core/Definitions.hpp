@@ -85,6 +85,9 @@ namespace Kaixo {
 
         // ------------------------------------------------
 
+        Rect()
+            : juce::Rectangle<Ty>(0, 0, 0, 0) {}
+
         Rect(juce::Rectangle<Ty> o)
             : juce::Rectangle<Ty>(o) {}
 
@@ -163,6 +166,9 @@ namespace Kaixo {
     struct Point : juce::Point<Ty> {
 
         // ------------------------------------------------
+
+        Point()
+            : juce::Point<Ty>(0, 0) {}
 
         Point(juce::Point<Ty> o)
             : juce::Point<Ty>(o) {}

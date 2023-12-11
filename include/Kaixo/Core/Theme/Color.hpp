@@ -1,5 +1,6 @@
 #pragma once
 #include "Kaixo/Core/Definitions.hpp"
+#include "Kaixo/Core/Theme/StateLinked.hpp"
 #include "Kaixo/Core/Theme/Element.hpp"
 #include "Kaixo/Core/Theme/Container.hpp"
 #include "Kaixo/Core/Theme/ZoomMultiplier.hpp"
@@ -7,7 +8,7 @@
 // ------------------------------------------------
 
 namespace Kaixo::Theme {
-
+    
     // ------------------------------------------------
 
     /*
@@ -19,13 +20,13 @@ namespace Kaixo::Theme {
 
     // ------------------------------------------------
     
-    class Color {
+    class Color : public Animation {
     public:
 
         // ------------------------------------------------
 
-        struct Interface {
-            virtual juce::Colour get() const = 0;
+        struct Interface : Animation {
+            virtual juce::Colour get(View::State state = View::State::Default) = 0;
         };
 
         // ------------------------------------------------
@@ -38,6 +39,14 @@ namespace Kaixo::Theme {
 
         operator juce::Colour() const;
         operator bool() const;
+
+        // ------------------------------------------------
+
+        juce::Colour get(View::State state) const;
+
+        // ------------------------------------------------
+        
+        bool changing() const override { return m_Graphics ? m_Graphics->changing() : false; }
 
         // ------------------------------------------------
 
@@ -59,20 +68,16 @@ namespace Kaixo::Theme {
         using Element::Element;
 
         // ------------------------------------------------
-
-        Kaixo::Color color{ 0, 0, 0, 0, };
+        
+        StateLinked<Animated<Kaixo::Color>> color;
 
         // ------------------------------------------------
 
+        void interpret(const basic_json& theme, View::State state);
         void interpret(const basic_json& theme) override;
 
         // ------------------------------------------------
 
-        operator juce::Colour() const { return color; }
-        operator Kaixo::Color() const { return color; }
-
-        // ------------------------------------------------
-        
         operator Color() const;
 
         // ------------------------------------------------

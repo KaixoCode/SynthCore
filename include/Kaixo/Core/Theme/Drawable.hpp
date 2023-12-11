@@ -1,6 +1,9 @@
 #pragma once
 #include "Kaixo/Core/Definitions.hpp"
 #include "Kaixo/Core/Gui/View.hpp"
+#include "Kaixo/Core/Theme/StateLinked.hpp"
+#include "Kaixo/Core/Theme/Property.hpp"
+#include "Kaixo/Core/Theme/Stateful.hpp"
 #include "Kaixo/Core/Theme/Element.hpp"
 #include "Kaixo/Core/Theme/Container.hpp"
 #include "Kaixo/Core/Theme/Image.hpp"
@@ -52,7 +55,7 @@ namespace Kaixo::Theme {
 
      // ------------------------------------------------
 
-    class Drawable {
+    class Drawable : public Animation {
     public:
 
         // ------------------------------------------------
@@ -69,7 +72,8 @@ namespace Kaixo::Theme {
         // ------------------------------------------------
 
         struct Interface {
-            virtual void draw(Instruction) const = 0;
+            virtual void draw(Instruction) = 0;
+            virtual bool changing() const = 0;
         };
 
         // ------------------------------------------------
@@ -87,6 +91,10 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
+        bool changing() const override { return m_Graphics ? m_Graphics->changing() : false; }
+
+        // ------------------------------------------------
+
     private:
         std::unique_ptr<Interface> m_Graphics{};
 
@@ -96,109 +104,7 @@ namespace Kaixo::Theme {
 
     // ------------------------------------------------
 
-    template<class Ty>
-    union Property {
-        enum class Type { Reference, Value, Empty } m_Type;
-
-        // ------------------------------------------------
-
-        struct Reference {
-            Type type = Type::Reference;
-            Ty* value = nullptr;
-        } m_Reference;
-
-        Reference ref() { return { hasValue() ? Type::Reference : Type::Empty, get() }; }
-
-        // ------------------------------------------------
-
-        struct Value {
-            Type type = Type::Value;
-            Ty value{};
-        } m_Value;
-
-        // ------------------------------------------------
-
-    public:
-
-        // ------------------------------------------------
-
-        Property() : m_Reference(Type::Empty, nullptr) {}
-        Property(std::nullptr_t) : Property() {}
-        Property(Ty&& value) : m_Value(Type::Value, std::move(value)) {}
-        Property(const Ty& value) : m_Value(Type::Value, value) {}
-        Property(Property& other) : m_Reference(other.ref()) {}
-        Property(const Property&) = delete;
-        Property(Property&& other) { 
-            switch (other.m_Type) {
-            case Type::Reference: new (&m_Reference) Reference{ std::move(other.m_Reference) };
-            case Type::Value: new (&m_Value) Value{ std::move(other.m_Value) };
-            case Type::Empty: new (&m_Reference) Reference{ Type::Empty, nullptr };
-            }
-            other.clean();
-            new (&other.m_Reference) Reference { Type::Empty, nullptr };
-        }
-
-        Property& operator=(std::nullptr_t) { clean(); new (&m_Reference) Reference { Type::Empty, nullptr }; return *this; }
-        Property& operator=(Ty&& value) { clean(); new(&m_Value) Value { Type::Value, std::move(value) }; return *this; }
-        Property& operator=(const Ty& value) { clean(); new (&m_Value) Value { Type::Value, value }; return *this; }
-        Property& operator=(Property& other) {
-            if (!other.hasValue()) return *this; 
-            clean(); 
-            new (&m_Reference) Reference{ other.ref() };
-            return *this;
-        }
-
-        // ------------------------------------------------
-
-        ~Property() { clean(); }
-
-        // ------------------------------------------------
-        
-        Ty* get() {
-            switch (m_Type) {
-            case Type::Reference: return m_Reference.value;
-            case Type::Value: return &m_Value.value;
-            default: return nullptr;
-            }
-        }
-        
-        const Ty* get() const {
-            switch (m_Type) {
-            case Type::Reference: return m_Reference.value;
-            case Type::Value: return &m_Value.value;
-            default: return nullptr;
-            }
-        }
-
-        Ty* operator->() { return get(); }
-        const Ty* operator->() const { return get(); }
-        
-        Ty* operator&() { return get(); }
-        const Ty* operator&() const { return get(); }
-        
-        Ty& operator*() { return *get(); }
-        const Ty& operator*() const { return *get(); }
-
-        // ------------------------------------------------
-
-        bool hasValue() const { return get() != nullptr; }
-        operator bool() const { return hasValue(); }
-
-        // ------------------------------------------------
-        
-    private:
-        
-        // ------------------------------------------------
-        
-        void clean() { if (m_Type == Type::Value) m_Value.~Value(); }
-
-        // ------------------------------------------------
-
-    };
-
-    // ------------------------------------------------
-
-    class DrawableElement : Element {
+    class DrawableElement : public Element {
     public:
 
         // ------------------------------------------------
@@ -207,132 +113,110 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
-        struct ImageElement {
+        struct ImagePart : Element {
+            using Element::Element;
 
-            // ------------------------------------------------
+            StateLinked<ImageID> image{};
+            StateLinked<Point<int>> offset{};
+            StateLinked<std::optional<Point<int>>> size{};
+            StateLinked<Point<int>> position{};
+            StateLinked<Align> align{};
+            StateLinked<std::optional<MultiFrameDescription>> multiframe{};
+            StateLinked<std::optional<TiledDescription>> tiled{};
 
-            Property<ImageID> image{};
-            Property<Point<int>> offset{};
-            Property<Point<int>> size{};
-            Property<Point<int>> position{};
-            Property<Align> align{};
-            Property<MultiFrameDescription> multiframe{};
-            Property<TiledDescription> tiled{};
+            void reset();
+            void interpret(const basic_json& theme, View::State state = View::State::Default);
+        };
 
-            // ------------------------------------------------
-            
-            void interpret(Theme& self, const basic_json& json);
-
-            // ------------------------------------------------
-
-            bool draw(Theme& self, Drawable::Instruction instr);
-
-            // ------------------------------------------------
-
+        struct ImageDrawable : Animation {
+            void link(ImagePart& part);
+            void draw(Drawable::Instruction instr, Theme& self, ImagePart& part);
+            bool changing() const override;
         };
 
         // ------------------------------------------------
 
-        struct TextElement {
-
-            // ------------------------------------------------
+        struct TextPart : Element {
+            using Element::Element;
 
             struct Content {
                 bool wasArray = false;
-                std::vector<std::string> text;
+                std::vector<std::string> text{};
             };
 
-            Property<Content> content{};
-            Property<Point<int>> position{};
-            Property<std::size_t> frames{};
-            Property<Align> align{};
-            Property<ColorElement> color{};
-            Property<FontElement> font{};
+            StateLinked<Content> content{};
+            StateLinked<Point<int>> position{};
+            StateLinked<std::optional<std::size_t>> frames{};
+            StateLinked<Align> align{};
+            ColorElement color{ self };
+            FontElement font{ self };
 
-            // ------------------------------------------------
-
-            void interpret(Theme& self, const basic_json& json);
-
-            // ------------------------------------------------
-
-            bool draw(Theme& self, Drawable::Instruction instr);
-
-            // ------------------------------------------------
-
+            void reset();
+            void interpret(const basic_json& theme, View::State state = View::State::Default);
         };
-        
-        // ------------------------------------------------
 
-        struct BackgroundColorElement {
+        struct TextDrawable : Animation {
 
-            // ------------------------------------------------
+            Color color;
+            Font font;
 
-            Property<ColorElement> color{};
-
-            // ------------------------------------------------
-
-            void interpret(Theme& self, const basic_json& json);
-
-            // ------------------------------------------------
-
-            bool draw(Theme& self, Drawable::Instruction instr);
-
-            // ------------------------------------------------
-
+            void link(TextPart& part);
+            void draw(Drawable::Instruction instr, Theme& self, TextPart& part);
+            bool changing() const override;
         };
 
         // ------------------------------------------------
 
-        struct Layer {
+        struct BackgroundColorPart : Element {
+            using Element::Element;
 
-            // ------------------------------------------------
+            ColorElement color{ self };
 
+            void reset();
+            void interpret(const basic_json& theme, View::State state = View::State::Default);
+        };
+
+        struct BackgroundColorDrawable : Animation {
+
+            Color color;
+
+            void link(BackgroundColorPart& part);
+            void draw(Drawable::Instruction instr, Theme& self, BackgroundColorPart& part);
+            bool changing() const override;
+        };
+
+        // ------------------------------------------------
+
+        struct Layer : Element {
+            using Element::Element;
             std::string identifier{}; // used for identifying the layer
 
-            // ------------------------------------------------
+            ImagePart image{ self };
+            TextPart text{ self };
+            BackgroundColorPart backgroundColor{ self };
 
-            ImageElement image{};
-            TextElement text{};
-            BackgroundColorElement backgroundColor{};
-
-            // ------------------------------------------------
-
-            void interpret(Theme& self, const basic_json& theme);
-
-            // ------------------------------------------------
-            
-            bool draw(Theme& self, Drawable::Instruction instr);
-
-            // ------------------------------------------------
-
+            void interpret(const basic_json& theme);
         };
 
-        struct State {
+        struct LayerDrawable : Animation {
+            std::string identifier{}; // used for identifying the layer
 
-            // ------------------------------------------------
+            ImageDrawable image{ };
+            TextDrawable text{ };
+            BackgroundColorDrawable backgroundColor{ };
 
-            View::State state = View::State::Default;
-            std::vector<Layer> layers{};
-            
-            // ------------------------------------------------
-
-            void interpret(Theme& self, const basic_json& theme);
-
-            // ------------------------------------------------
-
+            void link(Layer& part);
+            void draw(Drawable::Instruction instr, Theme& self, Layer& part);
+            bool changing() const override;
         };
 
         // ------------------------------------------------
         
-        std::vector<State> states;
+        std::vector<Layer> layers;
 
         // ------------------------------------------------
 
         void interpret(const basic_json& theme) override;
-
-        // ------------------------------------------------
-
-        void draw(Drawable::Instruction instr);
 
         // ------------------------------------------------
 

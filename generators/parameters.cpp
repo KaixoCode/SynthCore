@@ -743,7 +743,7 @@ namespace Kaixo::Generator {
                     add("p.goal = val;", 3);
                     add("database.setChanging(" + idstr + ");", 3);
                 } else {
-                    add("if (database.self().isActive()) {", 3);
+                    add("if (database.self().active()) {", 3);
                     add("p.goal = val;", 4);
                     add("database.setChanging(" + idstr + ");", 4);
                     add("} else {", 3);

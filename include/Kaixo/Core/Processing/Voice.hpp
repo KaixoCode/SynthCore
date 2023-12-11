@@ -31,9 +31,6 @@ namespace Kaixo::Processing {
 
         // ------------------------------------------------
 
-        // Should return true when playing sound
-        virtual bool isActive() const { return false; }
-
         virtual void trigger(bool legato) = 0;
         virtual void release() = 0;
 

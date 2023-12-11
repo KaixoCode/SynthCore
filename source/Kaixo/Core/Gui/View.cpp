@@ -96,6 +96,20 @@ namespace Kaixo::Gui {
             if (view->wantsIdle()) 
                 view->onIdle();
         }
+
+        for (auto& anim : m_LinkedAnimations) {
+            if (anim->changing()) {
+                repaint();
+                break;
+            }
+        }
+    }
+
+    // ------------------------------------------------
+    
+    void View::animation(Animation& anim) {
+        wantsIdle(true); // Need idle when animation
+        m_LinkedAnimations.push_back(&anim);
     }
 
     // ------------------------------------------------

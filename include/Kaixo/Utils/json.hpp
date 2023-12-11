@@ -88,11 +88,12 @@ namespace Kaixo {
             }
             
             // Inserts at iterator if not exists yet
-            void insert(value_type value, iterator where) {
+            iterator insert(value_type value, iterator where) {
                 if (contains(value.first)) {
                     operator[](value.first) = std::move(value.second);
+                    return where;
                 } else {
-                    m_Values.insert(where, value);
+                    return ++m_Values.insert(where, value);
                 }
             }
 
@@ -379,7 +380,7 @@ namespace Kaixo {
             case Object:
                 other.foreach([&](const string& key, const basic_json& val) {
                     if (!contains(key)) {
-                        as<object>().insert({ key, val }, where++);
+                        where = as<object>().insert({ key, val }, where);
                     } else if (val.is(Object)) {
                         operator[](key).merge(val);
                     }

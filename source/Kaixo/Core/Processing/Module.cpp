@@ -32,6 +32,15 @@ namespace Kaixo::Processing {
 
     // ------------------------------------------------
 
+    bool ModuleContainer::active() const {
+        for (auto& module : m_Modules) {
+            if (module->active()) return true;
+        }
+        return false;
+    }
+
+    // ------------------------------------------------
+
     void ModuleContainer::param(ParamID id, ParamValue value) {
         for (auto& module : m_Listeners)
             module->param(id, value);

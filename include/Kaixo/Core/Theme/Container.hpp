@@ -9,7 +9,6 @@ namespace Kaixo::Theme {
     // ------------------------------------------------
     
     class Container;
-    class Stateful;
 
     // ------------------------------------------------
     
@@ -24,8 +23,6 @@ namespace Kaixo::Theme {
         
         DynamicElement operator[](std::string_view name);
         
-        Stateful operator[](std::size_t index);
-
         // ------------------------------------------------
 
     private:

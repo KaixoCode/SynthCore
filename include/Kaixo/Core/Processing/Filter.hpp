@@ -667,8 +667,12 @@ namespace Kaixo::Processing {
     // ------------------------------------------------
 
     template<std::size_t N, class Sample = double, class MathQuality = Math, std::size_t Parallel = 1, bool Quadruple = true>
-    class BatchEqualizer : public std::array<Biquad<Sample, MathQuality, Parallel, Quadruple>, N> {
+    class BatchEqualizer : public std::array<Biquad<Sample, MathQuality, Parallel, Quadruple>, N>, public Module {
     public:
+
+        // ------------------------------------------------
+        
+        void process() override {}; // No default process
 
         template<class Type>
         Type processBatch(Type in, std::size_t index, std::size_t i = 0) {
@@ -680,7 +684,18 @@ namespace Kaixo::Processing {
             for (auto& filter : *this) filter.finalizeBatches();
         }
 
-        void reset() { for (auto& filter : *this) filter.reset(); }
+        // ------------------------------------------------
+
+        void reset() override { for (auto& filter : *this) filter.reset(); }
+
+        void prepare(double sampleRate, std::size_t maxBufferSize) override {
+            for (auto& filter : *this) {
+                filter.sampleRate(sampleRate);
+            }
+        }
+
+        // ------------------------------------------------
+
     };
 
     // Simple specialization for 0 filters, does nothing

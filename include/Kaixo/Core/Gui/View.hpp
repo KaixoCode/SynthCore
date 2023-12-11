@@ -23,6 +23,12 @@ namespace Kaixo::Gui {
 
     // ------------------------------------------------
     
+    struct Animation {
+        virtual bool changing() const = 0;
+    };
+
+    // ------------------------------------------------
+    
     class View : public juce::Component {
     public:
         using ViewVector = std::vector<std::unique_ptr<View>>;
@@ -156,6 +162,10 @@ namespace Kaixo::Gui {
         typename Attr::Type& operator[](Attr) { return attribute(Attr{}); }
 
         // ------------------------------------------------
+        
+        void animation(Animation& anim);
+
+        // ------------------------------------------------
 
     protected:
         std::map<std::type_index, std::map<std::string_view, std::any>> m_Attributes;
@@ -163,6 +173,7 @@ namespace Kaixo::Gui {
         UnevaluatedRect m_Dimensions{ 0, 0, Width, Height };
         bool m_UseDimensions = true;
         std::string m_Description{};
+        std::vector<Animation*> m_LinkedAnimations{};
 
         // ------------------------------------------------
 
