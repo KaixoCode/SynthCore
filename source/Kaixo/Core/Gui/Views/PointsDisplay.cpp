@@ -167,7 +167,7 @@ namespace Kaixo::Gui {
 
         auto v = paddedDimensions();
 
-        g.setColour(settings.grid.color);
+        g.setColour(settings.grid.color.get(state()));
         for (std::size_t i = 1; i < settings.grid.x; i++) {
             float x = v.x() + Math::trunc(0.5 * i * v.width() / settings.grid.x) * 2;
             g.fillRect(Rect<float>{ x, v.y(), 2, v.height() });
@@ -179,7 +179,7 @@ namespace Kaixo::Gui {
         }
 
         if (settings.phase.display) {
-            g.setColour(settings.phase.color);
+            g.setColour(settings.phase.color.get(state()));
             float x = v.x() + m_CurrentPhase * v.width();
             g.fillRect(Rect<float>{ x, v.y(), 2, v.height() });
         }
@@ -209,7 +209,7 @@ namespace Kaixo::Gui {
                 path.lineTo(Kaixo::Point<float>{ v.x() + v.width(), v.y() + settings.line.end(v) });
             }
 
-            g.setColour(settings.line.fill);
+            g.setColour(settings.line.fill.get(state()));
             g.fillPath(path);
         }
 
@@ -222,7 +222,7 @@ namespace Kaixo::Gui {
                 path.lineTo({ x + v.x(), y + v.y() });
             }
 
-            g.setColour(settings.line.stroke);
+            g.setColour(settings.line.stroke.get(state()));
             g.strokePath(path, juce::PathStrokeType{ settings.line.strokeWeight });
         }
 

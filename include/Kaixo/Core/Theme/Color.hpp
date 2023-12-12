@@ -26,7 +26,7 @@ namespace Kaixo::Theme {
         // ------------------------------------------------
 
         struct Interface : Animation {
-            virtual juce::Colour get(View::State state = View::State::Default) = 0;
+            virtual Kaixo::Color get(View::State state = View::State::Default) = 0;
         };
 
         // ------------------------------------------------
@@ -38,11 +38,12 @@ namespace Kaixo::Theme {
         // ------------------------------------------------
 
         operator juce::Colour() const;
+        operator Kaixo::Color() const;
         operator bool() const;
 
         // ------------------------------------------------
 
-        juce::Colour get(View::State state) const;
+        Kaixo::Color get(View::State state) const;
 
         // ------------------------------------------------
         

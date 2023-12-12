@@ -16,11 +16,12 @@ namespace Kaixo::Theme {
     {}
 
     // ------------------------------------------------
-    
-    Color::operator juce::Colour() const { return m_Graphics ? m_Graphics->get() : m_DefaultColor; }
+
+    Color::operator juce::Colour() const { return operator Kaixo::Color(); }
+    Color::operator Kaixo::Color() const { return m_Graphics ? m_Graphics->get() : m_DefaultColor; }
     Color::operator bool() const { return (bool)m_Graphics; }
 
-    juce::Colour Color::get(View::State state) const { return m_Graphics ? m_Graphics->get(state) : m_DefaultColor; }
+    Kaixo::Color Color::get(View::State state) const { return m_Graphics ? m_Graphics->get(state) : m_DefaultColor; }
 
     // ------------------------------------------------
 
@@ -135,7 +136,7 @@ namespace Kaixo::Theme {
             Animated<Kaixo::Color> color;
             View::State state = static_cast<View::State>(-1);
 
-            juce::Colour get(View::State s = View::State::Default) override {
+            Kaixo::Color get(View::State s = View::State::Default) override {
                 if (state != s) {
                     color = self->color[s];
                     state = s;
