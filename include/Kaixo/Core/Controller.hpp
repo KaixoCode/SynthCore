@@ -133,6 +133,7 @@ namespace Kaixo {
 
         ParamID m_PitchWheelLinkedParameter = NoParam;
         ParamID m_ModWheelLinkedParameter = NoParam;
+        ParamID m_AftertouchLinkedParameter = NoParam;
 
         // ------------------------------------------------
         

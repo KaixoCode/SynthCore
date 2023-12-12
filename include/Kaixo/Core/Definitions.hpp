@@ -68,7 +68,7 @@ namespace Kaixo {
 
     // ------------------------------------------------
 
-    using Note = std::int32_t;
+    using Note = float; // Should be int32_t, but this allows gliding
 
     // ------------------------------------------------
 

@@ -81,9 +81,15 @@ namespace Kaixo::Processing {
         }
 
         void trigger(bool retrigger = false) {
-            m_State = State::Delay;
-            m_Phase = 0;
-            m_AttackValue = retrigger ? output : m_AttackLevel;
+            if (retrigger && !idle()) {
+                m_State = State::Attack;
+                m_Phase = 0;
+                m_AttackValue = output;
+            } else {
+                m_State = State::Delay;
+                m_Phase = 0;
+                m_AttackValue = m_AttackLevel;
+            }
         }
 
         // ------------------------------------------------
@@ -111,7 +117,7 @@ namespace Kaixo::Processing {
                     m_State = State::Decay;
                 }
                 else {
-                    output = m_AttackValue + (m_DecayLevel - m_AttackLevel) * Math::Fast::curve(m_Phase, m_AttackCurve);
+                    output = m_AttackValue + (m_DecayLevel - m_AttackValue) * Math::Fast::curve(m_Phase, m_AttackCurve);
                 }
                 break;
             case State::Decay:

@@ -139,14 +139,19 @@ namespace Kaixo {
                 m_Processor->param(m_PitchWheelLinkedParameter, message.getPitchWheelValue() / 16384.);
                 continue;
             }
+            
+            if (message.isAftertouch() && m_AftertouchLinkedParameter != NoParam) {
+                m_Processor->param(m_AftertouchLinkedParameter, message.getAfterTouchValue() / 127.);
+                continue;
+            }
 
             if (message.isNoteOn()) {
-                m_Processor->noteOn(message.getNoteNumber(), message.getVelocity() / 127.);
+                m_Processor->noteOn(message.getNoteNumber(), message.getVelocity() / 127., message.getChannel());
                 continue;
             }
 
             if (message.isNoteOff()) {
-                m_Processor->noteOff(message.getNoteNumber(), message.getVelocity() / 127.);
+                m_Processor->noteOff(message.getNoteNumber(), message.getVelocity() / 127., message.getChannel());
                 continue;
             }
         }

@@ -19,11 +19,14 @@ namespace Kaixo::Processing {
 
         // ------------------------------------------------
 
-        Note fromNote = -1;
-        Note note = -1;
+        Note fromNote = -1; // Previous note (to allow gliding)
+        Note note = -1; // Pressed note
+        int channel = 0;
         float velocity = 0;
         float releaseVelocity = 0;
         bool pressed = false; // True after trigger is called, false after release is called
+        bool legato = false;
+        bool stolen = false;
 
         // ------------------------------------------------
 
@@ -31,15 +34,13 @@ namespace Kaixo::Processing {
 
         // ------------------------------------------------
 
-        virtual void trigger(bool legato) = 0;
+        virtual void trigger() = 0;
         virtual void release() = 0;
 
-        virtual float currentNote() const { return note; }
+        virtual Note currentNote() const { return note; }
 
         // ------------------------------------------------
 
-    private:
-        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Voice)
     };
 
     // ------------------------------------------------

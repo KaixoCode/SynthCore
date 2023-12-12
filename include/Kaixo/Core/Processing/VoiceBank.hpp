@@ -17,24 +17,19 @@ namespace Kaixo::Processing {
 
         // ------------------------------------------------
 
-        VoiceBank() {
-            for (auto& voice : m_Voices)
-                registerModule(voice);
-        }
-
-        virtual ~VoiceBank() = default;
-
-        // ------------------------------------------------
-        
-        Stereo output;
+        enum class Mode { RoundRobin, Lifo };
 
         // ------------------------------------------------
 
-        void maxVoices(std::size_t active) { 
+        VoiceBank() { for (auto& voice : m_Voices) registerModule(voice); }
+
+        // ------------------------------------------------
+
+        void maxVoices(std::size_t active) {
             active = Math::clamp(active, 1ull, Count);
             if (m_MaxVoices != active) {
                 m_MaxVoices = active;
-                m_PressedInOrder.clear();
+                killAll();
             }
         }
 
@@ -43,43 +38,113 @@ namespace Kaixo::Processing {
 
         // ------------------------------------------------
 
-        void noteOn(Note note, double velocity) {
-            std::size_t _activeVoices = 0;
-            std::size_t _firstAvailableVoice = 0;
-            for (std::size_t i = 0; i < Count; ++i) {
-                auto& _voice = m_Voices[i];
-                if (_voice.active()) _activeVoices++;
-                else {
-                    _firstAvailableVoice = i;
+        void noteOn(Note note, double velocity, int channel) {
+            auto pick = chooseVoice();
+
+            for (std::size_t i = 0; i < m_History.size(); ++i) {
+                auto& n = m_History[i];
+                if (n.note == note) {
+                    // If note in history and already assigned to voice,
+                    // use that voice instead
+                    if (n.voice != NoVoice) {
+                        pick.voice = n.voice;
+                        pick.phase = Chosen::Sustain;
+                    }
+                    // Remove from history so it can later be added back on top
+                    m_History.erase_index(i);
+                    break;
+                }
+            }
+            // If it is stolen, make sure to remove the voice from the note in the history
+            if (pick.stolen()) {
+                for (std::size_t i = 0; i < m_History.size(); ++i) {
+                    auto& n = m_History[i];
+                    if (n.voice == pick.voice) {
+                        n.voice = NoVoice;
+                        break;
+                    }
+                }
+            }
+
+            trigger(Trigger{
+                .velocity = velocity,
+                .voice = pick.voice,
+                .note = note,
+                .channel = channel,
+                .legato = pick.legato(),
+                .stolen = pick.stolen(),
+            });
+
+            m_History.push_back(PressedNote{
+                .velocity = velocity,
+                .note = note, 
+                .voice = pick.voice
+            });
+        }
+
+        void noteOff(Note note, double velocity, int channel) {
+            // Remove the note from history
+            for (std::size_t i = 0; i < m_History.size(); ++i) {
+                auto& n = m_History[i];
+                if (n.note == note) {
+                    m_History.erase_index(i);
+                    break;
+                }
+            }
+            // Look for the voice that had this note
+            std::size_t voiceThatHadThisNote = NoVoice;
+            for (std::size_t i = 0; i < m_Voices.size(); ++i) {
+                auto& voice = m_Voices[i];
+                if (voice.pressed && voice.note == note) {
+                    voiceThatHadThisNote = i;
+                    break;
+                }
+            }
+            // Apparently no voice had this note?? Okay well then don't do anything
+            if (voiceThatHadThisNote == NoVoice) return; 
+
+            // Look for notes in history that are not assigned to a voice yet
+            std::size_t canSwitchToNoteFromHistory = npos;
+            for (std::size_t i = 0; i < m_History.size(); ++i) {
+                auto& n = m_History[i];
+                if (n.voice == NoVoice) {
+                    canSwitchToNoteFromHistory = i;
                     break;
                 }
             }
 
-            if (_activeVoices >= m_MaxVoices) {
-                overrideVoice(note, velocity);
+            // Cannot switch to note from history, just release voice
+            if (canSwitchToNoteFromHistory == npos) {
+                release(Release{
+                    .voice = voiceThatHadThisNote,
+                    .velocity = velocity,
+                    .note = note
+                });
             } else {
-                triggerVoice(_firstAvailableVoice, note, velocity, false);
-            }
-        }
-        
-        void noteOff(Note note, double velocity) {
-            for (std::size_t i = 0; i < Count; ++i) {
-                auto& _voice = m_Voices[i];
-                if (_voice.note != note) continue;
+                PressedNote n = m_History[canSwitchToNoteFromHistory];
+                m_History.erase_index(canSwitchToNoteFromHistory);
 
-                if (!restoreOverriden(i)) {
-                    releaseVoice(i, note, velocity);
-                }
-            }
+                trigger({
+                    .velocity = n.velocity,
+                    .voice = voiceThatHadThisNote,
+                    .note = n.note,
+                    .channel = channel,
+                    .legato = true,
+                    .stolen = true,
+                });
 
-            removeFromHistory(note); 
+                m_History.push_back(PressedNote{
+                    .velocity = n.velocity,
+                    .note = n.note,
+                    .voice = voiceThatHadThisNote
+                });
+            }
         }
 
         // ------------------------------------------------
-        
+
         void process() override {
             m_LastNote = lastTriggered().currentNote();
-
             for (auto& voice : m_Voices) {
                 voice.output.prepare(outputBuffer().size());
                 voice.process();
@@ -92,24 +157,6 @@ namespace Kaixo::Processing {
             }
         }
 
-        void prepare(double sampleRate, std::size_t maxBufferSize) override { 
-            Module::prepare(sampleRate, maxBufferSize);
-            for (auto& voice : m_Voices)
-                voice.prepare(sampleRate, maxBufferSize);
-        }
-
-        void reset() override {
-            for (auto& voice : m_Voices)
-                voice.reset();
-        }
-
-        // ------------------------------------------------
-        
-        void param(ParamID id, ParamValue value) override {
-            for (auto& voice : m_Voices)
-                voice.param(id, value);
-        }
-
         // ------------------------------------------------
 
         auto begin() { return m_Voices.begin(); }
@@ -118,113 +165,137 @@ namespace Kaixo::Processing {
         VoiceClass& operator[](std::size_t i) { return m_Voices[i]; }
 
         // ------------------------------------------------
-        
-        VoiceClass& lastTriggered() {
-            if (m_PressedVoices.size() > 0) return m_Voices[m_PressedVoices.back()];
-            return m_Voices[m_LastTriggered];
-        }
+
+        VoiceClass& lastTriggered() { return m_Voices[m_LastTriggered]; }
 
         // ------------------------------------------------
-        
+
     private:
-        struct History {
-            std::size_t voice;
-            Note note;
-            double velocity;
-        };
+
+        // ------------------------------------------------
+
+        constexpr static std::size_t NoVoice = static_cast<std::size_t>(-1);
 
         // ------------------------------------------------
 
         std::array<VoiceClass, Count> m_Voices{};
-        Vector<std::size_t, Count> m_PressedVoices{};
-        Vector<std::size_t, Count> m_PressedInOrder{};
-        Vector<History, 100> m_OverridenNoteHistory{};
-
+        
         // ------------------------------------------------
 
-        std::size_t m_LastTriggered = 0;
-        std::size_t m_MaxVoices = Count;
-        bool m_AlwaysLegato = false;
         bool m_UseThreading = false;
-        float m_LastNote = -1;
+        bool m_AlwaysLegato = false;
+        std::size_t m_MaxVoices = Count;
+        std::size_t m_LastTriggered = 0;
+        Note m_LastNote = 0;
 
         // ------------------------------------------------
 
-        void removeFromHistory(Note note) {
-            for (std::size_t i = 0; i < m_OverridenNoteHistory.size();) {
-                auto& _history = m_OverridenNoteHistory[i];
-                if (_history.note == note) {
-                    m_OverridenNoteHistory.erase_index(i);
-                } else ++i;
+        Mode m_Mode = Mode::RoundRobin;
+
+        // ------------------------------------------------
+
+        struct PressedNote {
+            double velocity = 0;
+            Note note = 0;
+            std::size_t voice = NoVoice; // Is note actually assigned to voice?
+        };
+
+        Vector<PressedNote, 32> m_History;
+
+        // ------------------------------------------------
+
+        bool active(std::size_t i) const { return m_Voices[i].active(); }
+        bool pressed(std::size_t i) const { return m_Voices[i].pressed; }
+
+        // ------------------------------------------------
+
+        struct Chosen {
+            std::size_t voice = 0;
+            enum Phase { Sustain, Release, Dead } phase = Dead;
+            bool stolen() const { return phase != Dead; }
+            bool legato() const { return phase == Sustain; }
+        };
+
+        // ------------------------------------------------
+
+        Chosen chooseVoice() {
+            auto choose = [&](auto index) {
+                std::size_t chosen = 0;
+                auto find = [&](auto condition) {
+                    for (std::size_t i = 0; i < m_MaxVoices; ++i) {
+                        chosen = index(i);
+                        if (condition(chosen)) return true;
+                    }
+                    return false;
+                };
+                // Prefer non-active voices
+                if (find([&](auto voice) { return !active(voice); }))
+                    return Chosen{ chosen, Chosen::Dead };
+                // Otherwise prefer non-pressed voices (in release mode)
+                if (find([&](auto voice) { return !pressed(voice); }))
+                    return Chosen{ chosen, Chosen::Release };
+                // Finally just pick the next voice if no other available
+                return Chosen{ index(0), Chosen::Sustain};
+            };
+
+            switch (m_Mode) {
+            case Mode::RoundRobin: return choose([&](std::size_t i) { return (i + m_LastTriggered + 1) % m_MaxVoices; });
+            case Mode::Lifo: return choose([&](std::size_t i) { return i; });
             }
         }
 
-        bool restoreOverriden(std::size_t voice) {
-            for (std::size_t i = m_OverridenNoteHistory.size(); i > 0; --i) {
-                auto& _history = m_OverridenNoteHistory[i - 1];
-                if (_history.voice == voice) {
-                    m_OverridenNoteHistory.erase_index(i - 1);
-                    triggerVoice(_history.voice, _history.note, _history.velocity, true);
-                    return true;
-                }
-            }
-
-            return false;
-        }
+        // ------------------------------------------------
         
-        void overrideVoice(Note note, double velocity) {
-            std::size_t _toKill = npos;
-            // Kill oldest not pressed note
-            for (auto& pressed : m_PressedInOrder) {
-                if (!m_Voices[pressed].pressed) {
-                    _toKill = pressed;
-                    break;
-                }
+        void killAll() {
+            m_LastTriggered = 0;
+            for (auto& voice : m_Voices) {
+                voice.reset();
             }
-
-            // If all notes pressed, just kill oldest
-            if (_toKill == npos) {
-                _toKill = m_PressedInOrder.front();
-            }
-
-            // If none removed from pressed, no need to override, just kill
-            // the voice that is in release-mode.
-            if (m_PressedVoices.remove(_toKill) == 0) {
-                triggerVoice(_toKill, note, velocity, true);
-                return;
-            }
-
-            if (m_OverridenNoteHistory.full()) {
-                m_OverridenNoteHistory.pop_front();
-            }
-
-            m_OverridenNoteHistory.push_back(History{
-                .voice = _toKill,
-                .note = m_Voices[_toKill].note,
-                .velocity = m_Voices[_toKill].velocity,
-            });
-
-            triggerVoice(_toKill, note, velocity, true);
-        }
-        
-        void triggerVoice(std::size_t i, Note note, double velocity, bool legato) {
-            m_Voices[i].fromNote = legato ? m_Voices[i].currentNote() : (m_AlwaysLegato ? m_LastNote : note);
-            m_Voices[i].note = note;
-            m_Voices[i].velocity = velocity;
-            m_Voices[i].trigger(m_AlwaysLegato || (legato && m_Voices[i].pressed));
-            m_Voices[i].pressed = true;
-            m_PressedVoices.remove(i);
-            m_PressedVoices.push_back(i);
-            m_PressedInOrder.remove(i);
-            m_PressedInOrder.push_back(i);
-            m_LastTriggered = i;
         }
 
-        void releaseVoice(std::size_t i, Note note, double velocity) {
-            m_Voices[i].releaseVelocity = -1;
-            m_Voices[i].release();
-            m_Voices[i].pressed = false;
-            m_PressedVoices.remove(i);
+        // ------------------------------------------------
+
+        struct Trigger {
+            double velocity;
+            std::size_t voice;
+            Note note;
+            int channel;
+            bool legato;
+            bool stolen;
+        };
+
+        void trigger(Trigger t) {
+            auto& voice = m_Voices[t.voice];
+            voice.fromNote = t.legato ? voice.currentNote() : m_AlwaysLegato ? m_LastNote : t.note;
+            voice.note = t.note;
+            voice.channel = t.channel;
+            voice.velocity = t.velocity;
+            voice.legato = m_AlwaysLegato || t.legato;
+            voice.stolen = t.stolen;
+            voice.trigger();
+            voice.pressed = true;
+            m_LastTriggered = t.voice;
         }
+
+        // ------------------------------------------------
+
+        struct Release {
+            std::size_t voice;
+            double velocity;
+            Note note;
+        };
+
+        void release(Release t) {
+            auto& voice = m_Voices[t.voice];
+            voice.releaseVelocity = t.velocity;
+            voice.release();
+            voice.pressed = false;
+        }
+
+        // ------------------------------------------------
+
     };
+
+    // ------------------------------------------------
+
 }
