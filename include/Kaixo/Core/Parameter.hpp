@@ -60,10 +60,10 @@ namespace Kaixo {
 
     // ------------------------------------------------
 
-    constexpr json& getFromIdentifier(json& j, std::string_view identifier) {
+    constexpr basic_json& getFromIdentifier(basic_json& j, std::string_view identifier) {
         auto parts = split(identifier, ".");
 
-        json* p = &j;
+        basic_json* p = &j;
         for (auto& part : parts) {
             if (part.ends_with("]")) {
                 auto f = part.find_first_of('[') + 1;

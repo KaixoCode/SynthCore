@@ -189,14 +189,14 @@ namespace Kaixo {
     // ------------------------------------------------
 
     void Controller::getStateInformation(juce::MemoryBlock& destData) {
-        json _serialized = serialize();
+        basic_json _serialized = serialize();
         std::string _asString = _serialized.to_string();
         destData.append(_asString.data(), _asString.size());
     }
 
     void Controller::setStateInformation(const void* data, int sizeInBytes) {
         std::string _jsonString{ static_cast<const char*>(data), static_cast<std::size_t>(sizeInBytes) };
-        if (auto _json = json::parse(_jsonString)) {
+        if (auto _json = basic_json::parse(_jsonString)) {
             deserialize(_json.value());
         }
     }
@@ -228,7 +228,7 @@ namespace Kaixo {
         std::ifstream file{ path };
         if (!file.is_open()) return;
 
-        if (auto val = json::parse(file_to_string(file))) {
+        if (auto val = basic_json::parse(file_to_string(file))) {
             deserialize(val.value());
         }
 
@@ -253,13 +253,13 @@ namespace Kaixo {
         }
     }
 
-    json Controller::serialize() {
-        json result = json::object{};
+    basic_json Controller::serialize() {
+        basic_json result = basic_json::object{};
 
         auto& _params = result[ParametersName];
 
         for (auto& param : Synth) {
-            json& p = getFromIdentifier(_params, param.fullVarName);
+            basic_json& p = getFromIdentifier(_params, param.fullVarName);
             p["value"] = parameter(param.id).value();
         }
 
@@ -272,16 +272,16 @@ namespace Kaixo {
         return result;
     }
 
-    void Controller::deserialize(json& val) {
+    void Controller::deserialize(basic_json& val) {
 
         if (val.contains(ParametersName)) {
             auto& _params = val[ParametersName];
 
             for (auto& param : Synth) {
-                json& p = getFromIdentifier(_params, param.fullVarName);
+                basic_json& p = getFromIdentifier(_params, param.fullVarName);
 
-                if (p.contains("value", json::Floating)) {
-                    auto value = p["value"].as<json::floating>();
+                if (p.contains("value", basic_json::Number)) {
+                    ParamValue value = p["value"].as<ParamValue>();
                     beginEdit(param);
                     performEdit(param, value);
                     endEdit(param);

@@ -1,6 +1,10 @@
 #pragma once
+
+// ------------------------------------------------
+
 #include "Kaixo/Core/Definitions.hpp"
 #include "Kaixo/Core/Processing/Module.hpp"
+#include "Kaixo/Core/Processing/PointStorage.hpp"
 
 // ------------------------------------------------
 
@@ -13,44 +17,7 @@ namespace Kaixo::Processing {
 
         // ------------------------------------------------
 
-        struct Point {
-            float x;
-            float y;
-            float c;
-        };
-
-        // ------------------------------------------------
-
-        class Storage : public Vector<Point, 100> {
-        public:
-            constexpr static Point Zero{ 0, 0, 0 };
-
-            // ------------------------------------------------
-            
-            float at(float x) const {
-                const Point* prev = empty() ? &Zero : &front();
-                for (std::size_t i = 0; i < size(); ++i) {
-                    auto& point = operator[](i);
-                    if (point.x >= x) {
-                        if ((point.x - prev->x) == 0) return point.y;
-                        float r = Math::Fast::curve((x - prev->x) / (point.x - prev->x), prev->c);
-                        return r * point.y + (1 - r) * prev->y;
-                    }
-
-                    prev = &point;
-                }
-
-                auto& point = empty() ? Zero : front();
-
-                if ((1 - prev->x) == 0) return point.y;
-
-                float r = Math::Fast::curve((x - prev->x) / (1 - prev->x), prev->c);
-                return r * point.y + (1 - r) * prev->y;
-            }
-
-            // ------------------------------------------------
-
-        };
+        using Storage = PointStorage<100>;
 
         // ------------------------------------------------
 

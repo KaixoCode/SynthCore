@@ -15,32 +15,6 @@
 namespace Kaixo::Gui {
 
     // ------------------------------------------------
-    
-    class LfoInterface : public Processing::Interface {
-    public:
-
-        // ------------------------------------------------
-
-        using Point = PointsDisplay::Point;
-
-        // ------------------------------------------------
-
-        virtual float at(float) = 0;
-        virtual float phase() = 0;
-
-        virtual std::size_t size() = 0;
-
-        virtual Point get(std::size_t) = 0;
-        virtual void set(std::size_t, Point) = 0;
-        
-        virtual void remove(std::size_t) = 0;
-        virtual void add(Point) = 0;
-
-        // ------------------------------------------------
-
-    };
-
-    // ------------------------------------------------
 
     class LfoDisplay : public PointsDisplay {
     public:
@@ -55,7 +29,7 @@ namespace Kaixo::Gui {
 
             // ------------------------------------------------
 
-            Processing::InterfaceStorage<LfoInterface> interface{};
+            Processing::InterfaceStorage<PointsDisplayInterface> interface{};
 
             // ------------------------------------------------
 

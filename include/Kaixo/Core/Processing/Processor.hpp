@@ -36,8 +36,8 @@ namespace Kaixo::Processing {
         // ------------------------------------------------
 
         virtual void init() override {}
-        virtual json serialize() override { return {}; }
-        virtual void deserialize(json& data) override {}
+        virtual basic_json serialize() override { return {}; }
+        virtual void deserialize(basic_json& data) override {}
 
         // ------------------------------------------------
 

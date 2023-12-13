@@ -17,8 +17,8 @@ namespace Kaixo {
         // ------------------------------------------------
 
         virtual void init() {} // reset state to default
-        virtual json serialize() = 0;
-        virtual void deserialize(json&) = 0;
+        virtual basic_json serialize() = 0;
+        virtual void deserialize(basic_json&) = 0;
 
         // ------------------------------------------------
 

@@ -2,8 +2,6 @@
 #include "Kaixo/Core/Definitions.hpp"
 #include "Kaixo/Core/Gui/View.hpp"
 #include "Kaixo/Core/Theme/StateLinked.hpp"
-#include "Kaixo/Core/Theme/Property.hpp"
-#include "Kaixo/Core/Theme/Stateful.hpp"
 #include "Kaixo/Core/Theme/Element.hpp"
 #include "Kaixo/Core/Theme/Container.hpp"
 #include "Kaixo/Core/Theme/Image.hpp"

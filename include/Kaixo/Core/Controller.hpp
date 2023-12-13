@@ -87,8 +87,8 @@ namespace Kaixo {
         virtual void loadPreset(std::filesystem::path path);
 
         virtual void init() override;
-        virtual json serialize() override;
-        virtual void deserialize(json&) override;
+        virtual basic_json serialize() override;
+        virtual void deserialize(basic_json&) override;
 
         // ------------------------------------------------
         

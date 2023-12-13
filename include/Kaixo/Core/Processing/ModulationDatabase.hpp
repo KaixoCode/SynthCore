@@ -66,8 +66,8 @@ namespace Kaixo::Processing {
         // ------------------------------------------------
 
         void init() override;
-        json serialize() override;
-        void deserialize(json& data) override;
+        basic_json serialize() override;
+        void deserialize(basic_json& data) override;
 
         // ------------------------------------------------
 

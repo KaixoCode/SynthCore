@@ -200,6 +200,31 @@ namespace Kaixo::Gui {
         // ------------------------------------------------
 
     };
+    
+    // ------------------------------------------------
+
+    class PointsDisplayInterface : public Processing::Interface {
+    public:
+
+        // ------------------------------------------------
+
+        using Point = PointsDisplay::Point;
+
+        // ------------------------------------------------
+
+        virtual float at(float x) { return 0; }
+        virtual std::size_t size() = 0;
+        virtual Point get(std::size_t i) = 0;
+        virtual void set(std::size_t i, Point point) = 0;
+        virtual void resetCurve(std::size_t i) {}
+        virtual void resetPoint(std::size_t i) {}
+        virtual void add(Point point) {}
+        virtual void remove(std::size_t i) {}
+        virtual float phase() { return 0; }
+
+        // ------------------------------------------------
+
+    };
 
     // ------------------------------------------------
 

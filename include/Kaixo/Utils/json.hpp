@@ -164,13 +164,34 @@ namespace Kaixo {
     public:
 
         // ------------------------------------------------
+
+        basic_json(std::nullptr_t) : _value(null{}) {}
+
+        basic_json(bool value) : _value(value) {}
         
-        template<class Ty> requires (std::constructible_from<value, Ty>)
+        template<class Ty> requires (std::constructible_from<string, Ty&&>)
         basic_json(Ty&& value)
-            : _value(std::forward<Ty>(value)) {}
+            : _value(string{ std::forward<Ty>(value) }) {}
         
-        basic_json(std::string_view value)
-            : _value(std::string{ value }) {}
+        basic_json(const object& value) : _value(value) {}
+        basic_json(object&& value) : _value(std::move(value)) {}
+        
+        basic_json(const array& value) : _value(value) {}
+        basic_json(array&& value) : _value(std::move(value)) {}
+        
+        basic_json(const number& value) : _value(value) {}
+        basic_json(number&& value) : _value(std::move(value)) {}
+        
+        basic_json(std::floating_point auto value)
+            : _value(number{ static_cast<double>(value) }) {}
+        
+        template<class Ty> requires (std::signed_integral<Ty> && !std::same_as<Ty, bool>)
+        basic_json(Ty value)
+            : _value(number{ static_cast<std::int64_t>(value) }) {}
+        
+        template<class Ty> requires (std::unsigned_integral<Ty> && !std::same_as<Ty, bool>)
+        basic_json(Ty value)
+            : _value(number{ static_cast<std::uint64_t>(value) }) {}
         
         basic_json() = default;
 
@@ -267,6 +288,20 @@ namespace Kaixo {
             return true;
         }
 
+        template<class Ty, class B>
+        bool try_get_or_default(Ty& val, B&& def) {
+            if (try_get(val)) return true;
+            val = std::forward<B>(def);
+            return false;
+        }
+        
+        template<class Ty, class B>
+        bool try_get_or_default(std::string_view key, Ty& val, B&& def) {
+            if (try_get(key, val)) return true;
+            val = std::forward<B>(def);
+            return false;
+        }
+        
         // ------------------------------------------------
 
         value_type type() const { return static_cast<value_type>(_value.index()); }
@@ -331,6 +366,16 @@ namespace Kaixo {
             } else {
                 static_assert(std::same_as<fun_type, int>, "Wrong functor");
             }
+        }
+
+        bool foreach(std::string_view key, auto fun) {
+            if (contains(key)) return at(key).foreach(fun);
+            return false;
+        }
+        
+        bool foreach(std::string_view key, auto fun) const {
+            if (contains(key)) return at(key).foreach(fun);
+            return false;
         }
 
         template<class Fun>
@@ -423,20 +468,70 @@ namespace Kaixo {
             return as<array>()[index];
         }
         
+        basic_json& at(std::string_view index) {
+            if (!is(Object)) throw std::exception("Not an object.");
+            auto _it = as<object>().find(index);
+            if (_it == as<object>().end()) throw std::exception("Invalid key.");
+            else return _it->second;
+        }
+
+        basic_json& at(std::size_t index) {
+            if (!is(Array)) throw std::exception("Not an array.");
+            if (as<array>().size() <= index) throw std::exception("Out of bounds");
+            return as<array>()[index];
+        }
+        
+        const basic_json& at(std::string_view index) const {
+            if (!is(Object)) throw std::exception("Not an object.");
+            auto _it = as<object>().find(index);
+            if (_it == as<object>().end()) throw std::exception("Invalid key.");
+            else return _it->second;
+        }
+
+        const basic_json& at(std::size_t index) const {
+            if (!is(Array)) throw std::exception("Not an array.");
+            if (as<array>().size() <= index) throw std::exception("Out of bounds");
+            return as<array>()[index];
+        }
+        
         // ------------------------------------------------
 
         template<class Ty> requires (std::constructible_from<value, Ty>)
-        basic_json& push_back(const Ty& val) {
+        basic_json& push_back(Ty&& val) {
+            if (is(Null)) _value = array{};
+            else if (!is(Array)) throw std::exception("Not an array.");
+            return as<array>().emplace_back(std::forward<Ty>(val));
+        }
+        
+        template<class Ty> requires (std::constructible_from<value, Ty>)
+        basic_json& push_front(Ty&& val) {
+            if (is(Null)) _value = array{};
+            else if (!is(Array)) throw std::exception("Not an array.");
+            return *as<array>().emplace(as<array>().begin(), std::forward<Ty>(val));
+        }
+        
+        basic_json& push_back(const basic_json& val) {
             if (is(Null)) _value = array{};
             else if (!is(Array)) throw std::exception("Not an array.");
             return as<array>().emplace_back(val);
         }
         
-        template<class Ty> requires (std::constructible_from<value, Ty>)
-        basic_json& push_front(const Ty& val) {
+        basic_json& push_front(const basic_json& val) {
             if (is(Null)) _value = array{};
             else if (!is(Array)) throw std::exception("Not an array.");
-            return as<array>().emplace(as<array>().begin(), val);
+            return *as<array>().emplace(as<array>().begin(), val);
+        }
+        
+        basic_json& push_back(basic_json&& val) {
+            if (is(Null)) _value = array{};
+            else if (!is(Array)) throw std::exception("Not an array.");
+            return as<array>().emplace_back(std::move(val));
+        }
+        
+        basic_json& push_front(basic_json&& val) {
+            if (is(Null)) _value = array{};
+            else if (!is(Array)) throw std::exception("Not an array.");
+            return *as<array>().emplace(as<array>().begin(), std::move(val));
         }
 
         // ------------------------------------------------
@@ -450,19 +545,18 @@ namespace Kaixo {
         // ------------------------------------------------
         
         static std::optional<basic_json> parse(std::string_view json) {
-            try {
-                parser _parser{
-                    .original = json,
-                    .value = json
-                };
-                return _parser.parseObject();
-            } catch (std::exception e) {
-                std::cout << e.what() << '\n';
-                return {};
-            }
+            parser _parser{
+                .original = json,
+                .value = json
+            };
+            auto result = _parser.parseObject();
+            if (result.valid()) return result.value();
+            std::cout << result.what() << "\n";
+            return {};
         }
 
         // ------------------------------------------------
+        
         std::string to_string() {
             switch (type()) {
             case Number: {
@@ -587,6 +681,59 @@ namespace Kaixo {
             std::string_view original;
             std::string_view value;
 
+            template<class Ty = void>
+            struct result {
+                result(std::string_view msg) : m_Valid(false), m_Message(msg) {}
+                result(const Ty& value) : m_Valid(true), m_Value(value) {}
+                result(Ty&& value) : m_Valid(true), m_Value(std::move(value)) {}
+                result(const result&) = delete;
+                result(result&& other) { *this = std::move(other); }
+                result(result<void>&& other) { *this = std::move(other); }
+
+                result& operator=(const result&) = delete;
+                result& operator=(result&& other) {
+                    m_Valid = other.m_Valid;
+                    if (m_Valid) m_Value = std::move(other.m_Value);
+                    else m_Message = std::move(other.m_Message);
+                    other.clean();
+                    return *this;
+                }
+
+                result& operator=(result<void>&& other) {
+                    m_Valid = false;
+                    new(&m_Message) std::string{ std::move(other.m_Message) };
+                    return *this;
+                }
+
+                ~result() { clean(); }
+
+                int m_Valid = false;
+                union {
+                    Ty m_Value;
+                    std::string m_Message;
+                };
+
+                void clean() {
+                    if (m_Valid == true) m_Value.~Ty();
+                    else if (m_Valid == false) m_Message.~string();
+                    m_Valid = 2;
+                }
+
+                Ty& value() { return m_Value; }
+                bool valid() const { return m_Valid == true; }
+                std::string_view what() const { return m_Valid ? "" : m_Message; }
+            };
+
+            template<>
+            struct result<void> {
+                std::string m_Message;
+
+                result(std::string_view msg) : m_Message(msg) {}
+
+                bool valid() const { return false; }
+                std::string_view what() const { return m_Message; }
+            };
+
             struct undo {
                 parser* self;
                 std::string_view backup;
@@ -598,7 +745,7 @@ namespace Kaixo {
                 ~undo() { if (!committed) self->value = backup; }
             };
 
-            void die(std::string_view message) {
+            result<> die(std::string_view message) {
                 std::size_t parsed = original.size() - value.size();
                 std::size_t newlines = 0;
                 std::size_t charsInLine = 0;
@@ -610,7 +757,7 @@ namespace Kaixo {
                     }
                 }
 
-                throw std::exception(std::format("line {}, character {}: {}", newlines, charsInLine, message).c_str());
+                return { std::format("line {}, character {}: {}", newlines, charsInLine, message) };
             }
 
             undo push() { return undo{ this, value }; }
@@ -619,14 +766,23 @@ namespace Kaixo {
 
             bool maybe(auto fun) {
                 auto _ = push();
-                try {
-                    fun();
+                auto result = fun();
+                if (result.valid()) {
                     _.commit();
                     return true;
                 }
-                catch (...) {
-                    return false;
+                return false;
+            }
+            
+            bool maybe(auto fun, auto assign) {
+                auto _ = push();
+                auto result = fun();
+                if (result.valid()) {
+                    assign(std::move(result.value()));
+                    _.commit();
+                    return true;
                 }
+                return false;
             }
 
             bool consume(char c) {
@@ -675,7 +831,7 @@ namespace Kaixo {
                 return _result;
             }
 
-            void parseComment() {
+            result<int> parseComment() {
                 while (true) {
                     auto _ = push();
 
@@ -694,15 +850,15 @@ namespace Kaixo {
 
                         if (!closed) {
                             _.revert();
-                            die("Expected end of multi-line comment");
+                            return die("Expected end of multi-line comment");
                         }
-                    } else return; // No more comments
+                    } else return 0; // No more comments
 
                     _.commit();
                 }
             }
             
-            number parseNumber() {
+            result<number> parseNumber() {
                 auto _ = push();
 
                 bool negative = false;
@@ -713,7 +869,7 @@ namespace Kaixo {
                 std::string post = "";
                 std::string exponent = "";
 
-                maybe([&] { parseComment(); });
+                maybe([&] { return parseComment(); });
 
                 ignore(Whitespace);
                 if (consume('-')) negative = true;
@@ -730,7 +886,7 @@ namespace Kaixo {
                     else if (consume('7')) pre = "7";
                     else if (consume('8')) pre = "8";
                     else if (consume('9')) pre = "9";
-                    else die("Expected at least 1 digit in number");
+                    else return die("Expected at least 1 digit in number");
 
                     while (true) {
                         if (consume('0')) pre += "0";
@@ -763,7 +919,7 @@ namespace Kaixo {
                         else break;
                     }
 
-                    if (post.empty()) die("Expected at least 1 decimal digit");
+                    if (post.empty()) return die("Expected at least 1 decimal digit");
                 }
 
                 if (consume('e') ||
@@ -788,19 +944,19 @@ namespace Kaixo {
                         else break;
                     }
 
-                    if (exponent.empty()) die("Expected at least 1 exponent digit");
+                    if (exponent.empty()) return die("Expected at least 1 exponent digit");
                 }
 
                 _.commit();
                 if (fractional) {
                     double val = 0;
 
-                    std::string fullStr = (negative ? "-" : "+") + pre + "." + post
+                    std::string fullStr = (negative ? "-" : "") + pre + "." + post
                         + (hasExponent ? (negativeExponent ? "E+" : "E-") + exponent : "");
 
                     std::from_chars(fullStr.data(), fullStr.data() + fullStr.size(), val);
 
-                    return val;
+                    return { val };
                 } else if (negative) {
                     std::int64_t val = 0;
 
@@ -808,7 +964,7 @@ namespace Kaixo {
 
                     std::from_chars(fullStr.data(), fullStr.data() + fullStr.size(), val);
 
-                    return -val;
+                    return { -val };
                 } else {
                     std::uint64_t val = 0;
 
@@ -816,18 +972,18 @@ namespace Kaixo {
 
                     std::from_chars(fullStr.data(), fullStr.data() + fullStr.size(), val);
 
-                    return val;
+                    return { val };
                 }
             }
 
-            string parseJsonString() {
+            result<string> parseJsonString() {
                 auto _ = push();
                 string _result;
 
-                maybe([&] { parseComment(); });
+                maybe([&] { return parseComment(); });
 
                 ignore(Whitespace);
-                if (!consume('"')) die("Expected '\"' to start json string");
+                if (!consume('"')) return die("Expected '\"' to start json string");
 
                 while (true) {
                     _result += consume_while_not("\"\\");
@@ -846,7 +1002,7 @@ namespace Kaixo {
                             // TODO: 4 hex digits unicode
                             continue;
                         }
-                        die("Wrong escape character");
+                        return die("Wrong escape character");
                     }
                 }
 
@@ -854,7 +1010,7 @@ namespace Kaixo {
                 return _result;
             }
 
-            string parseQuotelessString() {
+            result<string> parseQuotelessString() {
                 auto _ = push();
                 string _result;
 
@@ -867,7 +1023,7 @@ namespace Kaixo {
                     value[0] == ']' || 
                     value[0] == '{' || 
                     value[0] == '}' || 
-                    value[0] == ':') die("Empty string");
+                    value[0] == ':') return die("Empty string");
 
                 _result = consume_while_not("\n"); // Consume til end of line
 
@@ -876,7 +1032,7 @@ namespace Kaixo {
                 return _result;
             }
             
-            string parseMultilineString() {
+            result<string> parseMultilineString() {
                 auto _ = push();
                 string _result;
 
@@ -892,10 +1048,10 @@ namespace Kaixo {
 
                 std::int64_t _columns = count_column();
 
-                maybe([&] { parseComment(); });
+                maybe([&] { return parseComment(); });
 
                 ignore(Whitespace);
-                if (!consume("'''")) die("Expected ''' to start multi-line string");
+                if (!consume("'''")) return die("Expected ''' to start multi-line string");
                 while (true) {
                     std::int64_t _spaces = std::max(count_column() - _columns, 0ll);
                     for (std::size_t i = 0; i < _spaces; ++i) _result += ' ';
@@ -911,54 +1067,53 @@ namespace Kaixo {
                 return _result;
             }
 
-            string parseString() {
+            result<string> parseString() {
                 auto _ = push();
                 _.commit();
                 string _result;
 
-                if (maybe([&] {_result = parseJsonString(); })) return _result;
-                if (maybe([&] {_result = parseQuotelessString(); })) return _result;
-                if (maybe([&] {_result = parseMultilineString(); })) return _result;
+                if (maybe([&] { return parseJsonString(); }, [&](auto&& val){ _result = val; })) return _result;
+                if (maybe([&] { return parseQuotelessString(); }, [&](auto&& val) { _result = val; })) return _result;
+                if (maybe([&] { return parseMultilineString(); }, [&](auto&& val) { _result = val; })) return _result;
 
                 _.revert();
-                die("Expected string");
+                return die("Expected string");
             }
 
-            std::pair<string, basic_json> parseMember() {
+            result<std::pair<string, basic_json>> parseMember() {
                 auto _ = push();
                 string _name;
                 basic_json _value;
 
-                maybe([&] { parseComment(); });
+                maybe([&] { return parseComment(); });
 
                 ignore(Whitespace);
-                if (!maybe([&] {
-                    _name = parseJsonString();
-                })) {
+                if (!maybe([&] { return parseJsonString(); }, [&](auto&& val) { _name = val; })) {
                     _name = consume_while_not(",:[]{} \t\n\r\f\v");
                 }
 
-                if (_name.empty()) die("Cannot have empty key");
+                if (_name.empty()) return die("Cannot have empty key");
 
                 ignore(Whitespace);
-                if (!consume(":")) die("Expected ':' after key name");
+                if (!consume(":")) return die("Expected ':' after key name");
 
                 ignore(Whitespace);
-                _value = parseValue();
+                if (!maybe([&] { return parseValue(); }, [&](auto&& val) { _value = val; })) 
+                    return die("Expected value");
 
                 _.commit();
-                return { _name, _value };
+                return { { _name, _value } };
             }
 
-            void parseList(auto fun) {
-                if (!maybe(fun)) return;
+            void parseList(auto fun, auto assign) {
+                if (!maybe(fun, assign)) return;
                 while (true) {
                     { // First try comma
                         auto _ = push();
                         ignore(Whitespace);
                         if (consume(',')) {
                             _.commit();
-                            if (!maybe(fun)) return;
+                            if (!maybe(fun, assign)) return;
                             continue;
                         }
                     }
@@ -967,7 +1122,7 @@ namespace Kaixo {
                         ignore(WhitespaceNoLF);
                         if (consume('\n')) {
                             _.commit();
-                            if (!maybe(fun)) return;
+                            if (!maybe(fun, assign)) return;
                             continue;
                         }
                     }
@@ -975,60 +1130,60 @@ namespace Kaixo {
                 }
             }
 
-            object parseObject() {
+            result<object> parseObject() {
                 auto _ = push();
                 
                 object _result;
 
-                maybe([&] { parseComment(); });
+                maybe([&] { return parseComment(); });
 
                 ignore(Whitespace);
-                if (!consume('{')) die("Expected '{' to begin Object");
+                if (!consume('{')) return die("Expected '{' to begin Object");
 
-                parseList([&] { _result.insert(parseMember()); });
+                parseList([&] { return parseMember(); }, [&](auto&& val) { _result.insert(val); });
 
-                maybe([&] { parseComment(); });
+                maybe([&] { return parseComment(); });
 
                 ignore(Whitespace);
-                if (!consume('}')) die("Expected '}' to close Object");
+                if (!consume('}')) return die("Expected '}' to close Object");
 
                 _.commit();
                 return _result;
             }
 
-            array parseArray() {
+            result<array> parseArray() {
                 auto _ = push();
                 
                 array _result;
 
-                maybe([&] { parseComment(); });
+                maybe([&] { return parseComment(); });
 
                 ignore(Whitespace);
-                if (!consume('[')) die("Expected '[' to begin Array");
+                if (!consume('[')) return die("Expected '[' to begin Array");
 
-                parseList([&] { _result.push_back(parseValue()); });
+                parseList([&] { return parseValue(); }, [&](auto&& val) { _result.push_back(val); });
 
-                maybe([&] { parseComment(); });
+                maybe([&] { return parseComment(); });
 
                 ignore(Whitespace);
-                if (!consume(']')) die("Expected ']' to close Array");
+                if (!consume(']')) return die("Expected ']' to close Array");
 
                 _.commit();
                 return _result;
             }
 
-            basic_json parseValue() {
+            result<basic_json> parseValue() {
                 auto _ = push();
                 _.commit();
 
                 basic_json _value;
 
-                maybe([&] { parseComment(); });
+                maybe([&] { return parseComment(); });
 
                 ignore(Whitespace);
 
-                if (maybe([&] { _value = parseObject(); })) return _value;
-                if (maybe([&] { _value = parseArray(); })) return _value;
+                if (maybe([&] { return parseObject(); }, [&](auto&& val) { _value = val; })) return _value;
+                if (maybe([&] { return parseArray(); }, [&](auto&& val) { _value = val; })) return _value;
 
                 do {
                     auto _ = push();
@@ -1036,7 +1191,7 @@ namespace Kaixo {
                     if (consume("true")) _value = true;
                     else if (consume("false")) _value = false;
                     else if (consume("null")) _value = nullptr;
-                    else if (maybe([&] { _value = parseNumber(); }));
+                    else if (maybe([&] { return parseNumber(); }, [&](auto&& val) { _value = val; }));
                     else break;
 
                     // Make sure it's end of value, otherwise it's string
@@ -1045,7 +1200,7 @@ namespace Kaixo {
                         auto _ = push();
                         ignore(WhitespaceNoLF);
 
-                        if (maybe([&] { parseComment(); }) || 
+                        if (maybe([&] { return parseComment(); }) ||
                             consume('\n') ||
                             consume(',') || 
                             consume(']') || 
@@ -1064,441 +1219,13 @@ namespace Kaixo {
                     }
                 } while (false);
 
-                if (maybe([&] { _value = parseString(); })) return _value;
+                if (maybe([&] { return parseString(); }, [&](auto&& val) { _value = val; })) return _value;
 
                 _.revert();
-                die("Expected value");
+                return die("Expected value");
             }
         };
 
-    };
-
-    // ------------------------------------------------
-
-    class json {
-
-        // ------------------------------------------------
-
-        struct object_hash : std::hash<std::string_view> { using is_transparent = std::true_type; };
-
-        // ------------------------------------------------
-
-    public:
-
-        // ------------------------------------------------
-
-        enum value_type { Floating, Integral, Unsigned, String, Boolean, Array, Object, Null, None };
-
-        // ------------------------------------------------
-
-        using floating = double;
-        using integral = std::int64_t;
-        using unsigned_integral = std::uint64_t;
-        using string = std::string;
-        using boolean = bool;
-        using array = std::vector<json>;
-        using object = std::map<std::string, json, std::less<void>>;
-        using null = std::nullptr_t;
-
-        // ------------------------------------------------
-
-    private:
-
-        // ------------------------------------------------
-
-        using value = std::variant<floating, integral, unsigned_integral, string, boolean, array, object, null>;
-
-        // ------------------------------------------------
-
-        template<class Ty> struct type_alias { using type = Ty; };
-        template<> struct type_alias<float> { using type = floating; };
-        template<> struct type_alias<double> { using type = floating; };
-        template<> struct type_alias<bool> { using type = boolean; };
-        template<> struct type_alias<std::string_view> { using type = string; };
-        template<std::size_t N> struct type_alias<char[N]> { using type = string; };
-        template<std::signed_integral Ty> struct type_alias<Ty> { using type = integral; };
-        template<std::unsigned_integral Ty> struct type_alias<Ty> { using type = unsigned_integral; };
-
-        // ------------------------------------------------
-
-        value _value;
-
-        // ------------------------------------------------
-
-    public:
-
-        // ------------------------------------------------
-
-        template<class Ty = null> requires (!std::same_as<std::decay_t<Ty>, json>)
-        json(const Ty& ty = {}) : _value(static_cast<typename type_alias<Ty>::type>(ty)) {}
-
-        // ------------------------------------------------
-
-        template<class Ty> Ty& as() { return std::get<Ty>(_value); }
-        template<class Ty> const Ty& as() const { return std::get<Ty>(_value); }
-        auto type() const { return static_cast<value_type>(_value.index()); }
-        bool is(value_type t) const { return t == type(); }
-
-        // ------------------------------------------------
-
-        bool contains(std::string_view index, value_type type = None) const {
-            if (!is(Object)) return false;
-            auto _it = as<object>().find(index);
-            if (type == None) return _it != as<object>().end();
-            else return _it != as<object>().end() && _it->second.is(type);
-        }
-
-        // ------------------------------------------------
-
-        template<class Fun, class Ty = 
-            std::conditional_t<std::regular_invocable<Fun, json&>, json,
-            std::conditional_t<std::regular_invocable<Fun, string&>, string,
-            std::conditional_t<std::regular_invocable<Fun, array&>, array,
-            std::conditional_t<std::regular_invocable<Fun, object&>, object,
-            std::conditional_t<std::regular_invocable<Fun, std::int8_t&>, integral,
-            std::conditional_t<std::regular_invocable<Fun, std::int16_t&>, integral,
-            std::conditional_t<std::regular_invocable<Fun, std::int32_t&>, integral,
-            std::conditional_t<std::regular_invocable<Fun, std::int64_t&>, integral,
-            std::conditional_t<std::regular_invocable<Fun, std::uint8_t&>, unsigned_integral,
-            std::conditional_t<std::regular_invocable<Fun, std::uint16_t&>, unsigned_integral,
-            std::conditional_t<std::regular_invocable<Fun, std::uint32_t&>, unsigned_integral,
-            std::conditional_t<std::regular_invocable<Fun, std::uint64_t&>, unsigned_integral,
-            std::conditional_t<std::regular_invocable<Fun, double&>, floating,
-            std::conditional_t<std::regular_invocable<Fun, float&>, floating,
-            std::conditional_t<std::regular_invocable<Fun, boolean&>, boolean, void>>>>>>>>>>>>>>>>
-            requires (!std::same_as<Ty, void>)
-        void call_if_exists(std::string_view index, Fun fun) {
-            using type = type_alias<Ty>::type;
-            if (!is(Object)) { return; }
-            auto _it = as<object>().find(index);
-            if (_it == as<object>().end()) { return; }
-            if constexpr (std::same_as<Ty, json>) fun(_it->second);
-            else {
-                if (!std::holds_alternative<type>(_it->second._value)) { return; }
-                fun(_it->second.as<type>());
-            }
-        }
-
-        template<class Ty>
-        void assign_if_exists(std::string_view index, Ty& val) { 
-            using type = type_alias<Ty>::type;
-            if (!is(Object)) { return; }
-            auto _it = as<object>().find(index);
-            if (_it == as<object>().end()) { return; }
-            if (!std::holds_alternative<type>(_it->second._value)) { return; }
-            val = _it->second.as<type>();
-        }
-
-        template<class Ty>
-        void assign_or_default(std::string_view index, Ty& val, auto def) { 
-            using type = type_alias<Ty>::type;
-            if (!is(Object)) { val = def; return; }
-            auto _it = as<object>().find(index);
-            if (_it == as<object>().end()) { val = def; return; }
-            if (!std::holds_alternative<type>(_it->second._value)) { val = def; return; }
-            val = _it->second.as<type>();
-        }
-
-        template<class Ty>
-        void assign_or_default(Ty& val, auto def) { 
-            using type = type_alias<Ty>::type;
-            if (!std::holds_alternative<type>(_value)) { val = def; return; }
-            val = as<type>();
-        }
-
-        // ------------------------------------------------
-
-        json& operator[](std::string_view index) {
-            if (is(Null)) _value = object{};
-            else if (!is(Object)) throw std::exception("Not an object.");
-            auto _it = as<object>().find(index);
-            if (_it == as<object>().end()) return as<object>()[std::string{ index }];
-            else return _it->second;
-        }
-
-        json& operator[](std::size_t index) {
-            if (is(Null)) _value = array{};
-            else if (!is(Array)) throw std::exception("Not an array.");
-            if (as<array>().size() <= index) as<array>().resize(index + 1);
-            return as<array>()[index];
-        }
-        
-        const json& operator[](std::string_view index) const {
-            if (!is(Object)) throw std::exception("Not an object.");
-            auto _it = as<object>().find(index);
-            if (_it == as<object>().end()) throw std::exception("Invalid key.");
-            else return _it->second;
-        }
-
-        const json& operator[](std::size_t index) const {
-            if (!is(Array)) throw std::exception("Not an array.");
-            if (as<array>().size() <= index) throw std::exception("Out of bounds");
-            return as<array>()[index];
-        }
-
-        // ------------------------------------------------
-
-        template<class Ty> json& emplace(const Ty& val) {
-            if (is(Null)) _value = array{};
-            else if (!is(Array)) throw std::exception("Not an array.");
-            return as<array>().emplace_back(val);
-        }
-
-        // ------------------------------------------------
-
-        std::size_t size() const {
-            return is(Array) ? as<array>().size() 
-                : is(Object) ? as<object>().size() 
-                : is(String) ? as<string>().size() : 0ull;
-        }
-
-        // ------------------------------------------------
-
-        static std::optional<json> parse(std::string_view val) {
-            if ((val = trim(val)).empty()) return {};
-            std::optional<json> _result = {};
-            if ((_result = parseJsonObject(val)) && trim(val).empty()) return _result;
-            if ((_result = parseJsonArray(val)) && trim(val).empty()) return _result;
-            return {};
-        }
-
-        // ------------------------------------------------
-
-        std::string to_string() {
-            switch (type()) {
-            case Floating: return std::to_string(as<floating>());
-            case Integral: return std::to_string(as<integral>());
-            case Unsigned: return std::to_string(as<unsigned_integral>());
-            case String: return '"' + escape(as<string>()) + '"';
-            case Boolean: return as<boolean>() ? "true" : "false";
-            case Null: return "null";
-            case None: return "null";
-            case Array: {
-                std::string result = "[";
-                bool first = true;
-                for (auto& val : as<array>()) {
-                    if (!first) result += ",";
-                    result += val.to_string();
-                    first = false;
-                }
-                return result + "]";
-            }
-            case Object: {
-                std::string result = "{";
-                bool first = true;
-                for (auto& [key, val] : as<object>()) {
-                    if (!first) result += ",";
-                    result += '"' + escape(key) + '"' + ":" + val.to_string();
-                    first = false;
-                }
-                return result + "}";
-            }
-            default: return "";
-            }
-        }
-
-        std::string to_pretty_string(std::size_t indent = 0) {
-            std::string result;
-            bool first = true;
-
-            auto add = [&](std::string line = "", int x = 0, bool newline = true) {
-                for (std::size_t i = 0; i < x + indent; ++i) result += "    ";
-                result += line;
-                if (newline) result += "\n";
-            };
-
-            switch (type()) {
-            case Array: {
-                bool hasNestedObject = false;
-                for (auto& val : as<array>()) {
-                    if (val.is(json::Object) || val.is(json::Array)) {
-                        hasNestedObject = true;
-                        break;
-                    }
-                }
-
-                if (hasNestedObject) {
-                    result += "[\n";
-                    for (auto& val : as<array>()) {
-                        if (!first) result += ",\n";
-                        add(val.to_pretty_string(indent + 1), 1, false);
-                        first = false;
-                    }
-                    result += '\n';
-                    add("]", 0, false);
-                } else {
-                    result += "[";
-                    for (auto& val : as<array>()) {
-                        if (!first) result += ", ";
-                        result += val.to_pretty_string(indent + 1);
-                        first = false;
-                    }
-                    result += "]";
-                }
-                return result;
-            }
-            case Object: {
-                result += "{\n";
-                for (auto& [key, val] : as<object>()) {
-                    if (!first) result += ",\n";
-                    add("\"" + escape(key) + "\": " + val.to_pretty_string(indent + 1), 1, false);
-                    first = false;
-                }
-                result += '\n';
-                add("}", 0, false);
-                return result;
-            }
-            default: return to_string();
-            }
-        }
-
-        // ------------------------------------------------
-
-    private:
-        static std::string removeEscapes(std::string_view str) {
-            std::string _str{ str };
-            replace_str(_str, "\\b", "\b");
-            replace_str(_str, "\\f", "\f");
-            replace_str(_str, "\\n", "\n");
-            replace_str(_str, "\\r", "\r");
-            replace_str(_str, "\\t", "\t");
-            replace_str(_str, "\\\"", "\"");
-            replace_str(_str, "\\\\", "\\");
-            return _str;
-        }
-        
-        static std::string escape(std::string_view str) {
-            std::string _str{ str };
-            replace_str(_str, "\\", "\\\\");
-            replace_str(_str, "\b", "\\b");
-            replace_str(_str, "\f", "\\f");
-            replace_str(_str, "\n", "\\n");
-            replace_str(_str, "\r", "\\r");
-            replace_str(_str, "\t", "\\t");
-            replace_str(_str, "\"", "\\\"");
-            return _str;
-        }
-
-        static bool consume(std::string_view& val, char c, bool empty = false) {
-            if ((val = trim(val)).empty() || !val.starts_with(c)) return false;
-            return !(val = trim(val.substr(1))).empty() || empty;
-        }
-        
-        static bool consumeNoTrim(std::string_view& val, char c, bool empty = false) {
-            if (val.empty() || !val.starts_with(c)) return false;
-            return !(val = val.substr(1)).empty() || empty;
-        }
-
-        static bool consume(std::string_view& val, std::string_view word) {
-            return val.starts_with(word) ? val = val.substr(word.size()), true : false;
-        }
-
-        static std::optional<json> parseJsonBool(std::string_view& val) {
-            return consume(val, "true") ? true
-                : consume(val, "false") ? false : std::optional<json>{};
-        }
-
-        static std::optional<json> parseJsonNull(std::string_view& val) {
-            return consume(val, "null") ? nullptr : std::optional<json>{};
-        }
-
-        static std::optional<json> parseJsonNumber(std::string_view& val) {
-            std::string_view _json = val;
-            std::size_t _size = 0ull;
-            bool _floating = false, _signed = false;
-            auto _isDigit = [&] { return oneOf(_json.front(), "0123456789"); };
-            auto _consume = [&] { return ++_size, !(_json = _json.substr(1)).empty(); };
-            auto _consumeDigits = [&] {
-                if (!_isDigit()) return false;
-                while (_isDigit()) if (!_consume()) return false;
-                return true;
-            };
-
-            if (_signed = _json.starts_with('-'))
-                if (!_consume()) return {};
-
-            if (_json.starts_with('0')) {      // when leading 0
-                if (!_consume()) return {}; // 
-                if (_isDigit()) return {};     // can't be followed by digit
-            }
-            else if (!_consumeDigits()) return {};
-
-            if (_floating = _json.starts_with('.')) {
-                if (!_consume()) return {};
-                if (!_consumeDigits()) return {};
-            }
-
-            if (oneOf(_json.front(), "eE")) {
-                if (!_consume()) return {};
-                if (oneOf(_json.front(), "-+") && !_consume()) return {};
-                if (!_consumeDigits()) return {};
-            }
-
-            _json = val.substr(0, _size);
-            auto _parse = [&]<class Ty>(Ty val) {
-                std::from_chars(_json.data(), _json.data() + _json.size(), val);
-                return json{ val };
-            };
-            val = val.substr(_size);
-            return _floating ? _parse(0.0) : _signed ? _parse(0ll) : _parse(0ull);
-        }
-
-        static std::optional<json> parseJsonString(std::string_view& val) {
-            std::string_view _json = val, _result = _json;
-            if (!consumeNoTrim(_json, '"')) return {};                 // parse '"'
-            if (consumeNoTrim(_json, '"')) return val = _json, "";     // empty string if parse '"'
-            for (std::size_t _offset = 1ull;;) {                 //
-                std::size_t _index = _json.find_first_of('"');   // find next '"'
-                if (_index == std::string_view::npos) return {}; // if not exist, invalid string
-                if (_result[_offset + _index - 1] == '\\') {     // if escaped
-                    bool _escaped = true;                        //   backtrack to make sure 
-                    std::size_t _backtrack = _offset + _index - 2; // the escape isn't escaped
-                    while (_backtrack > 0 && _result[_backtrack] == '\\') _escaped = !_escaped, _backtrack--;
-                    if (_escaped) {                              //   if escape isn't escaped
-                        _offset += _index + 1;                   //   add offset
-                        _json = _result.substr(_offset);         //   remove suffix from search
-                        continue;                                //   and continue from start of loop
-                    }
-                }                                                // else not escaped
-                val = _result.substr(_offset + _index + 1);      //   remove from remainder
-                return removeEscapes(_result.substr(1, _offset + _index - 1));
-            }
-        }
-
-        static std::optional<json> parseJsonArray(std::string_view& val) {
-            std::string_view _json = val;
-            if (!consume(_json, '[')) return {};                      // parse '['
-            std::optional<json> _result = array{}, _value = {};       // 
-            while (_value = parseJsonValue(_json)) {                  // try parse value
-                _result.value().emplace(_value.value());              // add value to result
-                if (!consume(_json, ',')) break;                      // if no comma, break
-            }                                                         // 
-            if (!consume(_json, ']', true)) return {};                // parse ']'
-            return val = _json, _result; // on success, save to val, return result
-        }
-
-        static std::optional<json> parseJsonObject(std::string_view& val) {
-            std::string_view _json = val;
-            if (!consume(_json, '{')) return {};                       // parse '{'
-            std::optional<json> _result = object{}, _value = {};       //
-            while (_value = parseJsonString(_json)) {                  // parse key
-                std::string _key = _value.value().as<string>();        // 
-                if (!consume(_json, ':')) return {};                   // parse ':'
-                if (!(_value = parseJsonValue(_json))) return {};      // parse value
-                _result.value()[_key] = _value.value();                // add to object
-                if (!consume(_json, ',')) break;                       // if no comma, break
-            }                                                          //
-            if (!consume(_json, '}', true)) return {};                 // parse '}'
-            return val = _json, _result; // on success, save to val, return result
-        }
-
-        static std::optional<json> parseJsonValue(std::string_view& val) {
-            std::optional<json> _result = {};
-            return (_result = parseJsonString(val)) || (_result = parseJsonArray(val))
-                || (_result = parseJsonObject(val)) || (_result = parseJsonBool(val))
-                || (_result = parseJsonNumber(val)) || (_result = parseJsonNull(val))
-                ? _result : std::optional<json>{};
-        }
     };
 
     // ------------------------------------------------
