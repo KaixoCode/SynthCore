@@ -120,10 +120,12 @@ namespace Kaixo::Theme {
 
         void interpret(const basic_json& theme, auto interpret, View::State state = View::State::Default) {
             if (state == View::State::Default) {
-                if (interpret(base, theme)) {
-                    if (theme.contains("transition", basic_json::Number)) {
-                        transition = theme["transition"].as<double>();
-                    }
+                if (theme.contains("transition", basic_json::Number)) {
+                    transition = theme["transition"].as<double>();
+                    if (theme.contains("value")) 
+                        interpret(base, theme["value"]);
+                } else {
+                    interpret(base, theme);
                 }
 
                 theme.foreach([&](std::string_view key, const basic_json& theme) {
@@ -136,21 +138,23 @@ namespace Kaixo::Theme {
                     if (key.contains("enabled")) state |= View::State::Enabled;
                     if (state != View::State::Default) {
                         Ty result;
-                        if (interpret(result, theme)) {
+                        if (theme.contains("transition", basic_json::Number)) {
+                            if (theme.contains("value")) interpret(result, theme["value"]);
                             State& s = states.emplace_back(state, std::move(result));
-                            if (theme.contains("transition", basic_json::Number)) {
-                                s.transition = theme["transition"].as<double>();
-                            }
+                            s.transition = theme["transition"].as<double>();
+                        } else if (interpret(result, theme)) {
+                            State& s = states.emplace_back(state, std::move(result));
                         }
                     }
                 });
             } else {
                 Ty result;
-                if (interpret(result, theme)) {
+                if (theme.contains("transition", basic_json::Number)) {
+                    if (theme.contains("value")) interpret(result, theme["value"]);
                     State& s = states.emplace_back(state, std::move(result));
-                    if (theme.contains("transition", basic_json::Number)) {
-                        s.transition = theme["transition"].as<double>();
-                    }
+                    s.transition = theme["transition"].as<double>();
+                } else if (interpret(result, theme)) {
+                    State& s = states.emplace_back(state, std::move(result));
                 }
             }
         }
