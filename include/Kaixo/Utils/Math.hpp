@@ -23,6 +23,33 @@ namespace Kaixo {
     struct Math {
 
         // ------------------------------------------------
+        
+        KAIXO_MONO saw(is_mono auto x, is_mono auto nf /*norm freq [0-1]*/) noexcept {
+            constexpr auto f = [](auto x) {
+                constexpr auto g = [](auto x) {
+                    return ((x * x - 1.f) * x) / 6.f;
+                };
+
+                return g(fmod1(x + 3) * 2 - 1);
+            };
+
+            return (f(x - 2 * nf) + f(x) - 2 * f(x - nf)) * 0.25f * (1.f / nf) * (1.f / nf);
+        }
+        
+        KAIXO_POLY saw(is_poly auto x, is_poly auto nf /*norm freq [0-1]*/) noexcept {
+            constexpr auto f = [](auto x) {
+                constexpr auto g = [](auto x) {
+                    return ((x * x - 1.f) * x) / 6.f;
+                };
+
+                return g(fmod1(x + 3) * 2 - 1);
+            };
+
+            return (f(x - 2 * nf) + f(x) - 2 * f(x - nf)) * 0.25f * (1.f / nf) * (1.f / nf);
+        }
+        KAIXO_STEREO(saw)
+
+        // ------------------------------------------------
 
         KAIXO_MONO trunc(is_mono auto x) noexcept { return std::trunc(x); }
         KAIXO_POLY trunc(is_poly auto x) noexcept { return x.trunc(); }
@@ -226,6 +253,33 @@ namespace Kaixo {
         // ------------------------------------------------
 
         struct Fast {
+            
+            // ------------------------------------------------
+        
+            KAIXO_MONO saw(is_mono auto x, is_mono auto nf /*norm freq [0-1]*/) noexcept {
+                constexpr auto f = [](auto x) {
+                    constexpr auto g = [](auto x) {
+                        return ((x * x - 1.f) * x) / 6.f;
+                    };
+
+                    return g(fmod1(x + 3) * 2 - 1);
+                };
+
+                return (f(x - 2 * nf) + f(x) - 2 * f(x - nf)) * 0.25f * (1.f / nf) * (1.f / nf);
+            }
+        
+            KAIXO_POLY saw(is_poly auto x, is_poly auto nf /*norm freq [0-1]*/) noexcept {
+                constexpr auto f = [](auto x) {
+                    constexpr auto g = [](auto x) {
+                        return ((x * x - 1.f) * x) / 6.f;
+                    };
+
+                    return g(fmod1(x + 3) * 2 - 1);
+                };
+
+                return (f(x - 2 * nf) + f(x) - 2 * f(x - nf)) * 0.25f * (1.f / nf) * (1.f / nf);
+            }
+            KAIXO_STEREO(saw)
 
             // ------------------------------------------------
 
