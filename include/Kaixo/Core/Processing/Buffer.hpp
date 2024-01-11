@@ -42,6 +42,13 @@ namespace Kaixo::Processing {
         const Stereo& operator[](std::size_t i) const { return m_Data[i]; }
 
         // ------------------------------------------------
+        
+        Stereo* begin() { return m_Data; }
+        Stereo* end() { return m_Data + m_CurrentSize; }
+        const Stereo* begin() const { return m_Data; }
+        const Stereo* end() const { return m_Data + m_CurrentSize; }
+
+        // ------------------------------------------------
 
         void prepare(std::size_t s) {
             reserve(s);

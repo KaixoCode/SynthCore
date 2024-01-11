@@ -21,6 +21,8 @@ namespace Kaixo::Processing {
 
         // ------------------------------------------------
 
+        template<class ...Args>
+        VoiceBank(Args&& ...args) : m_Voices{ std::forward<Args>(args)... } {}
         VoiceBank() { for (auto& voice : m_Voices) registerModule(voice); }
 
         // ------------------------------------------------

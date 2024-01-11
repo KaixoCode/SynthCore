@@ -17,7 +17,7 @@ namespace Kaixo::Processing {
 
         // ------------------------------------------------
 
-        virtual void process() = 0;
+        virtual void process() {};
         virtual void prepare(double sampleRate, std::size_t maxBufferSize) {}
         virtual void reset() {};
         virtual bool active() const { return false; }
@@ -74,7 +74,7 @@ namespace Kaixo::Processing {
 
         // ------------------------------------------------
 
-        virtual void process() override = 0;
+        virtual void process() override {};
         virtual void prepare(double sampleRate, std::size_t maxBufferSize) override;
         virtual void reset() override;
 
