@@ -11,7 +11,12 @@ namespace Kaixo::Processing {
 
     // ------------------------------------------------
 
-    template<std::derived_from<Voice> VoiceClass, std::size_t Count>
+    /**
+     * @tparam Parallel generate voices in parallel, meaning sample-by-sample. 
+     *                  when this is true, the Voice class must contain a "Stereo output;"
+     *                  where it will read the current output of the voice from.
+     */
+    template<std::derived_from<Voice> VoiceClass, std::size_t Count, bool Parallel = false>
     class VoiceBank : public ModuleContainer {
     public:
 
@@ -147,14 +152,23 @@ namespace Kaixo::Processing {
 
         void process() override {
             m_LastNote = lastTriggered().currentNote();
-            for (auto& voice : m_Voices) {
-                voice.output.prepare(outputBuffer().size());
-                voice.process();
-            }
-
-            for (auto& voice : m_Voices) {
+            if constexpr (Parallel) {
                 for (std::size_t i = 0; i < outputBuffer().size(); ++i) {
-                    outputBuffer()[i] += voice.output[i];
+                    for (auto& voice : m_Voices) {
+                        voice.process();
+                        outputBuffer()[i] += voice.output;
+                    }
+                }
+            } else {
+                for (auto& voice : m_Voices) {
+                    voice.output.prepare(outputBuffer().size());
+                    voice.process();
+                }
+
+                for (auto& voice : m_Voices) {
+                    for (std::size_t i = 0; i < outputBuffer().size(); ++i) {
+                        outputBuffer()[i] += voice.output[i];
+                    }
                 }
             }
         }
