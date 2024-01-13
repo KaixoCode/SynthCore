@@ -629,8 +629,8 @@ namespace Kaixo::Processing {
 
     // ------------------------------------------------
 
-    template<std::size_t N, class Sample = double, class MathQuality = Math>
-    class StereoEqualizer : public std::array<Biquad<Sample, MathQuality>, N>, public Module {
+    template<std::size_t N, class Sample = double, class MathQuality = Math, bool Quadruple = true>
+    class StereoEqualizer : public std::array<Biquad<Sample, MathQuality, 1, Quadruple>, N>, public Module {
     public:
 
         // ------------------------------------------------

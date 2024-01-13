@@ -114,6 +114,12 @@ namespace Kaixo::Theme {
         }
 
         if (json.is(basic_json::Object)) {
+            if (json.contains("default-spacing", basic_json::Number)) {
+                defaultSpacing = json["default-spacing"].as<std::int64_t>();
+            } else {
+                defaultSpacing = 2;
+            }
+
             for (auto& [key, val] : json.as<basic_json::object>()) {
                 if (key.size() != 1) continue;
 
@@ -130,7 +136,7 @@ namespace Kaixo::Theme {
                 }
 
                 val.try_get("pre-spacing", mapped.preSpacing);
-                val.try_get("post-spacing", mapped.postSpacing);
+                val.try_get_or_default("post-spacing", mapped.postSpacing, defaultSpacing);
 
                 if (val.contains("exceptions", basic_json::Array)) {
                     auto& arr = val["exceptions"].as<basic_json::array>();

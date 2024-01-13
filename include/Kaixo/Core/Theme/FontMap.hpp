@@ -115,6 +115,7 @@ namespace Kaixo::Theme {
         ImageID id = NoImage;
         std::map<char, Letter> charMap{};
         float maxHeight = 0;
+        std::int64_t defaultSpacing = 2;
 
         // ------------------------------------------------
 

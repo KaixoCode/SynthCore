@@ -32,6 +32,7 @@ namespace Kaixo::Gui {
             Type type = Type::Vertical;
             float speed = 1;
             bool moveCursorWithValue = false;
+            UnevaluatedPoint valuePosition{ {}, {} };
 
             // ------------------------------------------------
 

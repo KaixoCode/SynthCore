@@ -104,17 +104,33 @@ namespace Kaixo::Gui {
 
         if (!Storage::flag(Setting::TouchMode)) {
             if (settings.moveCursorWithValue) {
+                Rect evalRect = { value(), 0, width(), height() };
+
+                bool hasX = settings.valuePosition.x;
+                auto xPos = hasX
+                    ? settings.valuePosition.x(evalRect) + x()
+                    : m_PreviousMousePosition.x();
+                
+                bool hasY = settings.valuePosition.y;
+                auto yPos = hasY
+                    ? settings.valuePosition.y(evalRect) + y()
+                    : m_PreviousMousePosition.y();
+
                 switch (settings.type) {
                 case Type::Vertical:
-                    context.cursorPos(localPointToGlobal(Point{
-                        m_PreviousMousePosition.x(),
-                        y() + value() * height()
-                    })); break;
+                    if (hasY) {
+                        context.cursorPos(localPointToGlobal(Point{ xPos, yPos })); 
+                    } else {
+                        context.cursorPos(localPointToGlobal(Point{ xPos, y() + value() * height() })); 
+                    }
+                    break;
                 case Type::Horizontal:
-                    context.cursorPos(localPointToGlobal(Point{
-                        x() + value() * width(),
-                        m_PreviousMousePosition.y(),
-                    })); break;
+                    if (hasX) {
+                        context.cursorPos(localPointToGlobal(Point{ xPos, yPos })); 
+                    } else {
+                        context.cursorPos(localPointToGlobal(Point{ x() + value() * width(), yPos })); 
+                    }
+                    break;
                 }
             }
         }
@@ -170,7 +186,6 @@ namespace Kaixo::Gui {
             .bounds = localDimensions(),
             .parameter = settings.param,
             .value = v,
-            .index = steps() == 0 ? npos : normalToIndex(v, steps()),
             .state = state(),
         });
     }
