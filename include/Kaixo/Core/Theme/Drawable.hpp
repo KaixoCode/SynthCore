@@ -64,6 +64,7 @@ namespace Kaixo::Theme {
             ParamID parameter = NoParam;
             ParamValue value = -1; // Range must be [0, inf), -1 means not set
             std::size_t index = npos;
+            std::string_view text = "";
             View::State state = View::State::Default;
         };
 

@@ -18,7 +18,8 @@ namespace Kaixo::Gui {
 
         enum class Type {
             Vertical,  // Responds to vertical mouse movement
-            Horizontal // Responds to horizontal mouse movement
+            Horizontal,// Responds to horizontal mouse movement
+            Both,      // Responds to both vertical and horizontal
         };
 
         // ------------------------------------------------

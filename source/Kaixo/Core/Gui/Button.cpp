@@ -15,7 +15,8 @@ namespace Kaixo::Gui {
         : View(c), settings(std::move(s))
     {
         if (settings.param != NoParam) {
-            context.description(parameter(settings.param).description);
+            auto& param = parameter(settings.param);
+            context.description(param.description);
         }
 
         animation(settings.graphics);

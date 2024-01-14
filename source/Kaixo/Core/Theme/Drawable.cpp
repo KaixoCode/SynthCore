@@ -31,6 +31,7 @@ namespace Kaixo::Theme {
         // ------------------------------------------------
 
         image.interpret(json, [&](auto& image, const basic_json& json) {
+            bool containsImage = json.contains("image", basic_json::Object);
             if (json.try_get(str) || 
                 json.try_get("image", str) ||
                 containsImage && json["image"].try_get("source", str)) 
@@ -45,6 +46,7 @@ namespace Kaixo::Theme {
         // ------------------------------------------------
 
         multiframe.interpret(json, [&](auto& multiframe, const basic_json& json) {
+            bool containsImage = json.contains("image", basic_json::Object);
             if (json.contains("frames", basic_json::Number)) {
                 std::size_t frames = json["frames"].as<std::size_t>();
                 std::size_t fprow = 1;
@@ -79,6 +81,7 @@ namespace Kaixo::Theme {
         // ------------------------------------------------
 
         position.interpret(json, [&](auto& position, const basic_json& json) {
+            bool containsImage = json.contains("image", basic_json::Object);
             if (json.try_get("image-position", arr2) || 
                 containsImage && json["image"].try_get("position", arr2)) 
             {
@@ -92,6 +95,7 @@ namespace Kaixo::Theme {
         // ------------------------------------------------
 
         offset.interpret(json, [&](auto& offset, const basic_json& json) {
+            bool containsImage = json.contains("image", basic_json::Object);
             if (json.try_get("image-clip", arr4) ||
                 containsImage && json["image"].try_get("clip", arr4)) 
             {
@@ -109,6 +113,7 @@ namespace Kaixo::Theme {
         }, state);
         
         size.interpret(json, [&](auto& size, const basic_json& json) {
+            bool containsImage = json.contains("image", basic_json::Object);
             if (json.try_get("image-clip", arr4) ||
                 containsImage && json["image"].try_get("clip", arr4)) 
             {
@@ -128,6 +133,7 @@ namespace Kaixo::Theme {
         // ------------------------------------------------
 
         align.interpret(json, [&](Align& align, const basic_json& json) {
+            bool containsImage = json.contains("image", basic_json::Object);
             if (json.try_get("image-align", str) ||
                 containsImage && json["image"].try_get("align", str))
             {
@@ -260,6 +266,7 @@ namespace Kaixo::Theme {
         
         bool contentWasArray = false;
         content.interpret(json, [&](auto& content, const basic_json& json) {
+            bool containsText = json.contains("text", basic_json::Object);
             auto parseContent = [&](const basic_json& json) {
                 switch (json.type()) {
                 case basic_json::Array:
@@ -301,6 +308,7 @@ namespace Kaixo::Theme {
         // ------------------------------------------------
 
         position.interpret(json, [&](auto& position, const basic_json& json) {
+            bool containsText = json.contains("text", basic_json::Object);
             if (json.try_get("text-position", arr2) || 
                 containsText && json["text"].try_get("position", arr2))
             {
@@ -314,6 +322,7 @@ namespace Kaixo::Theme {
         // ------------------------------------------------
         
         align.interpret(json, [&](auto& align, const basic_json& json) {
+            bool containsText = json.contains("text", basic_json::Object);
             if (json.try_get("text-align", str) ||
                 containsText && json["text"].try_get("align", str))
             {
@@ -328,6 +337,7 @@ namespace Kaixo::Theme {
         // ------------------------------------------------
         
         frames.interpret(json, [&](auto& frames, const basic_json& json) {
+            bool containsText = json.contains("text", basic_json::Object);
             if (json.try_get("frames", str) ||
                 containsText && json["text"].try_get("frames", num))
             {
@@ -412,6 +422,7 @@ namespace Kaixo::Theme {
             replace_str(value, "$frame", std::to_string(_index + 1));
             replace_str(value, "$0frame", std::to_string(_index));
             replace_str(value, "$normalized-value", std::to_string(_value));
+            replace_str(value, "$text", instr.text);
             if (instr.parameter == NoParam) return value;
             auto& param = Kaixo::parameter(instr.parameter);
             replace_str(value, "$value", param.toString(_value));

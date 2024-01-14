@@ -10,8 +10,9 @@ namespace Kaixo::Gui {
         : View(c), settings(std::move(s))
     {
         if (settings.param != NoParam) {
+            auto& param = parameter(settings.param);
             m_Value = context.param(settings.param);
-            description(parameter(settings.param).description);
+            description(param.description);
         } else {
             m_Value = settings.resetValue;
         }
@@ -82,6 +83,8 @@ namespace Kaixo::Gui {
             switch (settings.type) {
             case Type::Vertical:   difference *= (m_PreviousMousePosition.y() - event.y) * +.005; break;
             case Type::Horizontal: difference *= (m_PreviousMousePosition.x() - event.x) * -.005; break;
+            case Type::Both:       difference *= (m_PreviousMousePosition.y() - event.y) * +.005 + 
+                                                 (m_PreviousMousePosition.x() - event.x) * -.005; break;
             }
 
             performEdit(value() + difference);
@@ -130,6 +133,12 @@ namespace Kaixo::Gui {
                     } else {
                         context.cursorPos(localPointToGlobal(Point{ x() + value() * width(), yPos })); 
                     }
+                    break;
+                case Type::Both:
+                    context.cursorPos(localPointToGlobal(Point{ 
+                        hasX ? xPos : (x() + value() * width()), 
+                        hasY ? yPos : (y() + value() * height())
+                    }));
                     break;
                 }
             }
