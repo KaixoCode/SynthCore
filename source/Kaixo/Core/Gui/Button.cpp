@@ -14,7 +14,7 @@ namespace Kaixo::Gui {
     Button::Button(Context c, Settings s)
         : View(c), settings(std::move(s))
     {
-        if (settings.param != NoParam) {
+        if (linkedToParam()) {
             auto& param = parameter(settings.param);
             context.description(param.description);
         }
@@ -26,7 +26,7 @@ namespace Kaixo::Gui {
 
     void Button::parameterChanged(ParamID id, ParamValue value) {
         if (settings.param == id) {
-            selected(value > 0.5);
+            callback(value > 0.5);
             repaint();
         }
     }
@@ -37,7 +37,7 @@ namespace Kaixo::Gui {
         View::mouseEnter(event);
         if (trigger() == OnHover) {
             if (behaviour() == Click) return callback(true);
-            if (behaviour() == Toggle) return callback(!selected());
+            if (behaviour() == Toggle) return callback(!m_Value);
         }
     }
 
@@ -50,7 +50,7 @@ namespace Kaixo::Gui {
         View::mouseDown(event);
         if (trigger() == OnMouseDown) {
             if (behaviour() == Click) return callback(true);
-            if (behaviour() == Toggle) return callback(!selected());
+            if (behaviour() == Toggle) return callback(!m_Value);
         }
     }
 
@@ -60,7 +60,7 @@ namespace Kaixo::Gui {
 
         if (contains(event.position) && trigger() == OnMouseUp) {
             if (behaviour() == Click) return callback(true);
-            if (behaviour() == Toggle) return callback(!selected());
+            if (behaviour() == Toggle) return callback(!m_Value);
         }
     }
 
@@ -78,6 +78,9 @@ namespace Kaixo::Gui {
     // ------------------------------------------------
 
     void Button::callback(bool value) {
+        if (m_Value == value) return; // Prevents recursion with parameterChanged
+        m_Value = value;
+
         bool isUntrigger = value == false;
         bool shouldCallback = isUntrigger ? settings.untrigger : true;
         if (settings.callback && shouldCallback) {
@@ -86,7 +89,7 @@ namespace Kaixo::Gui {
 
         if (behaviour() == Toggle) selected(value);
 
-        if (settings.param != NoParam) {
+        if (linkedToParam()) {
             context.beginEdit(settings.param);
             context.performEdit(settings.param, value);
             context.endEdit(settings.param);

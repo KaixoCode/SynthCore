@@ -67,10 +67,15 @@ namespace Kaixo::Gui {
 
         // ------------------------------------------------
     protected:
+        bool m_Value = false;
 
         // ------------------------------------------------
 
         void callback(bool value);
+
+        // ------------------------------------------------
+        
+        bool linkedToParam() const { return settings.param != NoParam; }
 
         // ------------------------------------------------
 
