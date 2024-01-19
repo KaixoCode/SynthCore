@@ -3,6 +3,10 @@
 
 // ------------------------------------------------
 
+namespace Kaixo { class Controller; }
+
+// ------------------------------------------------
+
 namespace Kaixo::Processing {
 
     // ------------------------------------------------
@@ -133,7 +137,7 @@ namespace Kaixo::Processing {
         // ------------------------------------------------
 
         friend class Processor;
-        friend class Controller;
+        friend class ::Kaixo::Controller;
 
         // ------------------------------------------------
 

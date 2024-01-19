@@ -1,4 +1,10 @@
+
+// ------------------------------------------------
+
 #include "Kaixo/Core/Controller.hpp"
+
+// ------------------------------------------------
+
 #include "Kaixo/Core/Gui/Window.hpp"
 #include "Kaixo/Core/Processing/Processor.hpp"
 #include "Kaixo/Core/Theme/Theme.hpp"

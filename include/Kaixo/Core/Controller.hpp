@@ -1,4 +1,7 @@
 #pragma once
+
+// ------------------------------------------------
+
 #include "Kaixo/Core/Definitions.hpp"
 #include "Kaixo/Core/Parameter.hpp"
 #include "Kaixo/Core/Serializable.hpp"

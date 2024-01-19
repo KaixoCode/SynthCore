@@ -103,7 +103,7 @@ namespace Kaixo::Processing {
 
         // ------------------------------------------------
         
-        friend class Controller;
+        friend class Kaixo::Controller;
 
         // ------------------------------------------------
 
