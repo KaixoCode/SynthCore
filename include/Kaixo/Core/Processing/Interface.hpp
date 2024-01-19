@@ -7,13 +7,70 @@ namespace Kaixo::Processing {
 
     // ------------------------------------------------
 
+    /**
+     * 
+     * Interfaces allow communication between the UI and Processor.
+     * There are 2 types of communication:
+     *  - Synchronous
+     *  - Asynchronous
+     * 
+     * With synchronous communication the execution remains on the UI thread
+     * and only data is read from the Processor. With this type of communication
+     * an interface can contain additional Settings for configuration.
+     * For example imagine we have an interface for an envelope:
+     * 
+     *   class EnvelopeInterface : public Interface {
+     *   public:
+     *       float value() = 0;
+     *   };
+     * 
+     * An Envelope view in the UI might have this in their settings:
+     * 
+     *   Processing::InterfaceStorage<EnvelopeInterface> interface;
+     * 
+     * But in the actual implementation of the interface there may be several
+     * envelopes to choose from. These can all use the same interface, like this:
+     * 
+     *   class EnvelopeInterfaceImpl : public EnvelopeInterface {
+     *   public:
+     *       struct Settings { std::size_t id; } settings{};
+     *       
+     *       float value() override { return self<Processor>().envelope[settings.id].output; };
+     *   };
+     * 
+     * You can then select which envelope this Envelope view gets its value from like this:
+     * 
+     *   .interface = context.interface<EnvelopeInterfaceImpl>({ .id = 0 });
+     * 
+     * You simple give the interface its settings when retrieving it from the context.
+     * 
+     * 
+     * With asynchronous communication it is not possible to use these settings.
+     * Asynchronous communication is implemented in a similar way to synchronous
+     * communication. The interface itself does not change, just the implementation.
+     * 
+     *   class SomeInterface : public Interface {
+     *   public:
+     *       void doSomething(int value) = 0;
+     *   };
+     * 
+     * This interface can then be implementated like this:
+     * 
+     *   class SomeInterfaceImpl : public SomeInterface {
+     *   public:
+     *       void doSomething(int value) override {
+     *           addAsyncTask([this, value]() {
+     *               self<Processor>().doSomething(value);
+     *           });
+     *       }
+     *   };
+     * 
+     * This task will then be executed on the audio thread.
+     * 
+     */
     class Processor;
     class Interface {
     public:
-
-        // ------------------------------------------------
-        
-        struct Settings {} settings {}; // Empty settings as a fallback
 
         // ------------------------------------------------
 
@@ -21,94 +78,19 @@ namespace Kaixo::Processing {
 
         // ------------------------------------------------
 
-        virtual void execute() {};
+    protected:
 
         // ------------------------------------------------
 
-        template<std::derived_from<Processor> Ty>
-        Ty& self() { return *dynamic_cast<Ty*>(m_Self); }
-
-        // ------------------------------------------------
-
-    private:
-        Processor* m_Self = nullptr;
-
-        // ------------------------------------------------
-
-        friend class Processor;
-
-        // ------------------------------------------------
-
-    };
-
-    // ------------------------------------------------
-
-    template<class> class TypedInterface;
-    template<class Result, class ...Args>
-    class TypedInterface<Result(Args...)> : public Interface {
-    public:
-
-        // ------------------------------------------------
-
-        virtual Result operator()(Args... args) = 0;
-
-        // ------------------------------------------------
-        
-        virtual Result operator()(Args... args, std::function<void(void)> assign) { assign(); return operator()(args...); };
-
-        // ------------------------------------------------
-
-    };
-
-    // ------------------------------------------------
-
-    template<class> class SynchronousInterface;
-    template<class Result, class ...Args>
-    class SynchronousInterface<Result(Args...)> : public TypedInterface<Result(Args...)> {
-    public:
-
-        // ------------------------------------------------
-
-        Result operator()(Args... args) override { return call(args...); }
-
-        // ------------------------------------------------
-
-        virtual Result call(Args... args) = 0;
-
-        // ------------------------------------------------
-
-    };
-
-    // ------------------------------------------------
-
-    template<class> class AsyncInterface;
-    template<class ...Args>
-    class AsyncInterface<void(Args...)> : public TypedInterface<void(Args...)> {
-    public:
-
-        // ------------------------------------------------
-
-        void operator()(Args... args, std::function<void(void)> assign) override { 
+        void addAsyncTask(std::function<void(void)> task) {
             auto& message = getMessage();
-            message.task = [this, assign = assign, ...args = args] { assign(); call(args...); };
-            message.executed = false;
-        };
-
-        // ------------------------------------------------
-
-        void operator()(Args... args) override { 
-            auto& message = getMessage();
-            message.task = [this, ...args = args] { call(args...); };
+            message.task = std::move(task);
             message.executed = false;
         }
 
         // ------------------------------------------------
 
-        virtual void call(Args... args) = 0;
-
-        // ------------------------------------------------
-
-        virtual void execute() override {
+        virtual void execute() {
             auto end = m_Messages.end();
             auto it = m_Messages.begin();
             for (; it != end; ++it) {
@@ -122,7 +104,16 @@ namespace Kaixo::Processing {
 
         // ------------------------------------------------
 
+        template<std::derived_from<Processor> Ty>
+        Ty& self() { return *dynamic_cast<Ty*>(m_Self); }
+
+        // ------------------------------------------------
+
     private:
+        Processor* m_Self = nullptr;
+
+        // ------------------------------------------------
+
         struct Message {
             std::atomic_bool executed = true;
             std::function<void()> task;
@@ -138,6 +129,26 @@ namespace Kaixo::Processing {
             }
             return m_Messages.emplace_back();
         }
+
+        // ------------------------------------------------
+
+        friend class Processor;
+        friend class Controller;
+
+        // ------------------------------------------------
+
+    };
+
+    // ------------------------------------------------
+
+    template<class> class TypedInterface;
+    template<class Result, class ...Args>
+    class TypedInterface<Result(Args...)> : public Interface {
+    public:
+
+        // ------------------------------------------------
+
+        virtual Result operator()(Args... args) = 0;
 
         // ------------------------------------------------
 
@@ -161,7 +172,12 @@ namespace Kaixo::Processing {
         InterfaceStorage() = default;
 
         template<std::derived_from<Type> Ty>
-        InterfaceStorage(Ty* interface, Ty::Settings settings = {})
+        InterfaceStorage(Ty* interface)
+            : m_Interface(interface)
+        {}
+        
+        template<std::derived_from<Type> Ty>
+        InterfaceStorage(Ty* interface, Ty::Settings settings)
             : m_Interface(interface), m_AssignSettings([interface, settings] { interface->settings = settings; })
         {}
         
@@ -182,7 +198,7 @@ namespace Kaixo::Processing {
             requires std::invocable<Type, Args&&...>
         auto operator()(Args&& ...args) const {
             if (m_AssignSettings) m_AssignSettings();
-            return (*m_Interface)(std::forward<Args>(args)..., m_AssignSettings);
+            return (*m_Interface)(std::forward<Args>(args)...);
         }
 
         // ------------------------------------------------
