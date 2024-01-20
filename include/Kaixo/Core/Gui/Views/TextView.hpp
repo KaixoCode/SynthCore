@@ -32,6 +32,7 @@ namespace Kaixo::Gui {
             std::size_t maxSize = 32; // Maximum amount of characters
             std::size_t maxLines = 3; // Maximum number of lines
 
+            std::string placeholder = "";
             std::string text = "";
         } settings;
 

@@ -17,6 +17,7 @@ namespace Kaixo::Theme {
 
     void TextAreaElement::interpret(const basic_json& theme) {
         if (theme.contains("font")) font.interpret(theme["font"]);
+        if (theme.contains("placeholder-color")) placeholderColor.interpret(theme["placeholder-color"]);
         if (theme.contains("text-color")) textColor.interpret(theme["text-color"]);
         if (theme.contains("caret-color")) caretColor.interpret(theme["caret-color"]);
         if (theme.contains("selection-color")) selectionColor.interpret(theme["selection-color"]);
@@ -27,6 +28,7 @@ namespace Kaixo::Theme {
     TextAreaElement::operator TextArea() const {
         TextArea result;
         result.font = font;
+        result.placeholderColor = placeholderColor;
         result.textColor = textColor;
         result.selectionColor = selectionColor;
         result.caretColor = caretColor;

@@ -79,6 +79,20 @@ namespace Kaixo::Gui {
             .bounds = localDimensions() 
         });
 
+        auto v = paddedDimensions().topLeft().toFloat() - m_Offset;
+        if (settings.text.empty()) {
+            auto lines = this->linesFrom(settings.placeholder);
+            if (settings.graphics.placeholderColor) {
+                g.setColour(settings.graphics.placeholderColor.get(state()));
+            } else {
+                g.setColour(settings.graphics.textColor.get(state()));
+            }
+            for (auto& line : lines) {
+                settings.graphics.font.draw(g, v, line, Theme::TopLeft, true);
+                v.y += settings.lineHeight;
+            }
+        }
+
         if (focused()) {
             std::int64_t begin = std::min(m_Caret, m_CaretEnd);
             std::int64_t end = std::max(m_Caret, m_CaretEnd);
@@ -123,12 +137,13 @@ namespace Kaixo::Gui {
             g.fillRect(Rect{ caretPos.x(), caretPos.y() - 2, 2, 2 + settings.lineHeight });
         }
 
-        auto v = paddedDimensions().topLeft().toFloat() - m_Offset;
-        auto lines = this->lines();
-        g.setColour(settings.graphics.textColor.get(state()));
-        for (auto& line : lines) {
-            settings.graphics.font.draw(g, v, line, Theme::TopLeft, true);
-            v.y += settings.lineHeight;
+         if (!settings.text.empty()) {
+            auto lines = this->lines();
+            g.setColour(settings.graphics.textColor.get(state()));
+            for (auto& line : lines) {
+                settings.graphics.font.draw(g, v, line, Theme::TopLeft, true);
+                v.y += settings.lineHeight;
+            }
         }
     }
 
@@ -344,18 +359,24 @@ namespace Kaixo::Gui {
     // ------------------------------------------------
 
     void TextView::doBackspace(bool word) {
-        if (word) selectWordLeft();
         if (hasSelection()) deleteSelection();
-        else {
+        else if (word) { 
+            selectWordLeft(); 
+            deleteSelection();
+        } else {
             deleteIndex(m_Caret - 1);
             setCaret(m_Caret - 1);
         }
     }
 
     void TextView::doDelete(bool word) {
-        if (word) selectWordRight();
         if (hasSelection()) deleteSelection();
-        else deleteIndex(m_Caret);
+        else if (word) {
+            selectWordRight();
+            deleteSelection();
+        } else {
+            deleteIndex(m_Caret);
+        }
     }
 
     void TextView::doLeft(bool word, bool moveEnd) {

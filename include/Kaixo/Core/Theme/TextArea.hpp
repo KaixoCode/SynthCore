@@ -22,6 +22,7 @@ namespace Kaixo::Theme {
 
         Font font;
         Color textColor;
+        Color placeholderColor;
         Color selectionColor;
         Color caretColor;
 
@@ -46,6 +47,7 @@ namespace Kaixo::Theme {
 
         FontElement font{ self };
         ColorElement textColor{ self };
+        ColorElement placeholderColor{ self };
         ColorElement selectionColor{ self };
         ColorElement caretColor{ self };
 
