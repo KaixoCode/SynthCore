@@ -307,6 +307,16 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
+        overflow == Overflow::Visible;
+        if (json.try_get("text-overflow", str) || 
+            containsText && json["text"].try_get("overflow", str)) 
+        {
+            if (str == "visible") overflow = Overflow::Visible;
+            else if (str == "dots") overflow = Overflow::Dots;
+        }
+
+        // ------------------------------------------------
+
         position.interpret(json, [&](auto& position, const basic_json& json) {
             bool containsText = json.contains("text", basic_json::Object);
             if (json.try_get("text-position", arr2) || 
@@ -446,7 +456,13 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
-        font.draw(instr.graphics, at, format(content.text[_text]), align, true);
+        auto string = format(content.text[_text]);
+        if (part.overflow == TextPart::Overflow::Dots) {
+            string = part.font.fitWithinWidth(string, instr.bounds.x() + instr.bounds.width() - at.x());
+            font.draw(instr.graphics, at, string, align, true);
+        } else {
+            font.draw(instr.graphics, at, string, align, true);
+        }
 
         // ------------------------------------------------
 
@@ -461,6 +477,7 @@ namespace Kaixo::Theme {
         position = { { 0, 0 } };
         frames = {};
         align = { Align::Center };
+        overflow = Overflow::Visible;
     }
 
     // ------------------------------------------------

@@ -34,6 +34,10 @@ namespace Kaixo::Gui {
             bool untrigger = behaviour == Behaviour::Toggle;
 
             // ------------------------------------------------
+            
+            std::string text{};
+
+            // ------------------------------------------------
 
             ParamID param = NoParam;
 

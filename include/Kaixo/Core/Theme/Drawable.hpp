@@ -32,13 +32,14 @@ namespace Kaixo::Theme {
      *     align: top-left           // image align relative to position
      *   }                           
      *                               
-     *   text: {                     
+     *   text: {
      *     content: [ "" ]           // array of strings, or single string
      *     font: $font               // font
      *     color: [0, 0, 0]          // text color
      *     position: [0, 0]          // relative position of text in drawable
      *     align: top-left           // text alignment relative to position
      *     frames: 1                 // used for $frame variable
+     *     overflow: visible         // Overflow [visible, dots]
      *   }
      * 
      *   background-color: [0, 0, 0] // Background color
@@ -149,6 +150,7 @@ namespace Kaixo::Theme {
             StateLinked<Align> align{};
             ColorElement color{ self };
             FontElement font{ self };
+            enum class Overflow { Visible, Dots } overflow = Overflow::Visible;
 
             void reset();
             void interpret(const basic_json& theme, View::State state = View::State::Default);

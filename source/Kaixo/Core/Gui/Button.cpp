@@ -71,6 +71,7 @@ namespace Kaixo::Gui {
             .graphics = g,
             .bounds = localDimensions(),
             .parameter = settings.param,
+            .text = settings.text,
             .state = state(),
         });
     }
