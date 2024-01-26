@@ -10,7 +10,10 @@ namespace Kaixo::Processing {
     Buffer& Module::outputBuffer() const { return m_Controller->m_Output; }
     const Buffer& Module::inputBuffer() const { return m_Controller->m_Input; }
 
-    double Module::sampleRate() const { return m_Controller->m_SampleRate; }
+    void Module::oversample(std::size_t n) const { m_Controller->m_Oversample = n; }
+
+    double Module::generatingSampleRate() const { return m_Controller->m_SampleRate; }
+    double Module::sampleRate() const { return m_Controller->m_SampleRate * m_Controller->m_Oversample; }
     double Module::bpm() const { return m_Controller->m_Bpm; }
     std::int64_t Module::timeInSamples() const { return m_Controller->m_TimeInSamples; }
 

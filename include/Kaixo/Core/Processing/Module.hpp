@@ -27,6 +27,9 @@ namespace Kaixo::Processing {
         Buffer& outputBuffer() const;
         const Buffer& inputBuffer() const;
 
+        void oversample(std::size_t n) const;
+
+        double generatingSampleRate() const;
         double sampleRate() const;
         double bpm() const;
         std::int64_t timeInSamples() const;
