@@ -65,6 +65,13 @@ namespace Kaixo::Gui {
     }
 
     // ------------------------------------------------
+    
+    void View::clear() {
+        removeAllChildren();
+        m_Views.clear();
+    }
+
+    // ------------------------------------------------
 
     void View::updateDimensions() {
         if (m_UseDimensions) {

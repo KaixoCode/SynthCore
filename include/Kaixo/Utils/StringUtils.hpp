@@ -9,6 +9,8 @@
 #include <type_traits>
 #include <utility>
 #include <sstream>
+#include <fstream>
+#include <filesystem>
 #include <istream>
 
 // ------------------------------------------------
@@ -189,6 +191,13 @@ namespace Kaixo {
     // ------------------------------------------------
 
     inline std::string file_to_string(std::istream& file) {
+        std::stringstream _stream{};
+        _stream << file.rdbuf();
+        return _stream.str();
+    }
+    
+    inline std::string file_to_string(std::filesystem::path path) {
+        std::ifstream file{ path };
         std::stringstream _stream{};
         _stream << file.rdbuf();
         return _stream.str();

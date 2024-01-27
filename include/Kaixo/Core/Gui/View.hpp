@@ -140,6 +140,8 @@ namespace Kaixo::Gui {
         
         ViewVector& views() { return m_Views; }
 
+        void clear();
+
         // ------------------------------------------------
 
         void parentSizeChanged() override { updateDimensions(); }

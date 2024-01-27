@@ -217,5 +217,6 @@ namespace Kaixo {
 #include "Kaixo/Utils/simd.hpp"
 #include "Kaixo/Utils/Math.hpp"
 #include "Kaixo/Utils/Color.hpp"
+#include "Kaixo/Utils/StringUtils.hpp"
 
 #include "Kaixo/Core/Processing/Stereo.hpp"
