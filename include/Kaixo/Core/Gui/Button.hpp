@@ -61,6 +61,10 @@ namespace Kaixo::Gui {
         void mouseUp(const juce::MouseEvent& event) override;
 
         // ------------------------------------------------
+        
+        virtual void value(bool v);
+
+        // ------------------------------------------------
 
         void paint(juce::Graphics& g) override;
 
@@ -70,6 +74,7 @@ namespace Kaixo::Gui {
         Trigger trigger() const { return settings.trigger; }
 
         // ------------------------------------------------
+
     protected:
         bool m_Value = false;
 

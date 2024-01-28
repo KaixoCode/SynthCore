@@ -65,6 +65,12 @@ namespace Kaixo::Gui {
     }
 
     // ------------------------------------------------
+    
+    void Button::value(bool v) {
+        callback(v);
+    }
+
+    // ------------------------------------------------
 
     void Button::paint(juce::Graphics& g)  {
         settings.graphics.draw({
