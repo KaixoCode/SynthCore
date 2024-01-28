@@ -154,9 +154,11 @@ namespace Kaixo {
 
     template<std::derived_from<Serializable> Ty>
     Ty& Controller::data() {
-        if (!m_SerializableData.contains(typeid(Ty)))
+        if (!m_SerializableData.contains(typeid(Ty))) {
             m_SerializableData[typeid(Ty)] = std::make_unique<Ty>();
-        return *dynamic_cast<Ty*>(m_SerializableData[typeid(Ty)].get()); 
+            m_SerializableData[typeid(Ty)]->init();
+        }
+        return *dynamic_cast<Ty*>(m_SerializableData[typeid(Ty)].get());
     }
 
     // ------------------------------------------------
