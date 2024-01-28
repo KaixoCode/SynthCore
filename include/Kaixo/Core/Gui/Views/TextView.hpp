@@ -18,7 +18,6 @@ namespace Kaixo::Gui {
         // ------------------------------------------------
 
         struct Settings {
-            Theme::Drawable background;
             Theme::TextArea graphics;
 
             Point<> padding{ 8, 8 };

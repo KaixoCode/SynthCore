@@ -74,9 +74,10 @@ namespace Kaixo::Gui {
     // ------------------------------------------------
 
     void TextView::paint(juce::Graphics& g) {
-        settings.background.draw({
+        settings.graphics.background.draw({
             .graphics = g, 
-            .bounds = localDimensions() 
+            .bounds = localDimensions(),
+            .state = state()
         });
 
         auto v = paddedDimensions().topLeft().toFloat() - m_Offset;
@@ -106,16 +107,16 @@ namespace Kaixo::Gui {
             if (beginPos.y() == endPos.y()) {
                 g.fillRect(Rect{
                     beginPos.x(),
-                    beginPos.y() - 2,
+                    beginPos.y(),
                     endPos.x() - beginPos.x() + 2,
-                    settings.lineHeight + 2
+                    settings.lineHeight
                 });
             } else {
                 g.fillRect(Rect{
                     beginPos.x(),
-                    beginPos.y() - 2,
+                    beginPos.y(),
                     v.right() - beginPos.x(),
-                    settings.lineHeight + 2
+                    settings.lineHeight
                 });
 
                 g.fillRect(Rect{
@@ -134,7 +135,7 @@ namespace Kaixo::Gui {
             }
             
             g.setColour(settings.graphics.caretColor.get(state()));
-            g.fillRect(Rect{ caretPos.x(), caretPos.y() - 2, 2, 2 + settings.lineHeight });
+            g.fillRect(Rect{ caretPos.x(), caretPos.y(), 2, settings.lineHeight });
         }
 
          if (!settings.text.empty()) {

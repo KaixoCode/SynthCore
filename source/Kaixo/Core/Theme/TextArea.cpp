@@ -10,7 +10,9 @@ namespace Kaixo::Theme {
     bool TextArea::changing() const {
         return textColor.changing() 
             || caretColor.changing() 
-            || selectionColor.changing();
+            || selectionColor.changing()
+            || placeholderColor.changing()
+            || background.changing();
     }
 
     // ------------------------------------------------
@@ -21,17 +23,19 @@ namespace Kaixo::Theme {
         if (theme.contains("text-color")) textColor.interpret(theme["text-color"]);
         if (theme.contains("caret-color")) caretColor.interpret(theme["caret-color"]);
         if (theme.contains("selection-color")) selectionColor.interpret(theme["selection-color"]);
+        if (theme.contains("background")) background.interpret(theme["background"]);
     }
 
     // ------------------------------------------------
 
-    TextAreaElement::operator TextArea() const {
+    TextAreaElement::operator TextArea() {
         TextArea result;
         result.font = font;
         result.placeholderColor = placeholderColor;
         result.textColor = textColor;
         result.selectionColor = selectionColor;
         result.caretColor = caretColor;
+        result.background = background;
         return result;
     }
 

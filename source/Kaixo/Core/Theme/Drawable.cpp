@@ -67,10 +67,11 @@ namespace Kaixo::Theme {
         // ------------------------------------------------
 
         tiled.interpret(json, [&](auto& tiled, const basic_json& json) {
-            if (json.try_get("edges", edg2)) {
+            bool containsImage = json.contains("image", basic_json::Object);
+            if (json.try_get("image-edges", edg2) || containsImage && json["image"].try_get("edges", edg2)) {
                 tiled = TiledDescription{ edg2[0], edg2[1], edg2[0], edg2[1] };
                 return true;
-            } else if (json.try_get("edges", edg4)) {
+            } else if (json.try_get("image-edges", edg4) || containsImage && json["image"].try_get("edges", edg4)) {
                 tiled = TiledDescription{ edg4[0], edg4[1], edg4[2], edg4[3] };
                 return true;
             }

@@ -5,6 +5,7 @@
 #include "Kaixo/Core/Theme/ZoomMultiplier.hpp"
 #include "Kaixo/Core/Theme/FontMap.hpp"
 #include "Kaixo/Core/Theme/Color.hpp"
+#include "Kaixo/Core/Theme/Drawable.hpp"
 
 // ------------------------------------------------
 
@@ -25,6 +26,7 @@ namespace Kaixo::Theme {
         Color placeholderColor;
         Color selectionColor;
         Color caretColor;
+        Drawable background;
 
         // ------------------------------------------------
         
@@ -50,6 +52,7 @@ namespace Kaixo::Theme {
         ColorElement placeholderColor{ self };
         ColorElement selectionColor{ self };
         ColorElement caretColor{ self };
+        DrawableElement background{ self };
 
         // ------------------------------------------------
 
@@ -57,7 +60,7 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
-        operator TextArea() const;
+        operator TextArea();
 
         // ------------------------------------------------
 

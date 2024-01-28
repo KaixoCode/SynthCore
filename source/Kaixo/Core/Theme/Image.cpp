@@ -108,7 +108,7 @@ namespace Kaixo::Theme {
         if (i.tiled) {
             drawTiledImage(i.graphics, _clipped, i.bounds, *i.tiled, i.fillAlphaWithColor);
         } else {
-            i.graphics.setOpacity(1.0);
+            if (!i.fillAlphaWithColor) i.graphics.setOpacity(1.0);
             i.graphics.saveState(); // Save state before clip
             i.graphics.reduceClipRegion(i.bounds.getSmallestIntegerContainer());
             // TODO: add proper placement using align and position

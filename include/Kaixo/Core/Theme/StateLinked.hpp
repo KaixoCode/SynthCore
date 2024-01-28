@@ -124,6 +124,8 @@ namespace Kaixo::Theme {
                     transition = theme["transition"].as<double>();
                     if (theme.contains("value")) 
                         interpret(base, theme["value"]);
+                } else if (theme.contains("value")) {
+                    interpret(base, theme["value"]);
                 } else {
                     interpret(base, theme);
                 }
