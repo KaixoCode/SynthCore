@@ -241,6 +241,11 @@ namespace Kaixo {
         if (m_Window) m_Window->notifyPresetLoad();
     }
     
+    void Controller::loadPresetFromJson(basic_json& json) {
+        deserialize(json);
+        if (m_Window) m_Window->notifyPresetLoad();
+    }
+
     constexpr auto ProcessorName = "_processor";
     constexpr auto ParametersName = "_parameters";
 

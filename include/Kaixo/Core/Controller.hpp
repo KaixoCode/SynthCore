@@ -88,6 +88,7 @@ namespace Kaixo {
         virtual void initPreset();
         virtual SaveResult savePreset(std::filesystem::path path, bool force = false);
         virtual void loadPreset(std::filesystem::path path);
+        virtual void loadPresetFromJson(basic_json& json);
 
         virtual void init() override;
         virtual basic_json serialize() override;
