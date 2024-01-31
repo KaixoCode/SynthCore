@@ -62,6 +62,11 @@ namespace Kaixo::Gui {
         Processing::InterfaceStorage<Ty> interface() const;
 
         // ------------------------------------------------
+
+        template<std::derived_from<Controller> Ty>
+        Ty& controller() const;
+
+        // ------------------------------------------------
         
         template<std::derived_from<Serializable> Ty>
         Ty& data() const { return getController().data<Ty>(); }
@@ -102,6 +107,11 @@ namespace Kaixo::Gui {
     };
 
     // ------------------------------------------------
+    
+    template<std::derived_from<Controller> Ty>
+    Ty& Context::controller() const { return dynamic_cast<Ty&>(getController()); };
+
+    // ------------------------------------------------
 
     template<std::derived_from<Processing::Interface> Ty>
     Processing::InterfaceStorage<Ty> Context::interface(Ty::Settings settings) const {
@@ -120,6 +130,7 @@ namespace Kaixo::Gui {
         }
         throw std::exception("Interface does not exist");
     }
+
     // ------------------------------------------------
 
 }
