@@ -604,6 +604,21 @@ namespace Kaixo::Processing {
 
             return res;
         }
+
+        float process(float s, Params& p) {
+            float res = s;
+            for (auto& c : p.coeficients) {
+                auto output = (c.b[0] * res) + c.state[0].l;
+
+                for (int j = 0; j < c.order - 1; ++j)
+                    c.state[j].l = (c.b[j + 1] * res) - (c.a[j + 1] * output) + c.state[j + 1].l;
+
+                c.state[c.order - 1].l = (c.b[c.order] * res) - (c.a[c.order] * output);
+                res = output;
+            }
+
+            return res;
+        }
     };
 
     // ------------------------------------------------
@@ -613,6 +628,13 @@ namespace Kaixo::Processing {
         double sampleRateOut = 48000;
 
         Stereo process(Stereo s) {
+            params.f0 = sampleRateOut / 2 - 2;
+            params.sampleRate = sampleRateIn;
+            params.recalculateParameters();
+            return filter.process(s, params);
+        }
+        
+        float process(float s) {
             params.f0 = sampleRateOut / 2 - 2;
             params.sampleRate = sampleRateIn;
             params.recalculateParameters();

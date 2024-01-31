@@ -191,8 +191,9 @@ namespace Kaixo::Gui {
             y = rect.y() - scroll;
             for (auto& view : views()) {
                 if (!view->isVisible()) continue;
-                Coord h = view->height();
+                view->evaluateDimensions(rect);
 
+                Coord h = view->height();
                 switch (settings.alignChildren & Theme::Align::X) {
                 case Theme::Align::CenterX: {
                     view->x(rect.x() + rect.width() / 2 - view->width() / 2);
@@ -209,7 +210,6 @@ namespace Kaixo::Gui {
                 }
 
                 view->y(y);
-                view->updateDimensions();
 
                 y += h + settings.gap;
             }
@@ -239,8 +239,9 @@ namespace Kaixo::Gui {
             x = rect.x() - scroll;
             for (auto& view : views()) {
                 if (!view->isVisible()) continue;
-                Coord w = view->width();
+                view->evaluateDimensions(rect);
 
+                Coord w = view->width();
                 switch (settings.alignChildren & Theme::Align::Y) {
                 case Theme::Align::CenterY: {
                     view->y(rect.y() + rect.height() / 2 - view->height() / 2);
@@ -257,7 +258,6 @@ namespace Kaixo::Gui {
                 }
 
                 view->x(x);
-                view->updateDimensions();
 
                 x += w + settings.gap;
             }
