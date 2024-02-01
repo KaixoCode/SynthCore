@@ -569,6 +569,10 @@ namespace Kaixo {
             // ------------------------------------------------
 
             KAIXO_MONO sign(is_mono auto x) noexcept { return x > 0 ? 1 : -1; }
+            KAIXO_MONO sign(is_poly auto x) noexcept { 
+                const auto cnd = 0.f < x;
+                return cnd & 1.f | ~cnd & -1.f;
+            }
             KAIXO_STEREO(sign)
 
             // ------------------------------------------------

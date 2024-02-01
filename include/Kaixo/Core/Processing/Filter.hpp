@@ -450,13 +450,14 @@ namespace Kaixo::Processing {
             return last;
         }
 
-        double passbandAmplitudedB = -1;
-        double stopbandAmplitudedB = -80;
-        double normalisedTransitionWidth = 0.001;
-
         double pf0 = 0;
         double psampleRate = 0;
     public:
+        // Cannot change dynamically!
+        double passbandAmplitudedB = -1;
+        double stopbandAmplitudedB = -80;
+        double normalisedTransitionWidth = 0.001;
+        // Can change:
         double f0 = 20000;
         double sampleRate = 44100;
         FilterType type = FilterType::LowPass;
