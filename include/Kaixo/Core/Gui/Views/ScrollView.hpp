@@ -62,6 +62,11 @@ namespace Kaixo::Gui {
         void updateDimensions() override;
 
         // ------------------------------------------------
+        
+        float scrolled();
+        void scrollTo(float pos);
+
+        // ------------------------------------------------
 
     protected:
         Coord m_HighestCoord = 0;

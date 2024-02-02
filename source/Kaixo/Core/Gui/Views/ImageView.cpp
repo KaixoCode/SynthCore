@@ -8,7 +8,11 @@ namespace Kaixo::Gui {
 
     ImageView::ImageView(Context c, Settings s)
         : View(c), settings(std::move(s))
-    {}
+    {
+        if (!settings.enableMouse) {
+            setInterceptsMouseClicks(false, false);
+        }
+    }
 
     // ------------------------------------------------
 
@@ -16,7 +20,8 @@ namespace Kaixo::Gui {
         settings.image.draw({
             .graphics = g,
             .bounds = localDimensions(),
-            .text = settings.text
+            .text = settings.text,
+            .state = state()
         });
     }
 

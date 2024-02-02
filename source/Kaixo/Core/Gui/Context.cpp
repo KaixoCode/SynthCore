@@ -53,6 +53,10 @@ namespace Kaixo::Gui {
 
     // ------------------------------------------------
 
+    Window& Context::window() const { return *m_Window; }
+
+    // ------------------------------------------------
+
     TabControl& Context::tabControl(std::int64_t id) const { return getWindow().m_TabControls[id]; }
 
     // ------------------------------------------------

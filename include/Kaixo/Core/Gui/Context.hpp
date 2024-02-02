@@ -54,6 +54,10 @@ namespace Kaixo::Gui {
         Tooltip& tooltip() const;
 
         // ------------------------------------------------
+        
+        Window& window() const;
+
+        // ------------------------------------------------
 
         template<std::derived_from<Processing::Interface> Ty>
         Processing::InterfaceStorage<Ty> interface(Ty::Settings settings) const;

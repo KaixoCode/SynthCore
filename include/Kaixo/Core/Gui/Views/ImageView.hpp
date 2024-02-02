@@ -23,6 +23,7 @@ namespace Kaixo::Gui {
 
             Theme::Drawable image;
             std::string text = "";
+            bool enableMouse = true;
 
             // ------------------------------------------------
 

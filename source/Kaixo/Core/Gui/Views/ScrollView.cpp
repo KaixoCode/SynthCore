@@ -17,8 +17,7 @@ namespace Kaixo::Gui {
         if (!hovering() && overBar) {
             hovering(true);
             repaint();
-        }
-        else if (hovering() && !overBar) {
+        } else if (hovering() && !overBar) {
             hovering(false);
             repaint();
         }
@@ -64,8 +63,7 @@ namespace Kaixo::Gui {
         if (scrollbarNecessary()) {
             m_Scrolled = Math::Fast::clamp(m_Scrolled - 100 * d.deltaY, 0, scrollSpace());
             positionChildren();
-        }
-        else {
+        } else {
             View::mouseWheelMove(event, d);
         }
     }
@@ -97,6 +95,18 @@ namespace Kaixo::Gui {
             view->evaluateDimensions(childrenRect());
         }
         positionChildren();
+    }
+
+    // ------------------------------------------------
+    
+    float ScrollView::scrolled() { return m_Scrolled; }
+    
+    void ScrollView::scrollTo(float pos) {
+        pos = Math::Fast::clamp(pos, 0, scrollSpace());
+        if (m_Scrolled != pos) {
+            m_Scrolled = pos;
+            positionChildren();
+        }
     }
 
     // ------------------------------------------------
