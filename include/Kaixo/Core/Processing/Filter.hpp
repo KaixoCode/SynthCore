@@ -365,91 +365,91 @@ namespace Kaixo::Processing {
 
     // ------------------------------------------------
 
+    inline void ellipticIntegralK(double k, double& K, double& Kp) {
+        constexpr int M = 4;
+
+        K = std::numbers::pi_v<double> / 2;
+        auto lastK = k;
+
+        for (int i = 0; i < M; ++i) {
+            lastK = std::pow(lastK / (1 + std::sqrt(1 - std::pow(lastK, 2.0))), 2.0);
+            K *= 1 + lastK;
+        }
+
+        Kp = std::numbers::pi_v<double> / 2;
+        auto last = std::sqrt(1 - k * k);
+
+        for (int i = 0; i < M; ++i) {
+            last = std::pow(last / (1.0 + std::sqrt(1.0 - std::pow(last, 2.0))), 2.0);
+            Kp *= 1 + last;
+        }
+    }
+
+    inline std::complex<double> asne(std::complex<double> w, double k) noexcept {
+        constexpr int M = 4;
+
+        double ke[M + 1];
+        double* kei = ke;
+        *kei = k;
+
+        for (int i = 0; i < M; ++i) {
+            auto next = std::pow(*kei / (1.0 + std::sqrt(1.0 - std::pow(*kei, 2.0))), 2.0);
+            *++kei = next;
+        }
+
+        std::complex<double> last = w;
+
+        for (int i = 1; i <= M; ++i)
+            last = 2.0 * last / ((1.0 + ke[i]) * (1.0 + std::sqrt(1.0 - std::pow(ke[i - 1] * last, 2.0))));
+
+        return 2.0 / std::numbers::pi_v<double> *std::asin(last);
+    }
+
+    inline std::complex<double> sne(std::complex<double> u, double k) noexcept {
+        constexpr int M = 4;
+
+        double ke[M + 1];
+        double* kei = ke;
+        *kei = k;
+
+        for (int i = 0; i < M; ++i) {
+            auto next = std::pow(*kei / (1 + std::sqrt(1 - std::pow(*kei, 2.0))), 2.0);
+            *++kei = next;
+        }
+
+        // NB: the spurious cast to double here is a workaround for a very odd link-time failure
+        std::complex<double> last = std::sin(u * (double)(std::numbers::pi_v<double> / 2));
+
+        for (int i = M - 1; i >= 0; --i)
+            last = (1.0 + ke[i + 1]) / (1.0 / last + ke[i + 1] * last);
+
+        return last;
+    }
+
+    inline std::complex<double> cde(std::complex<double> u, double k) noexcept {
+        constexpr int M = 4;
+
+        double ke[M + 1];
+        double* kei = ke;
+        *kei = k;
+
+        for (int i = 0; i < M; ++i) {
+            auto next = std::pow(*kei / (1.0 + std::sqrt(1.0 - std::pow(*kei, 2.0))), 2.0);
+            *++kei = next;
+        }
+
+        // NB: the spurious cast to double here is a workaround for a very odd link-time failure
+        std::complex<double> last = std::cos(u * (double)(std::numbers::pi_v<double> / 2));
+
+        for (int i = M - 1; i >= 0; --i)
+            last = (1.0 + ke[i + 1]) / (1.0 / last + ke[i + 1] * last);
+
+        return last;
+    }
+
     // High order minimal phase infinite impulse response elliptic
     // lowpass filter used for anti-aliasing
     class EllipticParameters {
-        void ellipticIntegralK(double k, double& K, double& Kp) {
-            constexpr int M = 4;
-
-            K = std::numbers::pi_v<double> / 2;
-            auto lastK = k;
-
-            for (int i = 0; i < M; ++i) {
-                lastK = std::pow(lastK / (1 + std::sqrt(1 - std::pow(lastK, 2.0))), 2.0);
-                K *= 1 + lastK;
-            }
-
-            Kp = std::numbers::pi_v<double> / 2;
-            auto last = std::sqrt(1 - k * k);
-
-            for (int i = 0; i < M; ++i) {
-                last = std::pow(last / (1.0 + std::sqrt(1.0 - std::pow(last, 2.0))), 2.0);
-                Kp *= 1 + last;
-            }
-        }
-
-        std::complex<double> asne(std::complex<double> w, double k) noexcept {
-            constexpr int M = 4;
-
-            double ke[M + 1];
-            double* kei = ke;
-            *kei = k;
-
-            for (int i = 0; i < M; ++i) {
-                auto next = std::pow(*kei / (1.0 + std::sqrt(1.0 - std::pow(*kei, 2.0))), 2.0);
-                *++kei = next;
-            }
-
-            std::complex<double> last = w;
-
-            for (int i = 1; i <= M; ++i)
-                last = 2.0 * last / ((1.0 + ke[i]) * (1.0 + std::sqrt(1.0 - std::pow(ke[i - 1] * last, 2.0))));
-
-            return 2.0 / std::numbers::pi_v<double> *std::asin(last);
-        }
-
-        std::complex<double> sne(std::complex<double> u, double k) noexcept {
-            constexpr int M = 4;
-
-            double ke[M + 1];
-            double* kei = ke;
-            *kei = k;
-
-            for (int i = 0; i < M; ++i) {
-                auto next = std::pow(*kei / (1 + std::sqrt(1 - std::pow(*kei, 2.0))), 2.0);
-                *++kei = next;
-            }
-
-            // NB: the spurious cast to double here is a workaround for a very odd link-time failure
-            std::complex<double> last = std::sin(u * (double)(std::numbers::pi_v<double> / 2));
-
-            for (int i = M - 1; i >= 0; --i)
-                last = (1.0 + ke[i + 1]) / (1.0 / last + ke[i + 1] * last);
-
-            return last;
-        }
-
-        std::complex<double> cde(std::complex<double> u, double k) noexcept {
-            constexpr int M = 4;
-
-            double ke[M + 1];
-            double* kei = ke;
-            *kei = k;
-
-            for (int i = 0; i < M; ++i) {
-                auto next = std::pow(*kei / (1.0 + std::sqrt(1.0 - std::pow(*kei, 2.0))), 2.0);
-                *++kei = next;
-            }
-
-            // NB: the spurious cast to double here is a workaround for a very odd link-time failure
-            std::complex<double> last = std::cos(u * (double)(std::numbers::pi_v<double> / 2));
-
-            for (int i = M - 1; i >= 0; --i)
-                last = (1.0 + ke[i + 1]) / (1.0 / last + ke[i + 1] * last);
-
-            return last;
-        }
-
         double pf0 = 0;
         double psampleRate = 0;
     public:
