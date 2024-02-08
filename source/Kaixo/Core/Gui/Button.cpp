@@ -16,7 +16,7 @@ namespace Kaixo::Gui {
     {
         if (linkedToParam()) {
             auto& param = parameter(settings.param);
-            context.description(param.description);
+            description(param.description);
         }
 
         animation(settings.graphics);
