@@ -148,6 +148,8 @@ namespace Kaixo::Gui {
 
         if (event.mods.isLeftButtonDown()) {
             setMouseCursor(juce::MouseCursor::NormalCursor);
+            if (settings.onchange)
+                settings.onchange(value());
             endEdit();
         }
     }

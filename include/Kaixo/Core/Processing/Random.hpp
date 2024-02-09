@@ -15,9 +15,16 @@ namespace Kaixo::Processing {
 
         // ------------------------------------------------
 
-        float next() { 
+        float nextFloat() { 
 			return static_cast<float>(xoroshiro128p()) / std::numeric_limits<std::uint64_t>::max();
 		}
+
+        // ------------------------------------------------
+        
+        static float next() {
+            thread_local Random random{};
+            return random.nextFloat();
+        }
 
         // ------------------------------------------------
 

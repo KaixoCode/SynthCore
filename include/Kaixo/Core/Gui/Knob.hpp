@@ -29,6 +29,7 @@ namespace Kaixo::Gui {
             // ------------------------------------------------
 
             std::function<void(ParamValue)> callback{};
+            std::function<void(ParamValue)> onchange{};
             Theme::Drawable graphics{};
             Type type = Type::Vertical;
             float speed = 1;

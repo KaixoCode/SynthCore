@@ -22,8 +22,9 @@ namespace Kaixo {
     Storage::Storage() {
         juce::PropertiesFile::Options options;
         options.applicationName = JucePlugin_Name;
+        options.folderName = JucePlugin_Manufacturer;
         options.filenameSuffix = ".settings";
-        options.storageFormat = juce::PropertiesFile::storeAsBinary;
+        options.storageFormat = juce::PropertiesFile::storeAsXML;
         options.osxLibrarySubFolder = "Application Support";
 
         m_Properties.setStorageParameters(options);
