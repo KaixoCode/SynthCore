@@ -12,6 +12,7 @@ namespace Kaixo::Processing {
 
     void Module::oversample(std::size_t n) const { m_Controller->m_Oversample = n; }
 
+    bool Module::offline() const { return m_Controller->m_Offline; }
     double Module::generatingSampleRate() const { return m_Controller->m_SampleRate; }
     double Module::sampleRate() const { return m_Controller->m_SampleRate * m_Controller->m_Oversample; }
     double Module::bpm() const { return m_Controller->m_Bpm; }

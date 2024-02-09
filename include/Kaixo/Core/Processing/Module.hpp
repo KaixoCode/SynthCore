@@ -29,6 +29,7 @@ namespace Kaixo::Processing {
 
         void oversample(std::size_t n) const;
 
+        bool offline() const;
         double generatingSampleRate() const;
         double sampleRate() const;
         double bpm() const;

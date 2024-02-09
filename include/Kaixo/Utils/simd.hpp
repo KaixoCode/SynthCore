@@ -17,6 +17,18 @@
 namespace Kaixo {
 
     // ------------------------------------------------
+    
+    constexpr std::size_t CPUID_SSE     = 0b00000000'00000000'00000000'00000001ull;
+    constexpr std::size_t CPUID_SSE2    = 0b00000000'00000000'00000000'00000010ull;
+    constexpr std::size_t CPUID_SSE3    = 0b00000000'00000000'00000000'00000100ull;
+    constexpr std::size_t CPUID_SSSE3   = 0b00000000'00000000'00000000'00001000ull;
+    constexpr std::size_t CPUID_SSE41   = 0b00000000'00000000'00000000'00010000ull;
+    constexpr std::size_t CPUID_SSE42   = 0b00000000'00000000'00000000'00100000ull;
+    constexpr std::size_t CPUID_AVX     = 0b00000000'00000000'00000001'00000000ull;
+    constexpr std::size_t CPUID_AVX2    = 0b00000000'00000000'00000010'00000000ull;
+    constexpr std::size_t CPUID_AVX512F = 0b00000000'00000001'00000000'00000000ull;
+
+    // ------------------------------------------------
 
     template<class Ty, std::size_t Bits> struct underlying_simd;
     template<> struct underlying_simd<int, 128> : std::type_identity<__m128i> {};

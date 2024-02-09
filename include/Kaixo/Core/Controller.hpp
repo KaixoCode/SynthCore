@@ -135,6 +135,7 @@ namespace Kaixo {
         std::int64_t m_TimeInSamples = 0;
         juce::AudioPlayHead::TimeSignature m_TimeSignature{};
         std::size_t m_Oversample = 1;
+        bool m_Offline = false;
 
         ParamID m_PitchWheelLinkedParameter = NoParam;
         ParamID m_ModWheelLinkedParameter = NoParam;

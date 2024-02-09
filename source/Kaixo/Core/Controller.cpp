@@ -90,6 +90,10 @@ namespace Kaixo {
 
         // ------------------------------------------------
         
+        m_Offline = isNonRealtime();
+
+        // ------------------------------------------------
+        
         for (auto& [type, interface] : m_Processor->m_Interfaces) {
             interface->execute();
         }
