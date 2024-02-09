@@ -315,6 +315,17 @@ namespace Kaixo::Theme {
             if (str == "visible") overflow = Overflow::Visible;
             else if (str == "dots") overflow = Overflow::Dots;
         }
+        
+        roundMode == RoundMode::Trunc;
+        if (json.try_get("text-round-position", str) || 
+            containsText && json["text"].try_get("round-position", str)) 
+        {
+            if (str == "floor") roundMode = RoundMode::Floor;
+            else if (str == "ceil") roundMode = RoundMode::Ceil;
+            else if (str == "round") roundMode = RoundMode::Round;
+            else if (str == "trunc") roundMode = RoundMode::Trunc;
+            else if (str == "none") roundMode = RoundMode::None;
+        }
 
         // ------------------------------------------------
 
@@ -454,6 +465,14 @@ namespace Kaixo::Theme {
         // ------------------------------------------------
 
         Point<float> at = pointFromAlign(align, instr.bounds) + position.toFloat();
+
+        switch (part.roundMode) {
+        case TextPart::RoundMode::Ceil: at = { Math::ceil(at.x()), Math::ceil(at.y()) }; break;
+        case TextPart::RoundMode::Floor: at = { Math::floor(at.x()), Math::floor(at.y()) }; break;
+        case TextPart::RoundMode::Round: at = { Math::round(at.x()), Math::round(at.y()) }; break;
+        case TextPart::RoundMode::Trunc: at = { Math::trunc(at.x()), Math::trunc(at.y()) }; break;
+        case TextPart::RoundMode::None: break;
+        }
 
         // ------------------------------------------------
 

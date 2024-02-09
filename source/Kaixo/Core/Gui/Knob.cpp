@@ -186,6 +186,9 @@ namespace Kaixo::Gui {
         } else {
             value(settings.resetValue);
         }
+
+        if (settings.onchange)
+            settings.onchange(value());
     }
 
     // ------------------------------------------------

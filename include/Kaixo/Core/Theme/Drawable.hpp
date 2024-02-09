@@ -151,6 +151,7 @@ namespace Kaixo::Theme {
             ColorElement color{ self };
             FontElement font{ self };
             enum class Overflow { Visible, Dots } overflow = Overflow::Visible;
+            enum class RoundMode { None, Ceil, Floor, Round, Trunc } roundMode = RoundMode::Trunc;
 
             void reset();
             void interpret(const basic_json& theme, View::State state = View::State::Default);
