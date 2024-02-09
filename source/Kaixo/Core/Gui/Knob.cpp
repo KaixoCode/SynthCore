@@ -52,24 +52,26 @@ namespace Kaixo::Gui {
 
     void Knob::mouseDown(const juce::MouseEvent& event) {
         View::mouseDown(event);
-        if (settings.tooltipValue) {
-            if (settings.tooltipName) {
-                context.tooltip().update(valueString());
-            } else {
-                context.tooltip().open({
-                    .string   = valueString(),
-                    .position = openTooltipAt()
-                });
+        if (event.mods.isLeftButtonDown()) {
+            if (settings.tooltipValue) {
+                if (settings.tooltipName) {
+                    context.tooltip().update(valueString());
+                }
+                else {
+                    context.tooltip().open({
+                        .string = valueString(),
+                        .position = openTooltipAt()
+                        });
+                }
             }
+
+            if (!Storage::flag(Setting::TouchMode)) {
+                setMouseCursor(juce::MouseCursor::NoCursor);
+            }
+
+            m_PreviousMousePosition = event.mouseDownPosition;
+            beginEdit();
         }
-
-        if (!Storage::flag(Setting::TouchMode)) {
-            setMouseCursor(juce::MouseCursor::NoCursor);
-        }
-
-        m_PreviousMousePosition = event.mouseDownPosition;
-
-        beginEdit();
     }
 
     void Knob::mouseDrag(const juce::MouseEvent& event) {
@@ -144,8 +146,10 @@ namespace Kaixo::Gui {
             }
         }
 
-        setMouseCursor(juce::MouseCursor::NormalCursor);
-        endEdit();
+        if (event.mods.isLeftButtonDown()) {
+            setMouseCursor(juce::MouseCursor::NormalCursor);
+            endEdit();
+        }
     }
 
     void Knob::mouseDoubleClick(const juce::MouseEvent& event) {
