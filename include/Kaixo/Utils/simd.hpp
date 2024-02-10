@@ -548,7 +548,7 @@ namespace Kaixo {
         }
 
         template<class To>
-        SIMD_OPERATION to(simd_type a) noexcept {
+        SIMD_OPERATION cast(simd_type a) noexcept {
             if constexpr (std::same_as<Ty, To>) return a;
             else if constexpr (std::same_as<To, int>) {
                 SIMD_CALL(SSE2, 128, float) _mm_cvtps_epi32(a);
@@ -698,8 +698,8 @@ namespace Kaixo {
     SIMD_BINARY_OP(operator <, cmplt);
     SIMD_BINARY_OP(operator <=, cmple);
     SIMD_BINARY_OP(operator >=, cmpge);
-    SIMD_BINARY_OP_SHIFT(operator >>, shift_left);
-    SIMD_BINARY_OP_SHIFT(operator <<, shift_right);
+    SIMD_BINARY_OP_SHIFT(operator >>, shift_right);
+    SIMD_BINARY_OP_SHIFT(operator <<, shift_left);
     
     namespace simd_operations {
         SIMD_UNARY_OP(trunc, trunc);
@@ -825,7 +825,7 @@ namespace Kaixo {
 
         template<class To> requires simd_operations::can_cast<To, Ty, Bits, Capabilities>
         KAIXO_INLINE simd<To, Bits, Capabilities> KAIXO_VECTORCALL cast() noexcept {
-            return simd_operation<Ty, Bits, Capabilities>::template reinterpret<To>(value);
+            return simd_operation<Ty, Bits, Capabilities>::template cast<To>(value);
         }
     };
 
