@@ -178,26 +178,26 @@ namespace Kaixo {
         }
             
         // Must be aligned!
-        SIMD_OPERATION load(float const* addr) noexcept {
+        SIMD_OPERATION load(const float const* addr) noexcept {
             SIMD_CALL(SSE, 128, float) _mm_load_ps(addr);
             SIMD_CALL(AVX, 256, float) _mm256_load_ps(addr);
             SIMD_CALL(AVX512F, 512, float) _mm512_load_ps(addr);
         }
 
         // Must be aligned!
-        SIMD_OPERATION load(int const* addr) noexcept {
+        SIMD_OPERATION load(const int const* addr) noexcept {
             SIMD_CALL(SSE2, 128, int) _mm_load_si128(addr);
             SIMD_CALL(AVX, 256, int) _mm256_load_si256(addr);
             SIMD_CALL(AVX512F, 512, int) _mm512_load_si512(addr);
         }
             
-        SIMD_OPERATION loadu(float const* addr) noexcept {
+        SIMD_OPERATION loadu(const float const* addr) noexcept {
             SIMD_CALL(SSE, 128, float) _mm_loadu_ps(addr);
             SIMD_CALL(AVX, 256, float) _mm256_loadu_ps(addr);
             SIMD_CALL(AVX512F, 512, float) _mm512_loadu_ps(addr);
         }
 
-        SIMD_OPERATION loadu(int const* addr) noexcept {
+        SIMD_OPERATION loadu(const int const* addr) noexcept {
             SIMD_CALL(SSE2, 128, int) _mm_loadu_si128(addr);
             SIMD_CALL(AVX, 256, int) _mm256_loadu_si256(addr);
             SIMD_CALL(AVX512F, 512, int) _mm512_loadu_si512(addr);
