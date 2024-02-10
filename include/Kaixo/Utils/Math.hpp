@@ -539,7 +539,7 @@ namespace Kaixo {
             KAIXO_STEREO(fmod)
 
             KAIXO_MONO fmod1(is_mono auto a) noexcept { return a - trunc(a); }
-            KAIXO_POLY fmod1(is_poly auto a) noexcept { return a - trunc(a); }
+            KAIXO_POLY fmod1(is_poly auto a) noexcept { return a.fmod1(); }
             KAIXO_STEREO(fmod1)
 
             // ------------------------------------------------
