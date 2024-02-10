@@ -783,15 +783,15 @@ namespace Kaixo {
         KAIXO_INLINE simd(base const* addr) : value(operation::loadu(addr)) {}
         KAIXO_INLINE simd(base val) : value(operation::set1(val)) {}
         KAIXO_INLINE simd(simd_type val) : value(val) {}
-        KAIXO_INLINE simd(bool val) : value(val ? one().value : zero().value) {}
+        KAIXO_INLINE explicit simd(bool val) : value(val ? one().value : zero().value) {}
 
         template<class ...Args> requires (sizeof...(Args) == elements && (std::same_as<base, Args> && ...))
         KAIXO_INLINE simd(Args ... args) : value(operation::setr(args...)) {}
 
         KAIXO_INLINE void KAIXO_VECTORCALL store(base* addr) const noexcept { operation::store(value, addr); }
         KAIXO_INLINE void KAIXO_VECTORCALL storeu(base* addr) const noexcept { operation::storeu(value, addr); }
-        KAIXO_INLINE void KAIXO_VECTORCALL get(base const* addr) const noexcept { operation::storeu(value, addr); }
-        KAIXO_INLINE void KAIXO_VECTORCALL aligned_get(base const* addr) const noexcept { operation::store(value, addr); }
+        KAIXO_INLINE void KAIXO_VECTORCALL get(base* addr) const noexcept { operation::storeu(value, addr); }
+        KAIXO_INLINE void KAIXO_VECTORCALL aligned_get(base* addr) const noexcept { operation::store(value, addr); }
 
         SIMD_MEMBER_UNARY_OP(trunc, trunc);
         SIMD_MEMBER_UNARY_OP(floor, floor);
@@ -867,7 +867,7 @@ namespace Kaixo {
     template<class Type>
     KAIXO_INLINE decltype(auto) assign(base_t<Type>* ptr, Type value) noexcept {
         if constexpr (is_mono<Type>) return *ptr = value;
-        else return value.get(ptr);
+        else return value.storeu(ptr);
     }
 
     template<class Type>
