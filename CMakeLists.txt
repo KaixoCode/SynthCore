@@ -6,6 +6,12 @@ cmake_minimum_required(VERSION 3.15)
 # ==============================================
 
 add_subdirectory(JUCE)
+add_subdirectory(libs)
+
+# ==============================================
+
+set(LIBRARY_INCLUDE_DIRS
+    "${CMAKE_CURRENT_SOURCE_DIR}/libs/cpuid/src")
 
 # ==============================================
 
@@ -61,7 +67,8 @@ target_include_directories(${NAME}
     PRIVATE 
         "${CORE_SOURCE_DIRECTORY}/include/"
         "${PROJECT_SOURCE_DIRECTORY}/include/"
-        ${GENERATED_SOURCES_DIR})
+        ${GENERATED_SOURCES_DIR}
+        ${LIBRARY_INCLUDE_DIRS})
 
 target_compile_definitions(${NAME}
     PUBLIC
@@ -75,7 +82,8 @@ target_link_libraries(${NAME}
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags
-        juce::juce_recommended_warning_flags)
+        juce::juce_recommended_warning_flags
+        steinwurf::cpuid)
 
 # ==============================================
 

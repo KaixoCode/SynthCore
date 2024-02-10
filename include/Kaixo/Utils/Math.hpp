@@ -350,8 +350,8 @@ namespace Kaixo {
             }
             KAIXO_STEREO(tanh)
 
-            KAIXO_MONO tanh_like(is_mono auto x) noexcept { return x / (1 + abs(x)); }
-            KAIXO_POLY tanh_like(is_poly auto x) noexcept { return x / (1 + abs(x)); }
+            KAIXO_MONO tanh_like(is_mono auto x) noexcept { return x / (1.f + abs(x)); }
+            KAIXO_POLY tanh_like(is_poly auto x) noexcept { return x / (1.f + abs(x)); }
             KAIXO_STEREO(tanh_like)
 
             // ------------------------------------------------
@@ -381,9 +381,9 @@ namespace Kaixo {
                 constexpr float kCoefficient4 = 80.0 / 8161.0;
                 constexpr float kCoefficient5 = 32.0 / 24483.0;
 
-                auto integer = x.to<int>();
-                auto t = x - integer.to<float>();
-                auto int_pow = ((integer + 127) << 23).reinterpret<float>();
+                auto integer = x.template cast<int>();
+                auto t = x - integer.template cast<float>();
+                auto int_pow = ((integer + 127) << 23).template reinterpret<float>();
 
                 auto cubic = t * (t * (t * kCoefficient5 + kCoefficient4) + kCoefficient3) + kCoefficient2;
                 auto interpolate = t * (t * cubic + kCoefficient1) + kCoefficient0;
@@ -416,12 +416,12 @@ namespace Kaixo {
                 constexpr float kCoefficient4 = -1.0 / 3.0;
                 constexpr float kCoefficient5 = 1.0 / 31.0;
 
-                auto floored_log2 = (x.reinterpret<int>() >> 23) - 127;
-                auto t = (x & 0x7fffff) | std::bit_cast<float>(127 << 23);
+                auto floored_log2 = (x.template reinterpret<int>() >> 23u) - 127;
+                auto t = (x & std::bit_cast<float>(0x7fffff)) | std::bit_cast<float>(127 << 23);
 
                 auto cubic = t * (t * (t * kCoefficient5 + kCoefficient4) + kCoefficient3) + kCoefficient2;
                 auto interpolate = t * (t * cubic + kCoefficient1) + kCoefficient0;
-                return floored_log2.to<float>() + interpolate;
+                return floored_log2.template cast<float>() + interpolate;
             }
             KAIXO_STEREO(log2)
 
@@ -606,5 +606,15 @@ namespace Kaixo {
             // ------------------------------------------------
 
         };
+
+        // ------------------------------------------------
+
     };
+
+    // ------------------------------------------------
+
+    constexpr float noteToFreq(float note) { return 440.f * Math::Fast::exp2(((note - 69) / 12.f)); }
+
+    // ------------------------------------------------
+
 }

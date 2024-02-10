@@ -11,11 +11,6 @@
 
 // ------------------------------------------------
 
-#include "Kaixo/Utils/math.hpp"
-#include "Kaixo/Utils/StringUtils.hpp"
-
-// ------------------------------------------------
-
 namespace Kaixo {
 
     // ------------------------------------------------
@@ -40,10 +35,6 @@ namespace Kaixo {
         }
     }
     
-    // ------------------------------------------------
-
-    constexpr float noteToFreq(float note) { return 440.f * Math::Fast::exp2(((note - 69) / 12.f)); }
-
     // ------------------------------------------------
 
     class ScopedCurrentPath {

@@ -208,6 +208,7 @@ namespace Kaixo {
 // ------------------------------------------------
 
 #include "Kaixo/Utils/json.hpp"
+#include "Kaixo/Utils/utils.hpp"
 #include "Kaixo/Utils/string_literal.hpp"
 #include "Kaixo/Utils/thread_pool.hpp"
 #include "Kaixo/Utils/Containers.hpp"
