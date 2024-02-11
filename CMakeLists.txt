@@ -11,7 +11,7 @@ add_subdirectory(libs)
 # ==============================================
 
 set(LIBRARY_INCLUDE_DIRS
-    "${CMAKE_CURRENT_SOURCE_DIR}/libs/cpuid/src")
+    "${CMAKE_CURRENT_SOURCE_DIR}/libs/basic_simd/include")
 
 # ==============================================
 
@@ -82,8 +82,7 @@ target_link_libraries(${NAME}
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags
-        juce::juce_recommended_warning_flags
-        steinwurf::cpuid)
+        juce::juce_recommended_warning_flags)
 
 # ==============================================
 

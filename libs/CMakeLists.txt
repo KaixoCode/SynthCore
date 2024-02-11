@@ -1,1 +1,1 @@
-add_subdirectory(cpuid)
+add_subdirectory(basic_simd)

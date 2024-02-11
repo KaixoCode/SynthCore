@@ -2,7 +2,7 @@
 #include <utility>
 #include <cstddef>
 #include <type_traits>
-#include "Kaixo/Utils/simd.hpp"
+#include "basic_simd.hpp"
 #include "Kaixo/Core/Processing/Stereo.hpp"
 
 // ------------------------------------------------
@@ -17,6 +17,15 @@ constexpr static __forceinline Processing::Stereo name(is_stereo auto ...args) n
 // ------------------------------------------------
 
 namespace Kaixo {
+
+    // ------------------------------------------------
+    
+    using namespace kaixo;
+
+    // ------------------------------------------------
+    
+    template<class Ty> concept is_mono = std::is_arithmetic_v<Ty>;
+    template<class Ty> concept is_poly = is_simd<Ty>;
 
     // ------------------------------------------------
 
