@@ -142,16 +142,19 @@ namespace Kaixo {
 
             if (message.isControllerOfType(1) && m_ModWheelLinkedParameter != NoParam) {
                 m_Processor->param(m_ModWheelLinkedParameter, message.getControllerValue() / 127.);
+                m_Parameters[m_ModWheelLinkedParameter]->setValue(message.getControllerValue() / 127.);
                 continue;
             }
             
             if (message.isPitchWheel() && m_PitchWheelLinkedParameter != NoParam) {
                 m_Processor->param(m_PitchWheelLinkedParameter, message.getPitchWheelValue() / 16384.);
+                m_Parameters[m_PitchWheelLinkedParameter]->setValue(message.getPitchWheelValue() / 16384.);
                 continue;
             }
             
             if (message.isAftertouch() && m_AftertouchLinkedParameter != NoParam) {
                 m_Processor->param(m_AftertouchLinkedParameter, message.getAfterTouchValue() / 127.);
+                m_Parameters[m_AftertouchLinkedParameter]->setValue(message.getAfterTouchValue() / 127.);
                 continue;
             }
 
