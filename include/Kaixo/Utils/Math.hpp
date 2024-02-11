@@ -489,10 +489,7 @@ namespace Kaixo {
             }
 
             // Requires input between -0.5 and 0.5!
-            KAIXO_POLY nsin(is_poly auto x) noexcept {
-                auto approx = x * (8.0f - 16.0f * abs(x));
-                return approx * (0.776f + 0.224f * abs(approx));
-            }
+            KAIXO_POLY nsin(is_poly auto x) noexcept { return x.fast_normalized_sin(); }
             KAIXO_STEREO(nsin)
 
             // Requires input between -0.5 and 0.5!
