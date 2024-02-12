@@ -57,6 +57,8 @@ namespace Kaixo::Theme {
         Element& operator=(const Element&) = delete;
         Element& operator=(Element&&) = default;
 
+        virtual ~Element() = default;
+
         // ------------------------------------------------
 
         virtual void interpret(const basic_json&) {};

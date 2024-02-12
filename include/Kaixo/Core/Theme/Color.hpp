@@ -26,6 +26,7 @@ namespace Kaixo::Theme {
         // ------------------------------------------------
 
         struct Interface : Animation {
+            virtual ~Interface() = default;
             virtual Kaixo::Color get(View::State state = View::State::Default) = 0;
         };
 

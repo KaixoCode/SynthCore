@@ -24,6 +24,7 @@ namespace Kaixo::Gui {
     // ------------------------------------------------
     
     struct Animation {
+        virtual ~Animation() = default;
         virtual bool changing() const = 0;
     };
 
