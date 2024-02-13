@@ -111,6 +111,9 @@ namespace Kaixo {
         ParamValue value() const { return m_NormalizedValue; }
         ParamValue defaultValue() const { return m_PrecalculatedNormalizedDefaultValue; }
 
+        float transformedValue() const { return m_Settings->transform.transform(value()); }
+        void setFromTransformedValue(float transformedNewValue) { setValue(m_Settings->transform.normalize(transformedNewValue)); }
+
         // ------------------------------------------------
 
         juce::String getLabel() const override { return ""; };

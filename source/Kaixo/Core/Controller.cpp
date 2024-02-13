@@ -278,7 +278,8 @@ namespace Kaixo {
 
         for (auto& param : Synth) {
             basic_json& p = getFromIdentifier(_params, param.fullVarName);
-            p["value"] = parameter(param.id).value();
+            p["value"] = parameter(param).transformedValue();
+            p["range"] = "transformed";
         }
 
         result[ProcessorName] = m_Processor->serialize();
@@ -298,12 +299,23 @@ namespace Kaixo {
             for (auto& param : Synth) {
                 basic_json& p = getFromIdentifier(_params, param.fullVarName);
 
+                beginEdit(param);
                 if (p.contains("value", basic_json::Number)) {
                     ParamValue value = p["value"].as<ParamValue>();
-                    beginEdit(param);
-                    performEdit(param, value);
-                    endEdit(param);
+                    if (p.contains("range", basic_json::String)) {
+                        std::string_view range = p["range"].as<std::string>();
+                        if (range == "transformed") {
+                            performEdit(param, param.transform.normalize(value));
+                        } else {
+                            performEdit(param, value);
+                        }
+                    } else {
+                        performEdit(param, value);
+                    }
+                } else {
+                    performEdit(param, parameter(param).defaultValue());
                 }
+                endEdit(param);
             }
         }
 
