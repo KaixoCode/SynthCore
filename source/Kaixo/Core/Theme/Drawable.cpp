@@ -168,7 +168,7 @@ namespace Kaixo::Theme {
 
     // ------------------------------------------------
 
-    void DrawableElement::ImageDrawable::draw(Drawable::Instruction instr, Theme& self, ImagePart& part) {
+    void DrawableElement::ImageDrawable::draw(const Drawable::Instruction& instr, Theme& self, ImagePart& part) {
 
         // ------------------------------------------------
         
@@ -400,7 +400,7 @@ namespace Kaixo::Theme {
 
     // ------------------------------------------------
 
-    void DrawableElement::TextDrawable::draw(Drawable::Instruction instr, Theme& self, TextPart& part) {
+    void DrawableElement::TextDrawable::draw(const Drawable::Instruction& instr, Theme& self, TextPart& part) {
 
         // ------------------------------------------------
         
@@ -444,7 +444,9 @@ namespace Kaixo::Theme {
             replace_str(value, "$frame", std::to_string(_index + 1));
             replace_str(value, "$0frame", std::to_string(_index));
             replace_str(value, "$normalized-value", std::to_string(_value));
-            replace_str(value, "$text", instr.text);
+            for (auto& [var, replace] : instr.text) {
+                replace_str(value, var, replace);
+            }
             if (instr.parameter == NoParam) return value;
             auto& param = Kaixo::parameter(instr.parameter);
             replace_str(value, "$value", param.toString(_value));
@@ -534,7 +536,7 @@ namespace Kaixo::Theme {
 
     // ------------------------------------------------
 
-    void DrawableElement::BackgroundColorDrawable::draw(Drawable::Instruction instr, Theme& self, BackgroundColorPart& part) {
+    void DrawableElement::BackgroundColorDrawable::draw(const Drawable::Instruction& instr, Theme& self, BackgroundColorPart& part) {
         instr.graphics.setColour(color.get(instr.state));
         instr.graphics.fillRect(instr.bounds);
     }
@@ -591,7 +593,7 @@ namespace Kaixo::Theme {
 
     // ------------------------------------------------
             
-    void DrawableElement::LayerDrawable::draw(Drawable::Instruction instr, Theme& self, Layer& part) {
+    void DrawableElement::LayerDrawable::draw(const Drawable::Instruction& instr, Theme& self, Layer& part) {
 
         // ------------------------------------------------
 
@@ -697,7 +699,7 @@ namespace Kaixo::Theme {
 
         void draw(Drawable::Instruction instr) override {
             instr.index = index; // Override index
-            Implementation::draw(instr);
+            Implementation::draw(std::move(instr));
         }
     };
 

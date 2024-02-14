@@ -65,7 +65,7 @@ namespace Kaixo::Theme {
             ParamID parameter = NoParam;
             ParamValue value = -1; // Range must be [0, inf), -1 means not set
             std::size_t index = npos;
-            std::string_view text = "";
+            std::map<std::string_view, std::string_view> text{}; // keys have to start with '$'
             View::State state = View::State::Default;
         };
 
@@ -130,7 +130,7 @@ namespace Kaixo::Theme {
 
         struct ImageDrawable : Animation {
             void link(ImagePart& part);
-            void draw(Drawable::Instruction instr, Theme& self, ImagePart& part);
+            void draw(const Drawable::Instruction& instr, Theme& self, ImagePart& part);
             bool changing() const override;
         };
 
@@ -163,7 +163,7 @@ namespace Kaixo::Theme {
             Font font;
 
             void link(TextPart& part);
-            void draw(Drawable::Instruction instr, Theme& self, TextPart& part);
+            void draw(const Drawable::Instruction& instr, Theme& self, TextPart& part);
             bool changing() const override;
         };
 
@@ -183,7 +183,7 @@ namespace Kaixo::Theme {
             Color color;
 
             void link(BackgroundColorPart& part);
-            void draw(Drawable::Instruction instr, Theme& self, BackgroundColorPart& part);
+            void draw(const Drawable::Instruction& instr, Theme& self, BackgroundColorPart& part);
             bool changing() const override;
         };
 
@@ -208,7 +208,7 @@ namespace Kaixo::Theme {
             BackgroundColorDrawable backgroundColor{ };
 
             void link(Layer& part);
-            void draw(Drawable::Instruction instr, Theme& self, Layer& part);
+            void draw(const Drawable::Instruction& instr, Theme& self, Layer& part);
             bool changing() const override;
         };
 

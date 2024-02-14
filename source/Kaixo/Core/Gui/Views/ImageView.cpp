@@ -20,7 +20,7 @@ namespace Kaixo::Gui {
         settings.image.draw({
             .graphics = g,
             .bounds = localDimensions(),
-            .text = settings.text,
+            .text{ { "$text", settings.text } },
             .state = state()
         });
     }
