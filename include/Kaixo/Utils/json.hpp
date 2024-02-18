@@ -11,6 +11,10 @@
 #include <string>
 #include <array>
 #include <stack>
+#include <list>
+#include <tuple>
+#include <utility>
+#include <type_traits>
 
 // ------------------------------------------------
 
