@@ -174,6 +174,16 @@ namespace Kaixo::Processing {
         VoiceClass& lastTriggered() { return m_Voices[m_LastTriggered]; }
 
         // ------------------------------------------------
+        
+        std::size_t activeVoices() const {
+            std::size_t i = 0;
+            for (auto& voice : m_Voices) {
+                if (voice.active()) i++;
+            }
+            return i;
+        }
+
+        // ------------------------------------------------
 
     private:
 
