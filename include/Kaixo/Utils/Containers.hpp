@@ -115,6 +115,21 @@ namespace Kaixo {
             ++_end;
         }
 
+        constexpr void insert_all(const Ty* at, const auto& range) {
+            std::size_t amount = range.size();
+            std::ptrdiff_t index = at - begin();
+            std::memmove(begin() + index + amount, begin() + index, (size() - index) * sizeof(Ty));
+            auto it = std::begin(range);
+            for (std::size_t i = 0; i < amount; ++i, ++it) {
+                new (begin() + index + i) Ty{ *it };
+            }
+            _end += amount;
+        }
+
+        constexpr void push_back_all(const auto& range) {
+            insert_all(end(), range);
+        }
+
         constexpr void clear() { _end = begin(); }
 
         constexpr std::size_t capacity() const { return Max; }
