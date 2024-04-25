@@ -43,6 +43,21 @@
 namespace Kaixo {
 
     // ------------------------------------------------
+    
+    enum class VersionType {
+        Release  = 0x13143, 
+        Demo     = 0x46363, 
+        Snapshot = 0x69626,
+        Unknown  = Demo, // Default to Demo
+    };
+
+    constexpr std::string_view versionTypeString = SYNTH_VersionType;
+    constexpr VersionType versionType = versionTypeString == "RELEASE" ? VersionType::Release
+                                      : versionTypeString == "SNAPSHOT" ? VersionType::Snapshot
+                                      : versionTypeString == "DEMO" ? VersionType::Demo
+                                      : VersionType::Unknown;
+
+    // ------------------------------------------------
 
     constexpr static std::size_t npos = static_cast<std::size_t>(-1);
 

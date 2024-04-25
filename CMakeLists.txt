@@ -41,8 +41,16 @@ source_group(TREE ${CORE_SOURCE_DIRECTORY} FILES ${CORE_SOURCE})
 
 # ==============================================
 
+if(${VERSION_TYPE} STREQUAL "RELEASE")
+    set(FULL_VERSION "${VERSION}")
+else()
+    set(FULL_VERSION "${VERSION}-${VERSION_TYPE}")
+endif()
+
 add_compile_definitions(
     SYNTH_InitialSize=${INITIAL_SIZE}
+    SYNTH_VersionType="${VERSION_TYPE}"
+    SYNTH_FullVersion="${FULL_VERSION}"
 )
 
 juce_add_plugin(${NAME}
