@@ -77,6 +77,7 @@ namespace Kaixo::Gui {
             .graphics = g,
             .bounds = localDimensions(),
             .parameter = settings.param,
+            .value = static_cast<float>(m_Value),
             .text{ { "$text", settings.text } },
             .state = state(),
         });
