@@ -629,15 +629,17 @@ namespace Kaixo::Processing {
         double sampleRateOut = 48000;
 
         Stereo process(Stereo s) {
+            auto srate = sampleRateIn < sampleRateOut ? sampleRateOut : sampleRateIn;
             params.f0 = sampleRateOut / 2 - 2;
-            params.sampleRate = sampleRateIn;
+            params.sampleRate = srate;
             params.recalculateParameters();
             return filter.process(s, params);
         }
         
         float process(float s) {
+            auto srate = sampleRateIn < sampleRateOut ? sampleRateOut : sampleRateIn;
             params.f0 = sampleRateOut / 2 - 2;
-            params.sampleRate = sampleRateIn;
+            params.sampleRate = srate;
             params.recalculateParameters();
             return filter.process(s, params);
         }
