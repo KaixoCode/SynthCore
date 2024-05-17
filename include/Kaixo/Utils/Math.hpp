@@ -2,6 +2,7 @@
 #include <utility>
 #include <cstddef>
 #include <type_traits>
+#include <numbers>
 #include "basic_simd.hpp"
 #include "Kaixo/Core/Processing/Stereo.hpp"
 

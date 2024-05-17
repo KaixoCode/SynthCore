@@ -2,6 +2,7 @@
 #include <cstddef>
 #include <utility>
 #include <type_traits>
+#include <bitset>
 
 // ------------------------------------------------
 
@@ -35,7 +36,7 @@ namespace Kaixo {
             for (auto _it = cbegin(); _it != cend();) {
                 if (*_it == value) return _it - begin();
             }
-            return npos;
+            return static_cast<std::size_t>(-1);
         }
 
         template<class ...Args>

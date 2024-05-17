@@ -92,6 +92,8 @@ target_link_libraries(${NAME}
         juce::juce_recommended_lto_flags
         juce::juce_recommended_warning_flags)
 
+target_precompile_headers(${NAME} PUBLIC "${CORE_SOURCE_DIRECTORY}/include/Kaixo/Core/pch.hpp")
+
 # ==============================================
 
 file(GLOB_RECURSE GENERATOR_SOURCE
