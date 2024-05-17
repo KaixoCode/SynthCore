@@ -68,11 +68,11 @@ namespace Kaixo::Theme {
 
         tiled.interpret(json, [&](auto& tiled, const basic_json& json) {
             bool containsImage = json.contains("image", basic_json::Object);
-            if (json.try_get("image-edges", edg2) || containsImage && json["image"].try_get("edges", edg2)) {
-                tiled = TiledDescription{ edg2[0], edg2[1], edg2[0], edg2[1] };
-                return true;
-            } else if (json.try_get("image-edges", edg4) || containsImage && json["image"].try_get("edges", edg4)) {
+            if (json.try_get("image-edges", edg4) || containsImage && json["image"].try_get("edges", edg4)) {
                 tiled = TiledDescription{ edg4[0], edg4[1], edg4[2], edg4[3] };
+                return true;
+            } else if (json.try_get("image-edges", edg2) || containsImage && json["image"].try_get("edges", edg2)) {
+                tiled = TiledDescription{ edg2[0], edg2[1], edg2[0], edg2[1] };
                 return true;
             }
 
@@ -102,13 +102,11 @@ namespace Kaixo::Theme {
             {
                 offset = Point{ arr4[0], arr4[1] };
                 return true;
-            } else {
-                if (json.try_get("image-offset", arr2) ||
-                    containsImage && json["image"].try_get("offset", arr2))
-                {
-                    offset = Point{ arr2[0], arr2[1] };
-                    return true;
-                }
+            } else if (json.try_get("image-offset", arr2) ||
+                containsImage && json["image"].try_get("offset", arr2))
+            {
+                offset = Point{ arr2[0], arr2[1] };
+                return true;
             }
             return false;
         }, state);
@@ -120,13 +118,11 @@ namespace Kaixo::Theme {
             {
                 size = Point{ arr4[2], arr4[3] };
                 return true;
-            } else {
-                if (json.try_get("image-size", arr2) ||
-                    containsImage && json["image"].try_get("size", arr2))
-                {
-                    size = Point{ arr2[0], arr2[1] };
-                    return true;
-                }
+            } else if (json.try_get("image-size", arr2) ||
+                containsImage && json["image"].try_get("size", arr2))
+            {
+                size = Point{ arr2[0], arr2[1] };
+                return true;
             }
             return false;
         }, state);
