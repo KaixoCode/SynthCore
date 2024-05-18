@@ -174,6 +174,11 @@ namespace Kaixo::Gui {
 
     ParamValue Knob::value() const { return m_Value; }
 
+    ParamValue Knob::transformedValue() const { 
+        if (isLinkedToParam()) return context.controller<Controller>().parameter(settings.param).transformedValue();
+        return settings.transform.transform(value());
+    }
+
     void Knob::value(ParamValue value) {
         beginEdit();
         performEdit(value);
@@ -199,13 +204,27 @@ namespace Kaixo::Gui {
             v = normalToIndex(v, steps()) / (steps() - 1.);
         }
 
-        settings.graphics.draw({
-            .graphics = g,
-            .bounds = localDimensions(),
-            .parameter = settings.param,
-            .value = v,
-            .state = state(),
-        });
+        if (isLinkedToParam()) {
+            settings.graphics.draw({
+                .graphics = g,
+                .bounds = localDimensions(),
+                .parameter = settings.param,
+                .value = v,
+                .state = state(),
+            });
+        } else {
+            settings.graphics.draw({
+                .graphics = g,
+                .bounds = localDimensions(),
+                .parameter = settings.param,
+                .value = v,
+                .text = { 
+                    { "$name", settings.name },
+                    { "$value", valueString() }
+                },
+                .state = state(),
+            });
+        }
     }
 
     // ------------------------------------------------

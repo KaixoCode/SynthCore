@@ -135,16 +135,18 @@ namespace Kaixo::Theme {
             const ColorElement* self;
             Animated<Kaixo::Color> color;
             View::State state = static_cast<View::State>(-1);
+            bool changingCache = false;
 
             Kaixo::Color get(View::State s = View::State::Default) override {
                 if (state != s) {
                     color = self->color[s];
                     state = s;
                 }
+                changingCache = color.changing();
                 return color.get();
             }
 
-            bool changing() const override { return color.changing(); }
+            bool changing() const override { return changingCache; }
         };
 
         return { std::make_unique<Implementation>(this) };
