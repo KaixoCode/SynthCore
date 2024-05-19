@@ -588,7 +588,8 @@ namespace Kaixo::Generator {
         add();
         add("constexpr ParamIterator& operator++() { id++; return *this; }", 2);
         add("constexpr bool operator==(const ParamIterator & o) const { return o.id == id; }", 2);
-        add("constexpr const ParameterSettings& operator*();", 2);
+        if (!fullParameterIdentifiers.empty()) add("constexpr const ParameterSettings& operator*();", 2);
+        else add("const ParameterSettings& operator*() {};", 2);
         add();
         add("// ------------------------------------------------", 2);
         add();
@@ -600,14 +601,18 @@ namespace Kaixo::Generator {
         result += modulesToString(main, 1);
         result += instantiate(main, 1);
 
-        add("constexpr const ParameterSettings& ParamIterator::operator*() { return " + main.varName + ".param(id); }", 1);
+        if (!fullParameterIdentifiers.empty()) add("constexpr const ParameterSettings& ParamIterator::operator*() { return " + main.varName + ".param(id); }", 1);
         add();
         add("// ------------------------------------------------", 1);
         add();
         if (!fullParameterIdentifiers.empty()) add("constexpr const ParameterSettings& parameter(ParamID id) { return " + main.varName + ".param(id); }", 1);
+        else add("inline const ParameterSettings& parameter(ParamID id) { }", 1);
         if (!fullSourceIdentifiers.empty()) add("constexpr const ModulationSourceSettings& modulationSource(ModulationSourceID id) { return " + main.varName + ".source(id); }", 1);
+        else add("inline const ModulationSourceSettings& modulationSource(ModulationSourceID id) { }", 1);
         if (!fullParameterIdentifiers.empty()) add("constexpr std::size_t nofParameters() { return " + main.varName + ".parameters; }", 1);
+        else add("constexpr std::size_t nofParameters() { return 0; }", 1);
         if (!fullSourceIdentifiers.empty()) add("constexpr std::size_t nofSources() { return " + main.varName + ".modulationSources; }", 1);
+        else add("constexpr std::size_t nofSources() { return 0; }", 1);
         add();
         add("// ------------------------------------------------", 1);
         add();
