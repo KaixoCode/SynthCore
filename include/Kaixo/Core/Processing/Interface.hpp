@@ -112,6 +112,10 @@ namespace Kaixo::Processing {
         Ty& self() { return *dynamic_cast<Ty*>(m_Self); }
 
         // ------------------------------------------------
+        
+        mutable std::mutex m_Mutex{};
+
+        // ------------------------------------------------
 
     private:
         Processor* m_Self = nullptr;
@@ -138,6 +142,9 @@ namespace Kaixo::Processing {
 
         friend class Processor;
         friend class ::Kaixo::Controller;
+
+        template<class Ty>
+        friend class InterfaceStorage;
 
         // ------------------------------------------------
 
@@ -191,6 +198,7 @@ namespace Kaixo::Processing {
 
         // ------------------------------------------------
         
+        // Not threadsafe, use call function for threadsafe calling
         Type* operator->() const {
             if (m_AssignSettings) m_AssignSettings();
             return m_Interface;
@@ -201,8 +209,18 @@ namespace Kaixo::Processing {
         template<class ...Args>
             requires std::invocable<Type, Args&&...>
         auto operator()(Args&& ...args) const {
+            std::lock_guard lock{ m_Interface->m_Mutex };
             if (m_AssignSettings) m_AssignSettings();
             return (*m_Interface)(std::forward<Args>(args)...);
+        }
+
+        // ------------------------------------------------
+        
+        template<class Fun, class ...Args>
+        decltype(auto) call(Fun funptr, Args&& ...args) const {
+            std::lock_guard lock{ m_Interface->m_Mutex };
+            if (m_AssignSettings) m_AssignSettings();
+            return (m_Interface->*funptr)(std::forward<Args>(args)...);
         }
 
         // ------------------------------------------------
