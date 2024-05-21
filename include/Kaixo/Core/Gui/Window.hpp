@@ -20,7 +20,7 @@ namespace Kaixo::Gui {
 
     // ------------------------------------------------
 
-    class Window : public juce::AudioProcessorEditor, public juce::Timer {
+    class Window : public juce::AudioProcessorEditor, public juce::Timer, public juce::OpenGLRenderer {
     public:
 
         // ------------------------------------------------
@@ -64,11 +64,18 @@ namespace Kaixo::Gui {
 
         // ------------------------------------------------
 
+        void newOpenGLContextCreated() override;
+        void renderOpenGL() override;
+        void openGLContextClosing() override;
+
+        // ------------------------------------------------
+
     private:
         Controller& m_Controller;
         std::vector<ParamValue> m_ParameterValues{};
         std::map<std::int64_t, TabControl> m_TabControls{};
         std::unique_ptr<Tooltip> m_Tooltip;
+        juce::OpenGLContext m_OpenGLContext;
 
         float m_Scale = 1;
 
@@ -117,6 +124,9 @@ namespace Kaixo::Gui {
 
         friend class Context;
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Window)
+
+        // ------------------------------------------------
+
     };
 
     // ------------------------------------------------

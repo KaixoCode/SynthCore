@@ -19,6 +19,10 @@ namespace Kaixo::Gui {
         , m_Editor(std::make_unique<Editor::Editor>(*this))
 #endif
     {
+        m_OpenGLContext.setComponentPaintingEnabled(true);
+        m_OpenGLContext.setRenderer(this);
+        m_OpenGLContext.attachTo(*this);
+
         setSize(SYNTH_InitialSize);
 
         m_BaseComponent = std::unique_ptr<View>(createBaseView(Context{ *this }));
@@ -141,6 +145,18 @@ namespace Kaixo::Gui {
         }
 
         m_BaseComponent->onIdle();
+    }
+
+    void Window::newOpenGLContextCreated()
+    {
+    }
+
+    void Window::renderOpenGL()
+    {
+    }
+
+    void Window::openGLContextClosing()
+    {
     }
 
     // ------------------------------------------------
