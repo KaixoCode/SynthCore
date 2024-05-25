@@ -113,7 +113,7 @@ namespace Kaixo::Processing {
 
         // ------------------------------------------------
         
-        mutable std::mutex m_Mutex{};
+        mutable std::recursive_mutex m_Mutex{};
 
         // ------------------------------------------------
 
@@ -198,10 +198,32 @@ namespace Kaixo::Processing {
 
         // ------------------------------------------------
         
-        // Not threadsafe, use call function for threadsafe calling
-        Type* operator->() const {
+        struct LockedAccess {
+
+            // ------------------------------------------------
+
+            Type* interface;
+
+            // ------------------------------------------------
+
+            LockedAccess(Type* interface) : interface(interface) {}
+            ~LockedAccess() { interface->m_Mutex.unlock(); }
+
+            // ------------------------------------------------
+
+            Type* operator->() const { return interface; }
+
+            // ------------------------------------------------
+
+        };
+
+        // ------------------------------------------------
+        
+        // Not threadsafe!
+        LockedAccess operator->() const {
+            m_Interface->m_Mutex.lock();
             if (m_AssignSettings) m_AssignSettings();
-            return m_Interface;
+            return { m_Interface };
         }
 
         // ------------------------------------------------
