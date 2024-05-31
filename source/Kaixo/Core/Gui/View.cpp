@@ -110,6 +110,10 @@ namespace Kaixo::Gui {
                 break;
             }
         }
+
+        for (auto& anim : m_ValueWatchers) {
+            anim->update();
+        }
     }
 
     // ------------------------------------------------

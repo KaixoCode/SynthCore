@@ -30,6 +30,12 @@ namespace Kaixo::Gui {
 
     // ------------------------------------------------
     
+    struct ValueWatcher {
+        virtual void update() = 0;
+    };
+
+    // ------------------------------------------------
+    
     class View : public juce::Component {
     public:
         using ViewVector = std::vector<std::unique_ptr<View>>;
@@ -169,6 +175,12 @@ namespace Kaixo::Gui {
         void animation(Animation& anim);
 
         // ------------------------------------------------
+        
+        template<class Type, class Interface, std::invocable<Type> Callback>
+            requires std::same_as<std::invoke_result_t<Interface>, Type>
+        void watch(Interface interface, Callback callback);
+
+        // ------------------------------------------------
 
     protected:
         std::map<std::type_index, std::map<std::string_view, std::any>> m_Attributes;
@@ -177,6 +189,7 @@ namespace Kaixo::Gui {
         bool m_UseDimensions = true;
         std::string m_Description{};
         std::vector<Animation*> m_LinkedAnimations{};
+        std::vector<std::unique_ptr<ValueWatcher>> m_ValueWatchers{};
 
         // ------------------------------------------------
 
@@ -239,6 +252,54 @@ namespace Kaixo::Gui {
         auto& value = m_Attributes[typeid(typename Attr::Type)][Attr::Name];
         if (!value.has_value()) value = typename Attr::Type{};
         return std::any_cast<typename Attr::Type&>(value);
+    }
+
+    // ------------------------------------------------
+
+    template<class Type, class Interface, std::invocable<Type> Callback>
+        requires std::same_as<std::invoke_result_t<Interface>, Type>
+    void View::watch(Interface interface, Callback callback) {
+
+        // ------------------------------------------------
+
+        wantsIdle(true); // watching a value needs idle
+
+        // ------------------------------------------------
+
+        struct Watcher : ValueWatcher {
+
+            // ------------------------------------------------
+
+            Interface interface;
+            Callback callback;
+            std::optional<Type> currentValue{};
+
+            // ------------------------------------------------
+
+            Watcher(Interface interface, Callback callback)
+                : interface(std::move(interface)), callback(std::move(callback)) 
+            {}
+
+            // ------------------------------------------------
+
+            void update() override {
+                Type value = interface();
+                if (value != currentValue) {
+                    currentValue = value;
+                    callback(value);
+                }
+            }
+
+            // ------------------------------------------------
+
+        };
+
+        // ------------------------------------------------
+
+        m_ValueWatchers.push_back(std::make_unique<Watcher>(std::move(interface), std::move(callback)));
+
+        // ------------------------------------------------
+
     }
 
     // ------------------------------------------------
