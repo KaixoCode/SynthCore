@@ -147,5 +147,6 @@ namespace Kaixo {
 
 #include "Kaixo/Core/pch.hpp"
 #include "Kaixo/Utils/Color.hpp"
+#include "Kaixo/Utils/Logger.hpp"
 
 // ------------------------------------------------
