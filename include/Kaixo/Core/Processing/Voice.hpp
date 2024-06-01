@@ -19,6 +19,7 @@ namespace Kaixo::Processing {
 
         // ------------------------------------------------
 
+        NoteID id; // unique note identifier, only used in MPE mode
         Note fromNote = -1; // Previous note (to allow gliding)
         Note note = -1; // Pressed note
         int channel = 0;
@@ -38,6 +39,12 @@ namespace Kaixo::Processing {
         virtual void release() = 0;
 
         virtual Note currentNote() const { return note; }
+
+        // ------------------------------------------------
+
+        virtual void notePitchBendMPE(double value) {}
+        virtual void notePressureMPE(double value) {}
+        virtual void noteTimbreMPE(double value) {}
 
         // ------------------------------------------------
 

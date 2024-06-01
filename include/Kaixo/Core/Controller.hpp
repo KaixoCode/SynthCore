@@ -29,7 +29,7 @@ namespace Kaixo {
 
     // ------------------------------------------------
 
-    class Controller : public juce::AudioProcessor, public Serializable {
+    class Controller : public juce::AudioProcessor, public Serializable, public MPEInstrument::Listener {
     public:
 
         // ------------------------------------------------
@@ -38,6 +38,7 @@ namespace Kaixo {
         ~Controller() override;
 
         // ------------------------------------------------
+
     private:
 
         void prepareToPlay(double sampleRate, int samplesPerBlock) override;
@@ -62,10 +63,11 @@ namespace Kaixo {
 
         const juce::String getName() const override { return JucePlugin_Name; }
 
-        bool acceptsMidi() const override { return true; };
-        bool producesMidi() const override { return false; };
-        bool isMidiEffect() const override { return false; };
-        double getTailLengthSeconds() const override { return 0; };
+        bool acceptsMidi() const override { return true; }
+        bool producesMidi() const override { return false; }
+        bool isMidiEffect() const override { return false; }
+        bool supportsMPE() const override { return true; }
+        double getTailLengthSeconds() const override { return 0; }
 
         // ------------------------------------------------
 
@@ -77,9 +79,19 @@ namespace Kaixo {
         const juce::String getProgramName(int index) override;
 
         // ------------------------------------------------
-
+        
         void getStateInformation(juce::MemoryBlock& destData) override;
         void setStateInformation(const void* data, int sizeInBytes) override;
+        
+        // ------------------------------------------------
+        
+        void noteAdded(MPENote newNote) override;
+        void notePressureChanged(MPENote changedNote) override;
+        void notePitchbendChanged(MPENote changedNote) override;
+        void noteTimbreChanged(MPENote changedNote) override;
+        void noteReleased(MPENote finishedNote) override;
+
+        // ------------------------------------------------
 
     public:
 
@@ -121,6 +133,10 @@ namespace Kaixo {
     private:
         std::unique_ptr<Processing::Processor> m_Processor;
         Gui::Window* m_Window = nullptr;
+
+        // ------------------------------------------------
+        
+        MPEInstrument m_MPEInstrument{};
 
         // ------------------------------------------------
 

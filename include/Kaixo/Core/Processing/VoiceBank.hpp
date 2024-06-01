@@ -44,6 +44,10 @@ namespace Kaixo::Processing {
         // ------------------------------------------------
 
         void noteOn(Note note, double velocity, int channel) {
+            noteOnMPE(NoNoteID, note, velocity, channel);
+        }
+
+        void noteOnMPE(NoteID id, Note note, double velocity, int channel) {
             auto pick = chooseVoice();
 
             for (std::size_t i = 0; i < m_History.size(); ++i) {
@@ -72,6 +76,7 @@ namespace Kaixo::Processing {
             }
 
             trigger(Trigger{
+                .id = id,
                 .velocity = velocity,
                 .voice = pick.voice,
                 .note = note,
@@ -81,6 +86,7 @@ namespace Kaixo::Processing {
             });
 
             m_History.push_back(PressedNote{
+                .id = id,
                 .velocity = velocity,
                 .note = note, 
                 .voice = pick.voice
@@ -88,6 +94,10 @@ namespace Kaixo::Processing {
         }
 
         void noteOff(Note note, double velocity, int channel) {
+            noteOffMPE(NoNoteID, note, velocity, channel);
+        }
+
+        void noteOffMPE(NoteID id, Note note, double velocity, int channel) {
             // Remove the note from history
             for (std::size_t i = 0; i < m_History.size(); ++i) {
                 auto& n = m_History[i];
@@ -130,6 +140,7 @@ namespace Kaixo::Processing {
                 m_History.erase_index(canSwitchToNoteFromHistory);
 
                 trigger({
+                    .id = n.id,
                     .velocity = n.velocity,
                     .voice = voiceThatHadThisNote,
                     .note = n.note,
@@ -139,10 +150,37 @@ namespace Kaixo::Processing {
                 });
 
                 m_History.push_back(PressedNote{
+                    .id = n.id,
                     .velocity = n.velocity,
                     .note = n.note,
                     .voice = voiceThatHadThisNote
                 });
+            }
+        }
+
+        // ------------------------------------------------
+
+        void notePitchBendMPE(NoteID id, double value) {
+            for (auto& voice : m_Voices) {
+                if (voice.id == id) {
+                    voice.notePitchBendMPE(value);
+                }
+            }
+        }
+
+        void notePressureMPE(NoteID id, double value) {
+            for (auto& voice : m_Voices) {
+                if (voice.id == id) {
+                    voice.notePressureMPE(value);
+                }
+            }
+        }
+
+        void noteTimbreMPE(NoteID id, double value) {
+            for (auto& voice : m_Voices) {
+                if (voice.id == id) {
+                    voice.noteTimbreMPE(value);
+                }
             }
         }
 
@@ -216,6 +254,7 @@ namespace Kaixo::Processing {
         // ------------------------------------------------
 
         struct PressedNote {
+            NoteID id;
             double velocity = 0;
             Note note = 0;
             std::size_t voice = NoVoice; // Is note actually assigned to voice?
@@ -277,6 +316,7 @@ namespace Kaixo::Processing {
         // ------------------------------------------------
 
         struct Trigger {
+            NoteID id;
             double velocity;
             std::size_t voice;
             Note note;
@@ -287,6 +327,7 @@ namespace Kaixo::Processing {
 
         void trigger(Trigger t) {
             auto& voice = m_Voices[t.voice];
+            voice.id = t.id;
             voice.fromNote = t.legato ? voice.currentNote() : m_AlwaysLegato ? m_LastNote : t.note;
             voice.note = t.note;
             voice.channel = t.channel;
@@ -308,6 +349,7 @@ namespace Kaixo::Processing {
 
         void release(Release t) {
             auto& voice = m_Voices[t.voice];
+            voice.id = NoNoteID;
             voice.releaseVelocity = t.velocity;
             voice.release();
             voice.pressed = false;

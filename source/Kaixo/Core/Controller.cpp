@@ -37,6 +37,10 @@ namespace Kaixo {
 
         // ------------------------------------------------
         
+        m_MPEInstrument.addListener(this);
+
+        // ------------------------------------------------
+        
         init();
         
         // ------------------------------------------------
@@ -139,24 +143,7 @@ namespace Kaixo {
         
         for (const auto& raw : midiMessages) {
             const auto& message = raw.getMessage();
-
-            if (message.isControllerOfType(1) && m_ModWheelLinkedParameter != NoParam) {
-                m_Processor->param(m_ModWheelLinkedParameter, message.getControllerValue() / 127.);
-                m_Parameters[m_ModWheelLinkedParameter]->setValue(message.getControllerValue() / 127.);
-                continue;
-            }
-            
-            if (message.isPitchWheel() && m_PitchWheelLinkedParameter != NoParam) {
-                m_Processor->param(m_PitchWheelLinkedParameter, message.getPitchWheelValue() / 16384.);
-                m_Parameters[m_PitchWheelLinkedParameter]->setValue(message.getPitchWheelValue() / 16384.);
-                continue;
-            }
-            
-            if (message.isAftertouch() && m_AftertouchLinkedParameter != NoParam) {
-                m_Processor->param(m_AftertouchLinkedParameter, message.getAfterTouchValue() / 127.);
-                m_Parameters[m_AftertouchLinkedParameter]->setValue(message.getAfterTouchValue() / 127.);
-                continue;
-            }
+            m_MPEInstrument.processNextMidiEvent(message);
 
             if (message.isNoteOn()) {
                 m_Processor->noteOn(message.getNoteNumber(), message.getVelocity() / 127., message.getChannel());
@@ -165,6 +152,26 @@ namespace Kaixo {
 
             if (message.isNoteOff()) {
                 m_Processor->noteOff(message.getNoteNumber(), message.getVelocity() / 127., message.getChannel());
+                continue;
+            }
+
+            if (message.isControllerOfType(1) && m_ModWheelLinkedParameter != NoParam) {
+                m_Processor->param(m_ModWheelLinkedParameter, message.getControllerValue() / 127.);
+                m_Parameters[m_ModWheelLinkedParameter]->setValue(message.getControllerValue() / 127.);
+                continue;
+            }
+
+            if (!m_MPEInstrument.isMemberChannel(message.getChannel())) {
+                if (message.isPitchWheel() && m_PitchWheelLinkedParameter != NoParam) {
+                    m_Processor->param(m_PitchWheelLinkedParameter, message.getPitchWheelValue() / 16384.);
+                    m_Parameters[m_PitchWheelLinkedParameter]->setValue(message.getPitchWheelValue() / 16384.);
+                    continue;
+                }
+            }
+
+            if (message.isAftertouch() && m_AftertouchLinkedParameter != NoParam) {
+                m_Processor->param(m_AftertouchLinkedParameter, message.getAfterTouchValue() / 127.);
+                m_Parameters[m_AftertouchLinkedParameter]->setValue(message.getAfterTouchValue() / 127.);
                 continue;
             }
         }
@@ -213,6 +220,60 @@ namespace Kaixo {
             deserialize(_json.value());
         }
     }
+
+    // ------------------------------------------------
+
+    void Controller::noteAdded(MPENote newNote) {
+        m_Processor->noteOnMPE(
+            newNote.noteID,
+            newNote.initialNote,
+            newNote.noteOffVelocity.asUnsignedFloat(),
+            newNote.midiChannel);
+
+        if (m_MPEInstrument.isMemberChannel(newNote.midiChannel)) {
+            m_Processor->notePitchBendMPE(
+                newNote.noteID,
+                newNote.pitchbend.asUnsignedFloat());
+        }
+
+        m_Processor->notePressureMPE(
+            newNote.noteID,
+            newNote.pitchbend.asUnsignedFloat());
+
+        m_Processor->noteTimbreMPE(
+            newNote.noteID,
+            newNote.timbre.asUnsignedFloat());
+    }
+
+    void Controller::notePressureChanged(MPENote changedNote) {
+        m_Processor->notePressureMPE(
+            changedNote.noteID,
+            changedNote.pitchbend.asUnsignedFloat());
+    }
+
+    void Controller::notePitchbendChanged(MPENote changedNote) {
+        if (m_MPEInstrument.isMemberChannel(changedNote.midiChannel)) {
+            m_Processor->notePitchBendMPE(
+                changedNote.noteID,
+                changedNote.pitchbend.asUnsignedFloat());
+        }
+    }
+
+    void Controller::noteTimbreChanged(MPENote changedNote) {
+        m_Processor->noteTimbreMPE(
+            changedNote.noteID,
+            changedNote.timbre.asUnsignedFloat());
+    }
+
+    void Controller::noteReleased(MPENote finishedNote) {
+        m_Processor->noteOffMPE(
+            finishedNote.noteID,
+            finishedNote.initialNote, 
+            finishedNote.noteOffVelocity.asUnsignedFloat(), 
+            finishedNote.midiChannel);
+    }
+
+    // ------------------------------------------------
 
     void Controller::initPreset() {
         init();

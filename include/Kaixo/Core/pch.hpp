@@ -83,6 +83,9 @@ namespace Kaixo {
     // ------------------------------------------------
 
     using Note = float; // Should be int32_t, but this allows gliding
+    using NoteID = std::uint64_t;
+
+    constexpr NoteID NoNoteID = static_cast<NoteID>(-1);
 
     // ------------------------------------------------
 

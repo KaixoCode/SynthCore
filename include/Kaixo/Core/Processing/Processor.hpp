@@ -28,6 +28,12 @@ namespace Kaixo::Processing {
 
         virtual void noteOn(Note note, double velocity, int channel) {}
         virtual void noteOff(Note note, double velocity, int channel) {}
+        
+        virtual void noteOnMPE(NoteID id, Note note, double velocity, int channel) {}
+        virtual void notePitchBendMPE(NoteID id, double value) {}
+        virtual void notePressureMPE(NoteID id, double value) {}
+        virtual void noteTimbreMPE(NoteID id, double value) {}
+        virtual void noteOffMPE(NoteID id, Note note, double velocity, int channel) {}
 
         // ------------------------------------------------
         
