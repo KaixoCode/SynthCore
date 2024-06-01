@@ -227,7 +227,7 @@ namespace Kaixo {
         m_Processor->noteOnMPE(
             newNote.noteID,
             newNote.initialNote,
-            newNote.noteOffVelocity.asUnsignedFloat(),
+            newNote.noteOnVelocity.asUnsignedFloat(),
             newNote.midiChannel);
 
         if (m_MPEInstrument.isMemberChannel(newNote.midiChannel)) {
