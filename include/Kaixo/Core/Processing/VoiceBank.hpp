@@ -149,7 +149,7 @@ namespace Kaixo::Processing {
         // ------------------------------------------------
 
         void process() override {
-            m_LastNote = lastTriggered().currentNote();
+            updateLastNote();
             for (auto& voice : m_Voices) {
                 voice.output.prepare(outputBuffer().size());
                 voice.process();
@@ -160,6 +160,12 @@ namespace Kaixo::Processing {
                     outputBuffer()[i] += voice.output[i];
                 }
             }
+        }
+
+        // Happens in process call, but can be called separately if for whatever reason
+        // the voice bank's process call isn't used.
+        void updateLastNote() {
+            m_LastNote = lastTriggered().currentNote();
         }
 
         // ------------------------------------------------
