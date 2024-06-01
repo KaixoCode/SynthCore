@@ -109,6 +109,16 @@ namespace Kaixo::Gui {
         }
     }
 
+    void ScrollView::scrollToKeepVisible(View* view) {
+        if (!isParentOf(view)) return;
+
+        if (view->y() < 0) {
+            scrollTo(m_Scrolled + view->y());
+        } else if (view->y() + view->height() > height()) {
+            scrollTo(m_Scrolled + (view->y() + view->height() - height()));
+        }
+    }
+
     // ------------------------------------------------
 
     Coord ScrollView::scrollSpace() {

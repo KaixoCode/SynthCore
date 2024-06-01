@@ -65,6 +65,7 @@ namespace Kaixo::Gui {
         
         float scrolled();
         void scrollTo(float pos);
+        void scrollToKeepVisible(View* view);
 
         // ------------------------------------------------
 
