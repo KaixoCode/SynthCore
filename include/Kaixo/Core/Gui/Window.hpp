@@ -20,7 +20,7 @@ namespace Kaixo::Gui {
 
     // ------------------------------------------------
 
-    class Window : public juce::AudioProcessorEditor, public juce::Timer, public juce::OpenGLRenderer {
+    class Window : public juce::AudioProcessorEditor, public juce::Timer {
     public:
 
         // ------------------------------------------------
@@ -61,12 +61,6 @@ namespace Kaixo::Gui {
         
         void scale(float scale);
         float scale();
-
-        // ------------------------------------------------
-
-        void newOpenGLContextCreated() override;
-        void renderOpenGL() override;
-        void openGLContextClosing() override;
 
         // ------------------------------------------------
 

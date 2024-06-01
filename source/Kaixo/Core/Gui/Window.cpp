@@ -20,7 +20,6 @@ namespace Kaixo::Gui {
 #endif
     {
         m_OpenGLContext.setComponentPaintingEnabled(true);
-        m_OpenGLContext.setRenderer(this);
         m_OpenGLContext.attachTo(*this);
 
         setSize(SYNTH_InitialSize);
@@ -145,18 +144,6 @@ namespace Kaixo::Gui {
         }
 
         m_BaseComponent->onIdle();
-    }
-
-    void Window::newOpenGLContextCreated()
-    {
-    }
-
-    void Window::renderOpenGL()
-    {
-    }
-
-    void Window::openGLContextClosing()
-    {
     }
 
     // ------------------------------------------------

@@ -143,7 +143,20 @@ namespace Kaixo {
         
         for (const auto& raw : midiMessages) {
             const auto& message = raw.getMessage();
-            m_MPEInstrument.processNextMidiEvent(message);
+            // Only process midi events when a zone is active
+            if (message.isController() || m_MPEInstrument.getZoneLayout().isActive()) {
+                m_MPEInstrument.processNextMidiEvent(message);
+            } else {
+                if (message.isNoteOn()) {
+                    m_Processor->noteOnMPE(NoNoteID, message.getNoteNumber(), message.getVelocity() / 127., message.getChannel());
+                    continue;
+                }
+
+                if (message.isNoteOff()) {
+                    m_Processor->noteOffMPE(NoNoteID, message.getNoteNumber(), message.getVelocity() / 127., message.getChannel());
+                    continue;
+                }
+            }
 
             if (message.isNoteOn()) {
                 m_Processor->noteOn(message.getNoteNumber(), message.getVelocity() / 127., message.getChannel());
