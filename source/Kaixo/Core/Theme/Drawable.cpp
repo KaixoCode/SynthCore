@@ -615,6 +615,7 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
+        loadIndex++;
         layers.clear();
         auto& l = layers.emplace_back(self); 
         l.identifier = "__base";
@@ -641,22 +642,13 @@ namespace Kaixo::Theme {
             : self(self) 
         {}
 
+        std::size_t loadIndex = npos;
         DrawableElement* self;
         std::vector<DrawableElement::LayerDrawable> layers{};
 
         void resync() {
-            bool changed = layers.size() != self->layers.size();
-
-            if (!changed) {
-                for (std::size_t i = 0; i < self->layers.size(); ++i) {
-                    if (self->layers[i].identifier != layers[i].identifier) {
-                        changed = true;
-                        break;
-                    }
-                }
-            }
-
-            if (changed) {
+            if (loadIndex != self->loadIndex) {
+                loadIndex = self->loadIndex;
                 layers.clear();
 
                 for (auto& layer : self->layers) {

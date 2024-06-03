@@ -44,9 +44,9 @@ namespace Kaixo::Theme {
         if (!m_IsThemeOpened) {
             auto theme = Storage::getOrDefault<std::string>(Setting::LoadedTheme, Default);
 
-            if (theme == Default) {
-                openDefault();
-            } else {
+            openDefault();
+
+            if (theme != Default) {
                 open(theme);
             }
         }
@@ -65,6 +65,7 @@ namespace Kaixo::Theme {
             return true;
         } else {
             std::filesystem::path _backup = path();
+            clearCache();
             openDefault();
             return open(_backup);
         }
@@ -297,6 +298,16 @@ namespace Kaixo::Theme {
         });
 
         interpret(json);
+    }
+
+    // ------------------------------------------------
+    
+    void Theme::clearCache() {
+        m_Variables.clear();
+        m_LoadedFonts.clear();
+        m_LoadedFontsByKey.clear();
+        m_LoadedImages.clear();
+        m_LoadedImagesByKey.clear();
     }
 
     // ------------------------------------------------

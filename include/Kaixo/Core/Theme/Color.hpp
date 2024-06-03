@@ -71,6 +71,7 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
         
+        std::size_t loadIndex = 0;
         StateLinked<Animated<Kaixo::Color>> color;
 
         // ------------------------------------------------

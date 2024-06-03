@@ -118,6 +118,10 @@ namespace Kaixo::Theme {
         }, state);
 
         // ------------------------------------------------
+        
+        loadIndex++;
+
+        // ------------------------------------------------
 
     }
 
@@ -132,12 +136,18 @@ namespace Kaixo::Theme {
         struct Implementation : public Color::Interface {
             Implementation(const ColorElement* self) : self(self) {}
 
+            std::size_t loadIndex = npos;
             const ColorElement* self;
             Animated<Kaixo::Color> color;
             View::State state = static_cast<View::State>(-1);
             bool changingCache = false;
 
             Kaixo::Color get(View::State s = View::State::Default) override {
+                if (loadIndex != self->loadIndex) {
+                    loadIndex = self->loadIndex;
+                    color = self->color[s];
+                }
+
                 if (state != s) {
                     color = self->color[s];
                     state = s;

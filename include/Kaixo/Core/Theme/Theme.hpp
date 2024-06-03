@@ -92,6 +92,10 @@ namespace Kaixo::Theme {
         void open(basic_json& json, std::string_view name);
         
         // ------------------------------------------------
+        
+        void clearCache();
+
+        // ------------------------------------------------
 
     };
 
