@@ -232,6 +232,8 @@ namespace Kaixo {
         if (auto _json = basic_json::parse(_jsonString)) {
             deserialize(_json.value());
         }
+
+        if (m_Window) m_Window->notifyPresetLoad();
     }
 
     // ------------------------------------------------
