@@ -111,7 +111,7 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
         
-        color.interpret(theme, [&](Kaixo::Color& color, const basic_json& theme) {
+        color.interpret(theme, [&](Kaixo::Color& color, const basic_json& theme, View::State state) {
             if (parseColor(color, theme)) return true;
             if (theme.contains("color") && parseColor(color, theme["color"])) return true;
             return false;

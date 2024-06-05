@@ -49,7 +49,7 @@ namespace Kaixo::Theme {
 
         void interpret(const basic_json& theme, auto interpret, View::State state = View::State::Default) {
             if (state == View::State::Default) {
-                interpret(base, theme);
+                interpret(base, theme, state);
 
                 theme.foreach([&](std::string_view key, const basic_json& theme) {
                     View::State state = View::State::Default;
@@ -61,14 +61,14 @@ namespace Kaixo::Theme {
                     if (key.contains("enabled")) state |= View::State::Enabled;
                     if (state != View::State::Default) {
                         Ty result;
-                        if (interpret(result, theme)) {
+                        if (interpret(result, theme, state)) {
                             states.emplace_back(state, std::move(result));
                         }
                     }
                 });
             } else {
                 Ty result;
-                if (interpret(result, theme)) {
+                if (interpret(result, theme, state)) {
                     states.emplace_back(state, std::move(result));
                 }
             }
@@ -123,11 +123,11 @@ namespace Kaixo::Theme {
                 if (theme.contains("transition", basic_json::Number)) {
                     transition = theme["transition"].as<double>();
                     if (theme.contains("value")) 
-                        interpret(base, theme["value"]);
+                        interpret(base, theme["value"], state);
                 } else if (theme.contains("value")) {
-                    interpret(base, theme["value"]);
+                    interpret(base, theme["value"], state);
                 } else {
-                    interpret(base, theme);
+                    interpret(base, theme, state);
                 }
 
                 theme.foreach([&](std::string_view key, const basic_json& theme) {
@@ -141,10 +141,10 @@ namespace Kaixo::Theme {
                     if (state != View::State::Default) {
                         Ty result;
                         if (theme.contains("transition", basic_json::Number)) {
-                            if (theme.contains("value")) interpret(result, theme["value"]);
+                            if (theme.contains("value")) interpret(result, theme["value"], state);
                             State& s = states.emplace_back(state, std::move(result));
                             s.transition = theme["transition"].as<double>();
-                        } else if (interpret(result, theme)) {
+                        } else if (interpret(result, theme, state)) {
                             State& s = states.emplace_back(state, std::move(result));
                         }
                     }
@@ -152,10 +152,10 @@ namespace Kaixo::Theme {
             } else {
                 Ty result;
                 if (theme.contains("transition", basic_json::Number)) {
-                    if (theme.contains("value")) interpret(result, theme["value"]);
+                    if (theme.contains("value")) interpret(result, theme["value"], state);
                     State& s = states.emplace_back(state, std::move(result));
                     s.transition = theme["transition"].as<double>();
-                } else if (interpret(result, theme)) {
+                } else if (interpret(result, theme, state)) {
                     State& s = states.emplace_back(state, std::move(result));
                 }
             }
