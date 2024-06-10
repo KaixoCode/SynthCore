@@ -76,7 +76,10 @@ namespace Kaixo::Theme {
         auto _absolute = std::filesystem::absolute(path);
         std::ifstream _file{ _absolute };
         
-        if (!_file.is_open()) return false;
+        if (!_file.is_open()) {
+            m_LastErrorMessage = "Failed to open file";
+            return false;
+        }
 
         if (auto _json = basic_json::parse(file_to_string(_file))) {
 
@@ -90,13 +93,18 @@ namespace Kaixo::Theme {
             open(m_DefaultTheme, Default);
 
             // Then open theme
-            open(_json.value(), path.string());
+            if (!open(_json.value(), path.string())) {
+                // ^^^ Error message set in open()
+                return false;
+            }
 
             m_OpenedPath = path;
 
             Storage::set<std::string>(Setting::LoadedTheme, _absolute.string());
 
             return true;
+        } else {
+            m_LastErrorMessage = "Failed to parse json.";
         }
 
         return false;
@@ -256,7 +264,7 @@ namespace Kaixo::Theme {
         }
     }
 
-    void Theme::open(basic_json& input, std::string_view name) {
+    bool Theme::open(basic_json& input, std::string_view name) {
         basic_json json = input;
 
         if (json.contains("theme-name", basic_json::String)) {
@@ -266,12 +274,21 @@ namespace Kaixo::Theme {
         }
 
         // Replace all occurences of variables
+        bool success = true;
+        std::size_t depth = 0;
         json.forall([&](this auto& self, basic_json& value) -> void {
             if (value.is(basic_json::String)) {
                 auto& val = value.as<basic_json::string>();
                 if (hasVariable(val)) {
                     value = variable(val);
-                    value.forall(self);
+                    if (++depth == 30) {
+                        m_LastErrorMessage = "Theme variable recursion depth limit (30) exceeded.";
+                        success = false;
+                        return;
+                    } else {
+                        value.forall(self);
+                    }
+                    --depth;
                 }
             }
         });
@@ -298,6 +315,8 @@ namespace Kaixo::Theme {
         });
 
         interpret(json);
+
+        return success;
     }
 
     // ------------------------------------------------
