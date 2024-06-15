@@ -36,6 +36,7 @@
 #include <codecvt>
 #include <cstdlib>
 #include <memory>
+#include <expected>
 
 // ------------------------------------------------
 

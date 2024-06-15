@@ -549,19 +549,6 @@ namespace Kaixo {
 
         // ------------------------------------------------
         
-        static std::optional<basic_json> parse(std::string_view json) {
-            parser _parser{
-                .original = json,
-                .value = json
-            };
-            auto result = _parser.parseObject();
-            if (result.valid()) return result.value();
-            std::cout << result.what() << "\n";
-            return {};
-        }
-
-        // ------------------------------------------------
-        
         std::string to_string() {
             switch (type()) {
             case Number: {
@@ -658,10 +645,6 @@ namespace Kaixo {
 
         // ------------------------------------------------
 
-    private:
-
-        // ------------------------------------------------
-
         static std::string escape(std::string_view str) {
             std::string _str{ str };
             replace_str(_str, "\\", "\\\\");
@@ -725,8 +708,10 @@ namespace Kaixo {
                 }
 
                 Ty& value() { return m_Value; }
+                Ty* operator->() { return &m_Value; }
                 bool valid() const { return m_Valid == true; }
-                std::string_view what() const { return m_Valid ? "" : m_Message; }
+                operator bool() const { return valid(); }
+                std::string_view what() const { return m_Message; }
             };
 
             template<>
@@ -1230,6 +1215,23 @@ namespace Kaixo {
                 return die("Expected value");
             }
         };
+
+        // ------------------------------------------------
+        
+        static parser::result<basic_json> parse(std::string_view json) {
+            parser _parser{
+                .original = json,
+                .value = json
+            };
+            auto result = _parser.parseObject();
+            if (result.valid()) {
+                return { std::move(result.value()) };
+            } else {
+                return result.what();
+            }
+        }
+
+        // ------------------------------------------------
 
     };
 

@@ -65,19 +65,19 @@ namespace Kaixo::Theme {
 
     // ------------------------------------------------
 
-    std::optional<basic_json> getFontDescription(Theme* self, const std::string& description) {
+    basic_json::parser::result<basic_json> getFontDescription(Theme* self, const std::string& description) {
         std::filesystem::path path = description;
         if (std::filesystem::exists(path) && std::filesystem::is_regular_file(path)) {
             auto abspath = std::filesystem::absolute(path);
 
             std::ifstream file{ abspath };
-            if (!file.is_open()) return nullptr;
+            if (!file.is_open()) return std::string_view{ "Cannot open file" };
             
             return basic_json::parse(file_to_string(file));
         } else if (self->hasVariable(description)) {
             return self->variable(description);
         } else {
-            return nullptr;
+            return std::string_view{ "File does not exist" };
         }
     }
 

@@ -40,6 +40,8 @@ namespace Kaixo::Theme {
         bool open(const std::filesystem::path& path);
         bool opened() const { return m_IsThemeOpened; }
 
+        std::string_view lastError() const { return m_LastErrorMessage; }
+
         std::string_view name() const { return m_OpenedThemeName; }
         const std::filesystem::path& path() const { return m_OpenedPath; }
 
@@ -78,6 +80,7 @@ namespace Kaixo::Theme {
         std::map<FontID, juce::Font> m_LoadedFonts;
         std::filesystem::path m_OpenedPath;
         std::string m_OpenedThemeName;
+        std::string m_LastErrorMessage;
         ZoomMultiplier m_Zoom = 1;
         bool m_IsThemeOpened = false;
 
@@ -89,7 +92,7 @@ namespace Kaixo::Theme {
         // ------------------------------------------------
 
         void findVariables(basic_json& json);
-        void open(basic_json& json, std::string_view name);
+        bool open(basic_json& json, std::string_view name);
         
         // ------------------------------------------------
         
