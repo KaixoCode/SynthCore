@@ -938,11 +938,11 @@ namespace Kaixo {
                 }
 
                 _.commit();
-                if (fractional) {
+                if (fractional || negativeExponent) {
                     double val = 0;
 
-                    std::string fullStr = (negative ? "-" : "") + pre + "." + post
-                        + (hasExponent ? (negativeExponent ? "E+" : "E-") + exponent : "");
+                    std::string fullStr = (negative ? "-" : "") + (fractional ? pre + "." + post : pre)
+                        + (hasExponent ? (negativeExponent ? "E-" : "E+") + exponent : "");
 
                     std::from_chars(fullStr.data(), fullStr.data() + fullStr.size(), val);
 
@@ -950,7 +950,7 @@ namespace Kaixo {
                 } else if (negative) {
                     std::int64_t val = 0;
 
-                    std::string fullStr = pre + (hasExponent ? (negativeExponent ? "E+" : "E-") + exponent : "");
+                    std::string fullStr = pre + (hasExponent ? (negativeExponent ? "E-" : "E+") + exponent : "");
 
                     std::from_chars(fullStr.data(), fullStr.data() + fullStr.size(), val);
 
@@ -958,7 +958,7 @@ namespace Kaixo {
                 } else {
                     std::uint64_t val = 0;
 
-                    std::string fullStr = pre + (hasExponent ? (negativeExponent ? "E+" : "E-") + exponent : "");
+                    std::string fullStr = pre + (hasExponent ? (negativeExponent ? "E-" : "E+") + exponent : "");
 
                     std::from_chars(fullStr.data(), fullStr.data() + fullStr.size(), val);
 
