@@ -207,7 +207,13 @@ namespace Kaixo {
         template<string_literal ...Names>
         constexpr Formatter Group{
             [](ParamValue value) -> std::string { return GroupImpl<Names...>.format(value); },
-            [](std::string_view str) -> ParamValue { return Default.parse(str); },
+            [](std::string_view str) -> ParamValue {
+                std::size_t index = 0;
+                bool found = false;
+                (((str == Names) ? (found = true) : (!found ? ++index : 0)), ...);
+                if (!found) return 0;
+                return index;
+            },
         };
 
         template<string_literal ...Names>

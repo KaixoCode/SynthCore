@@ -45,14 +45,29 @@ namespace Kaixo::Gui {
             }
 
             positionChildren();
+        } else {
+            switch (settings.type) {
+            case Type::Vertical: {
+                Coord delta = (event.mouseDownPosition.y - event.y);
+                m_Scrolled = Math::clamp(m_PressScrolled + delta, 0, scrollSpace());
+                break;
+            }
+            case Type::Horizontal: {
+                Coord delta = (event.mouseDownPosition.x - event.x);
+                m_Scrolled = Math::clamp(m_PressScrolled + delta, 0, scrollSpace());
+                break;
+            }
+            }
+
+            positionChildren();
         }
     }
 
     void ScrollView::mouseDown(const juce::MouseEvent& event) {
         if (hovering()) {
             pressed(true);
-            m_PressScrolled = m_Scrolled;
         }
+        m_PressScrolled = m_Scrolled;
     }
 
     void ScrollView::mouseUp(const juce::MouseEvent& event) {

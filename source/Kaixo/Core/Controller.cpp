@@ -354,8 +354,19 @@ namespace Kaixo {
 
         for (auto& param : Synth) {
             basic_json& p = getFromIdentifier(_params, param.fullVarName);
-            p["value"] = parameter(param).transformedValue();
-            p["range"] = "transformed";
+            // Store as transformed, unless it results in NaN or infinite, 
+            // then use normalized value. Because JSON can't do NaN/inf.
+            float value = parameter(param).transformedValue();
+            if (parameter(param).isDiscrete()) {
+                p["value"] = parameter(param).toString();
+                p["range"] = "formatted";
+            } else if (std::isnan(value) || std::isinf(value)) {
+                p["value"] = parameter(param).value();
+                p["range"] = "normalized";
+            } else {
+                p["value"] = value;
+                p["range"] = "transformed";
+            }
         }
 
         result[ProcessorName] = m_Processor->serialize();
@@ -388,6 +399,8 @@ namespace Kaixo {
                     } else {
                         performEdit(param, value);
                     }
+                } else if (p.contains("value", basic_json::String)) {
+                    performEdit(param, param.fromString(p["value"].as<std::string>()));
                 } else {
                     performEdit(param, parameter(param).defaultValue());
                 }
