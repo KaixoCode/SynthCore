@@ -27,7 +27,7 @@ namespace Kaixo::Gui {
     void EnvelopeDisplay::parameterChanged(ParamID id, ParamValue val) {
         bool _changed = false;
 
-        if      (id == settings.decay)        m_Decay = val,        _changed = true;
+        if      (id == settings.delay)        m_Delay = val,        _changed = true;
         else if (id == settings.attack)       m_Attack = val,       _changed = true;
         else if (id == settings.decay)        m_Decay = val,        _changed = true;
         else if (id == settings.attackLevel)  m_AttackLevel = val,  _changed = true;
