@@ -18,6 +18,10 @@ namespace Kaixo {
         constexpr Timer() = default;
 
         // ------------------------------------------------
+        
+        constexpr void restart() { start = clock::now(); }
+
+        // ------------------------------------------------
 
         template<
             class Unit = std::chrono::seconds,
@@ -28,5 +32,13 @@ namespace Kaixo {
             constexpr float ratio = 1. / std::chrono::duration_cast<granularity>(unit::duration(1)).count();
             return ratio * std::chrono::duration_cast<granularity>(clock::now() - start).count();
         }
+
+        // ------------------------------------------------
+
     };
+
+    // ------------------------------------------------
+
 }
+
+// ------------------------------------------------
