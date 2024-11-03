@@ -86,9 +86,18 @@ namespace Kaixo::Processing {
                 m_Phase = 0;
                 m_AttackValue = output;
             } else {
-                m_State = State::Delay;
-                m_Phase = 0;
-                m_AttackValue = m_AttackLevel;
+                // Special case when no delay and no attack, immediate
+                // set it to the decay value.
+                if (m_DelayMillis <= 1 && m_AttackMillis <= 1) {
+                    m_State = State::Decay;
+                    m_Phase = 0;
+                    output = m_DecayLevel;
+                } else {
+                    m_State = State::Delay;
+                    m_Phase = 0;
+                    m_AttackValue = m_AttackLevel;
+                    output = m_AttackLevel;
+                }
             }
         }
 
