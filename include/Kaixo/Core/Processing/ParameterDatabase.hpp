@@ -157,9 +157,9 @@ namespace Kaixo::Processing {
         constexpr bool changing(ParamID i) const {
 #ifdef KAIXO_INTERNAL_MODULATION
             return m_LinkedModulationDatabase->modulated(i)
-                || Math::Fast::abs(m_Parameters[i].add) > 0.00000001f;
+                || Math::Fast::abs(m_Parameters[i].add) > 0.00000005f;
 #else
-            return Math::Fast::abs(m_Parameters[i].add) > 0.00000001f;
+            return Math::Fast::abs(m_Parameters[i].add) > 0.00000005f;
 #endif
         }
 
