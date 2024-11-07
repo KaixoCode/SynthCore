@@ -265,6 +265,7 @@ namespace Kaixo {
         
         template<class Ty, std::size_t N>
         bool try_get(std::array<Ty, N>& value) const {
+            if (size() < N) return false;
             std::array<Ty, N> result;
             std::size_t index = 0;
             foreach([&](auto& v) {
