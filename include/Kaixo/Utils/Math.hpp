@@ -96,6 +96,9 @@ namespace Kaixo {
         KAIXO_STEREO(min)
 
         KAIXO_MONO clamp(is_mono auto a, is_mono auto b, is_mono auto c) noexcept { return a < b ? b : a > c ? c : a; }
+        KAIXO_POLY clamp(is_poly auto a, is_mono auto b, is_mono auto c) noexcept { auto m = a < b; auto n = a > c; return m & b | n & c | ~m & ~n & a; }
+        KAIXO_POLY clamp(is_poly auto a, is_poly auto b, is_mono auto c) noexcept { auto m = a < b; auto n = a > c; return m & b | n & c | ~m & ~n & a; }
+        KAIXO_POLY clamp(is_poly auto a, is_mono auto b, is_poly auto c) noexcept { auto m = a < b; auto n = a > c; return m & b | n & c | ~m & ~n & a; }
         KAIXO_POLY clamp(is_poly auto a, is_poly auto b, is_poly auto c) noexcept { auto m = a < b; auto n = a > c; return m & b | n & c | ~m & ~n & a; }
         KAIXO_STEREO(clamp)
 
@@ -200,6 +203,7 @@ namespace Kaixo {
         // ------------------------------------------------
 
         KAIXO_MONO fmod(is_mono auto a, is_mono auto b) noexcept { return std::fmod(a, b); }
+        KAIXO_POLY fmod(is_poly auto a, is_mono auto b) noexcept { return a - trunc(a / b) * b; }
         KAIXO_POLY fmod(is_poly auto a, is_poly auto b) noexcept { return a - trunc(a / b) * b; }
         KAIXO_STEREO(fmod)
 
@@ -551,6 +555,7 @@ namespace Kaixo {
             // ------------------------------------------------
 
             KAIXO_MONO fmod(is_mono auto a, is_mono auto b) noexcept { return a - trunc(a / b) * b; }
+            KAIXO_POLY fmod(is_poly auto a, is_mono auto b) noexcept { return a - trunc(a / b) * b; }
             KAIXO_POLY fmod(is_poly auto a, is_poly auto b) noexcept { return a - trunc(a / b) * b; }
             KAIXO_STEREO(fmod)
 
