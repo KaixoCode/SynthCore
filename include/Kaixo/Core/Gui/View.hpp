@@ -142,6 +142,7 @@ namespace Kaixo::Gui {
 
         template<class Ty, class ...As> Ty& add(As&& ...as);
         template<class Ty, class ...As> Ty& add(UnevaluatedRect size, As&& ...as);
+        template<class Ty, class A, class ...As> Ty& add(UnevaluatedRect size, Ty::Settings settings, A&& a, As&& ...as);
         template<class Ty> Ty& add(Ty::Settings settings);
         template<class Ty> Ty& add(UnevaluatedRect size, Ty::Settings settings);
         
@@ -215,6 +216,20 @@ namespace Kaixo::Gui {
     template<class Ty, class ...As>
     Ty& View::add(UnevaluatedRect size, As&& ...as) {
         auto ptr = std::make_unique<Ty>(context, std::forward<As>(as)...);
+        Ty* value = ptr.get();
+        m_Views.emplace_back(std::move(ptr));
+        addChildComponent(value);
+        value->m_Dimensions = size;
+        value->updateDimensions();
+        if constexpr (std::derived_from<Ty, Listener>) {
+            context.listener(value);
+        }
+        return *value;
+    }
+    
+    template<class Ty, class A, class ...As >
+    Ty& View::add(UnevaluatedRect size, Ty::Settings settings, A&& a, As&& ...as) {
+        auto ptr = std::make_unique<Ty>(context, std::move(settings), std::forward<A>(a), std::forward<As>(as)...);
         Ty* value = ptr.get();
         m_Views.emplace_back(std::move(ptr));
         addChildComponent(value);
