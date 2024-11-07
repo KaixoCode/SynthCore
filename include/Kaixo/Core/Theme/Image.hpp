@@ -63,7 +63,7 @@ namespace Kaixo::Theme {
         Rect<int>                    clip     = { 0, 0, 0, 0 };
         Align                        align    = Align::TopLeft;
         std::size_t                  frame    = 0;
-        Point<float>                 position = { 0, 0 };
+        Rect<float>                  position = { 0, 0, 0, 0 };
         Rect<float>                  bounds   = { 0, 0, 0, 0 };
 
         bool                         fillAlphaWithColor = false;

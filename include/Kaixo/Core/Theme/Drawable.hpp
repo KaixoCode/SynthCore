@@ -28,7 +28,7 @@ namespace Kaixo::Theme {
      *     frames: 100               // nmr of frames in image
      *     frames-per-row: 1         // nmr of frames per row
      *     edges: [0, 0, 0, 0]       // nine-tiled edges
-     *     position: [0, 0]          // relative position of image in drawable
+     *     position: [0, 0, 0, 0]    // relative position of image in drawable
      *     align: top-left           // image align relative to position
      *   }                           
      *                               
@@ -119,7 +119,8 @@ namespace Kaixo::Theme {
             StateLinked<ImageID> image{};
             StateLinked<Point<int>> offset{};
             StateLinked<std::optional<Point<int>>> size{};
-            StateLinked<Point<int>> position{};
+            StateLinked<Point<int>> positionOffset{};
+            StateLinked<std::optional<Point<int>>> positionSize{};
             StateLinked<Align> align{};
             StateLinked<std::optional<MultiFrameDescription>> multiframe{};
             StateLinked<std::optional<TiledDescription>> tiled{};

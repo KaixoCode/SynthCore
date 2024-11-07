@@ -126,8 +126,8 @@ namespace Kaixo::Theme {
         auto _frame = Rect<int>{
             i.clip.width() * col + i.clip.x(),
             i.clip.height() * row + i.clip.y(),
-            i.clip.width(),
-            i.clip.height()
+            Math::min(i.clip.width(), static_cast<int>(i.position.width())),
+            Math::min(i.clip.height(), static_cast<int>(i.position.height()))
         };
 
         auto _clipped = m_Image.getClippedImage(_frame);
@@ -141,7 +141,7 @@ namespace Kaixo::Theme {
             i.graphics.reduceClipRegion(i.bounds.getSmallestIntegerContainer());
             // TODO: add proper placement using align and position
             // alignment should be relative to position, which itself is relative to bounds
-            i.graphics.drawImage(_clipped, i.bounds + i.position, getPlacement(i.align), i.fillAlphaWithColor);
+            i.graphics.drawImage(_clipped, i.bounds + i.position.position(), getPlacement(i.align), i.fillAlphaWithColor);
             i.graphics.restoreState();
         }
 

@@ -81,12 +81,30 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
-        position.interpret(json, [&](auto& position, const basic_json& json, View::State state) {
+        positionOffset.interpret(json, [&](auto& position, const basic_json& json, View::State state) {
             bool containsImage = json.contains("image", basic_json::Object);
+            if (json.try_get("image-position", arr4) || 
+                containsImage && json["image"].try_get("position", arr4)) 
+            {
+                position = Point{ arr4[0], arr4[1] };
+                return true;
+            }
             if (json.try_get("image-position", arr2) || 
                 containsImage && json["image"].try_get("position", arr2)) 
             {
                 position = Point{ arr2[0], arr2[1] };
+                return true;
+            }
+
+            return false;
+        }, state);
+        
+        positionSize.interpret(json, [&](auto& position, const basic_json& json, View::State state) {
+            bool containsImage = json.contains("image", basic_json::Object);
+            if (json.try_get("image-position", arr4) || 
+                containsImage && json["image"].try_get("position", arr4)) 
+            {
+                position = Point{ arr4[2], arr4[3] };
                 return true;
             }
 
@@ -151,7 +169,8 @@ namespace Kaixo::Theme {
         image = { NoImage };
         offset = { { 0, 0 } };
         size = {};
-        position = { { 0, 0 } };
+        positionOffset = { { 0, 0 } };
+        positionSize = {};
         align = { Align::TopLeft };
         multiframe = {};
         tiled = {};
@@ -170,7 +189,8 @@ namespace Kaixo::Theme {
         
         auto& image = part.image[instr.state];
         auto& align = part.align[instr.state];
-        auto& position = part.position[instr.state];
+        auto& positionOffset = part.positionOffset[instr.state];
+        auto& positionSize = part.positionSize[instr.state];
         auto& multiframe = part.multiframe[instr.state];
         auto& tiled = part.tiled[instr.state];
         auto& offset = part.offset[instr.state];
@@ -206,7 +226,12 @@ namespace Kaixo::Theme {
                     .clip = _clip,
                     .align = align,
                     .frame = _index,
-                    .position = position,
+                    .position = { 
+                        positionOffset.x(),
+                        positionOffset.y(),
+                        positionSize.has_value() ? positionSize->x() : _clip.width(),
+                        positionSize.has_value() ? positionSize->y() : _clip.height(),
+                    },
                     .bounds = instr.bounds
                 });
 
@@ -236,7 +261,7 @@ namespace Kaixo::Theme {
                         .tiled = nullptr,
                         .clip = _clip,
                         .align = align,
-                        .position = position,
+                        .position = positionOffset,
                         .bounds = instr.bounds,
                     });
                 }
