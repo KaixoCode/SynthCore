@@ -220,6 +220,7 @@ namespace Kaixo::Gui {
                 .value = v,
                 .text = { 
                     { "$name", settings.name },
+                    { "$short-name", settings.name },
                     { "$value", valueString() }
                 },
                 .state = state(),
