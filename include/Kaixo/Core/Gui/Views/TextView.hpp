@@ -25,6 +25,7 @@ namespace Kaixo::Gui {
             bool multiline = false;
             bool editable = true;
             bool center = false;
+            bool alignToPixel = false;
 
             Coord lineHeight = 20;
 

@@ -81,6 +81,7 @@ namespace Kaixo::Gui {
         });
 
         auto v = paddedDimensions().topLeft().toFloat() - m_Offset;
+        if (settings.alignToPixel) v = v.toInt().toFloat();
         if (settings.text.empty()) {
             auto lines = this->linesFrom(settings.placeholder);
             if (settings.graphics.placeholderColor) {

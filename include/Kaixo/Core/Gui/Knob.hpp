@@ -97,6 +97,14 @@ namespace Kaixo::Gui {
         void paint(juce::Graphics& g) override;
 
         // ------------------------------------------------
+
+        int steps() const;
+
+        std::string name() const;
+        std::string valueString() const;
+
+        // ------------------------------------------------
+
     protected:
         ParamValue m_Value = 0;
         Point<> m_PreviousMousePosition{ 0, 0 };
@@ -108,13 +116,6 @@ namespace Kaixo::Gui {
         // ------------------------------------------------
 
         Point<> openTooltipAt() const;
-
-        // ------------------------------------------------
-
-        int steps() const;
-
-        std::string name() const;
-        std::string valueString() const;
 
         // ------------------------------------------------
 
