@@ -62,6 +62,7 @@ namespace Kaixo::Processing {
         // ------------------------------------------------
         
         constexpr bool modulated(ParamID id) const { return m_Modulations[id].size() != 0; }
+        constexpr std::size_t nofLinkedSource(ParamID id) const { return m_Modulations[id].size(); }
 
         // ------------------------------------------------
 
