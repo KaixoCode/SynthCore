@@ -54,7 +54,10 @@ namespace Kaixo::Gui {
 
             // ------------------------------------------------
             
-            float zoom = 3;
+            float minZoom = 0.9;
+            float maxZoom = 20;
+            float zoom = 15;
+            float zoomSpeed = 2;
 
             // ------------------------------------------------
 

@@ -46,10 +46,10 @@ namespace Kaixo::Gui {
     // ------------------------------------------------
 
     void EnvelopeDisplay::mouseWheelMove(const juce::MouseEvent& event, const juce::MouseWheelDetails& d) {
-        float mult = 1;
+        float mult = settings.zoomSpeed;
         if (event.mods.isCtrlDown()) mult *= 0.5;
         if (event.mods.isShiftDown()) mult *= 0.5;
-        settings.zoom = Math::clamp(settings.zoom + d.deltaY * mult, 0.9, 5);
+        settings.zoom = Math::clamp(settings.zoom + d.deltaY * mult, settings.minZoom, settings.maxZoom);
 
         repaint();
     }
