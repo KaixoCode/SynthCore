@@ -210,6 +210,9 @@ namespace Kaixo::Gui {
                 .bounds = localDimensions(),
                 .parameter = settings.param,
                 .value = v,
+                .values = {
+                    { "$value", v }
+                },
                 .state = state(),
             });
         } else {

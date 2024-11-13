@@ -66,6 +66,7 @@ namespace Kaixo::Theme {
             ParamValue value = -1; // Range must be [0, inf), -1 means not set
             std::size_t index = npos;
             std::map<std::string_view, std::string_view> text{}; // keys have to start with '$'
+            std::map<std::string_view, float> values{};          // keys have to start with '$'
             View::State state = View::State::Default;
         };
 
@@ -193,6 +194,9 @@ namespace Kaixo::Theme {
         struct Layer : Element {
             using Element::Element;
             std::string identifier{}; // used for identifying the layer
+
+            std::function<bool(const std::map<std::string_view, float>&)> conditional;
+            std::optional<std::string> linked;
 
             ImagePart image{ self };
             TextPart text{ self };

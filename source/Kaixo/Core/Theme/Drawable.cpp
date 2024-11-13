@@ -1,4 +1,3 @@
-#pragma once
 
 // ------------------------------------------------
 
@@ -7,6 +6,7 @@
 // ------------------------------------------------
 
 #include "Kaixo/Core/Theme/Theme.hpp"
+#include "Kaixo/Core/Theme/ExpressionParser.hpp"
 
 // ------------------------------------------------
 
@@ -574,6 +574,16 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
+        conditional = {};
+        if (theme.contains("if", basic_json::String)) {
+            conditional = ExpressionParser::parse(theme["if"].as<std::string_view>());
+        }
+
+        linked = {};
+        if (theme.contains("link", basic_json::String)) {
+            linked = theme["link"].as<std::string>();
+        }
+
         image.reset();
         text.reset();
         backgroundColor.reset();
@@ -684,7 +694,27 @@ namespace Kaixo::Theme {
 
         void draw(Drawable::Instruction instr) override {
             resync();
+            float value = instr.value;
+            std::size_t index = instr.index;
             for (std::size_t i = 0; i < self->layers.size(); ++i) {
+                if (self->layers[i].conditional && !self->layers[i].conditional(instr.values)) continue;
+
+                instr.value = value;
+                instr.index = index;
+                if (self->layers[i].linked) {
+                    std::string_view variable = self->layers[i].linked.value();
+                    auto it = instr.values.find(variable);
+                    if (it != instr.values.end()) {
+                        instr.value = it->second;
+
+                        // Clearing the index is a decision because the index takes
+                        // precedence over the value, and if this drawable was
+                        // indexed explicitly this would disallow other layers
+                        // that are linked explicitly to function.
+                        instr.index = npos;
+                    }
+                }
+
                 layers[i].draw(instr, *self->self, self->layers[i]);
             }
         }
