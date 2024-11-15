@@ -44,7 +44,11 @@ namespace Kaixo::Processing {
 
     // ------------------------------------------------
 
-    template<class Sample = double, class MathQuality = Math, std::size_t Parallel = 1, bool Quadruple = true>
+    template<class Sample = double, 
+             class MathQuality = Math, 
+             std::size_t Parallel = 1, 
+             std::size_t MaxPasses = 4,
+             FilterType ...FilterTypes>
     struct Biquad {
 
         // ------------------------------------------------
@@ -66,18 +70,28 @@ namespace Kaixo::Processing {
             struct Pass {
                 alignas(64) std::array<std::array<Sample, Parallel>, 3> y;
                 alignas(64) std::array<std::array<Sample, Parallel>, 3> x;
-            } pass[(Quadruple ? 4 : 1)];
+            } pass[MaxPasses];
         };
 
         // ------------------------------------------------
 
         constexpr bool quadruple() const { return m_Type == FilterType::LowPass4 || m_Type == FilterType::HighPass4; }
+        constexpr std::size_t passes() const { return m_Passes; }
+        constexpr FilterType type() const { return m_Type; }
         constexpr void sampleRate(double sr) { set(sr, m_SampleRate); }
         constexpr void gain(double gain) { set(gain, m_Gain); }
         constexpr void frequency(double frequency) { set(frequency, m_Frequency); }
         constexpr void resonance(double q) { set(q, m_Q); }
+        constexpr void passes(std::size_t p) { set(p, m_SetPasses); }
         constexpr void type(FilterType type) { set(type, m_Type); }
-        constexpr void type(double t) { type(eqParamTypeToFilterType(t)); }
+        constexpr void type(double t) { 
+            if constexpr (sizeof...(FilterTypes) == 0) {
+                type(eqParamTypeToFilterType(t));
+            } else {
+                constexpr FilterType types[]{ FilterTypes... };
+                type(types[normalToIndex(t, sizeof...(FilterTypes))]);
+            }
+        }
 
         // ------------------------------------------------
 
@@ -112,7 +126,7 @@ namespace Kaixo::Processing {
          * @param i start at the i'th parallel filter, used with simd
          */
         template<class Type> requires (is_simd<Type> || is_mono<Type>)
-            Type processBatch(Type in, std::size_t index, std::size_t i = 0) {
+        Type processBatch(Type in, std::size_t index, std::size_t i = 0) {
             if (bypass) return in;
             auto& coeff = getCoefficients();
             auto& state = getState(index);
@@ -127,28 +141,24 @@ namespace Kaixo::Processing {
                 else return value.store(ptr);
             };
 
-            if constexpr (Quadruple) {
+            if constexpr (MaxPasses != 1) {
                 auto singlePass = [&](auto& pass, auto input) {
                     store(pass.x[m_0].data() + i, input);
                     store(pass.y[m_0].data() + i,
-                        coeff.b0a0 * input
+                          coeff.b0a0 * input
                         + coeff.b1a0 * aat(pass.x[m_1].data(), i)
                         + coeff.b2a0 * aat(pass.x[m_2].data(), i)
                         - coeff.a1a0 * aat(pass.y[m_1].data(), i)
                         - coeff.a2a0 * aat(pass.y[m_2].data(), i));
-                    };
+                };
 
                 singlePass(state.pass[0], in);
 
-                if (quadruple()) {
-                    for (std::size_t j = 1; j < 4; ++j) {
-                        singlePass(state.pass[j], aat(state.pass[j - 1].y[m_0].data(), i));
-                    }
-
-                    return aat(state.pass[3].y[m_0].data(), i);
+                for (std::size_t j = 1; j < passes(); ++j) {
+                    singlePass(state.pass[j], aat(state.pass[j - 1].y[m_0].data(), i));
                 }
 
-                return aat(state.pass[0].y[m_0].data(), i);
+                return aat(state.pass[passes() - 1].y[m_0].data(), i);
             }
             else {
                 auto& pass = state.pass[0];
@@ -186,6 +196,8 @@ namespace Kaixo::Processing {
         bool dirty = true;
         Coefficients m_Coefficients;
         State m_States[2];
+        std::size_t m_Passes = 1;
+        std::size_t m_SetPasses = 1;
         std::size_t m_0 = 0;
         std::size_t m_1 = 1;
         std::size_t m_2 = 2;
@@ -208,6 +220,10 @@ namespace Kaixo::Processing {
                 return 8 * m_Q / (Math::Fast::abs(m_Gain) + 1);
             case PeakingEQ:
                 return 2 * m_Q + 0.2;
+            case Notch:
+                return 8 * (1 - m_Q) + 0.5;
+            case BandPass:
+                return 0.5 * m_Q;
             }
             return m_Q;
         }
@@ -226,13 +242,16 @@ namespace Kaixo::Processing {
             const double gain = m_Gain;
             auto& coeffs = m_Coefficients;
 
+            if (quadruple()) m_Passes = 4;
+            else m_Passes = m_SetPasses;
+
             const auto defaultA = [&](double alpha) {
                 coeffs.a = {
                     1.0 + alpha,
                    -2.0 * cosOmega,
                     1.0 - alpha
                 };
-                };
+            };
 
             // ------------------------------------------------
 
