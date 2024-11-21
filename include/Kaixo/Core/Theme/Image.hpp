@@ -108,6 +108,8 @@ namespace Kaixo::Theme {
         // ------------------------------------------------
         
         juce::Image* operator->() { return &m_Image; }
+        operator juce::Image& () { return m_Image; }
+        operator const juce::Image& () const { return m_Image; }
 
         // ------------------------------------------------
 

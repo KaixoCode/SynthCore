@@ -1,7 +1,7 @@
 
 # ==============================================
 
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.22)
 
 # ==============================================
 
@@ -91,6 +91,7 @@ target_compile_definitions(${NAME}
 
 target_link_libraries(${NAME}
     PRIVATE
+        juce::juce_core
         juce::juce_audio_utils
         juce::juce_gui_extra
         juce::juce_opengl
@@ -99,7 +100,7 @@ target_link_libraries(${NAME}
         juce::juce_recommended_lto_flags
         juce::juce_recommended_warning_flags)
 
-target_precompile_headers(${NAME} PUBLIC "${CORE_SOURCE_DIRECTORY}/include/Kaixo/Core/pch.hpp")
+target_precompile_headers(${NAME} PRIVATE "${CORE_SOURCE_DIRECTORY}/include/Kaixo/Core/pch.hpp")
 
 # ==============================================
 

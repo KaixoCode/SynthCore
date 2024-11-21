@@ -203,7 +203,7 @@ namespace Kaixo::Theme {
         char* _raw = _decoded.data();
         std::size_t _bytes = _decoded.size();
 
-        auto _font = juce::CustomTypeface::createSystemTypefaceFor(_raw, _bytes);
+        auto _font = juce::Typeface::createSystemTypefaceFor(_raw, _bytes);
         if (!_font) return NoFont;
         m_LoadedFontsByKey.emplace(key, id);
         m_LoadedFonts[id] = std::move(_font);
