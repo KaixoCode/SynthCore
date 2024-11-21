@@ -61,7 +61,7 @@ namespace Kaixo::Gui {
                     context.tooltip().open({
                         .string = valueString(),
                         .position = openTooltipAt()
-                        });
+                    });
                 }
             }
 
@@ -175,7 +175,7 @@ namespace Kaixo::Gui {
     ParamValue Knob::value() const { return m_Value; }
 
     ParamValue Knob::transformedValue() const { 
-        if (isLinkedToParam()) return context.controller<Controller>().parameter(settings.param).transformedValue();
+        if (useParamInfo()) return context.controller<Controller>().parameter(settings.param).transformedValue();
         return settings.transform.transform(value());
     }
 
@@ -204,7 +204,7 @@ namespace Kaixo::Gui {
             v = normalToIndex(v, steps()) / (steps() - 1.);
         }
 
-        if (isLinkedToParam()) {
+        if (useParamInfo()) {
             settings.graphics.draw({
                 .graphics = g,
                 .bounds = localDimensions(),
@@ -226,6 +226,9 @@ namespace Kaixo::Gui {
                     { "$short-name", settings.name },
                     { "$value", valueString() }
                 },
+                .values = {
+                    { "$value", v }
+                },
                 .state = state(),
             });
         }
@@ -234,6 +237,7 @@ namespace Kaixo::Gui {
     // ------------------------------------------------
 
     bool Knob::isLinkedToParam() const { return settings.param != NoParam; }
+    bool Knob::useParamInfo() const { return isLinkedToParam() && settings.useParamInformation; }
 
     // ------------------------------------------------
 
@@ -273,17 +277,17 @@ namespace Kaixo::Gui {
     // ------------------------------------------------
 
     int Knob::steps() const {
-        if (isLinkedToParam()) return context.steps(settings.param);
+        if (useParamInfo()) return context.steps(settings.param);
         else return settings.steps;
     }
 
     std::string Knob::name() const {
-        if (isLinkedToParam()) return std::string(context.name(settings.param));
+        if (useParamInfo()) return std::string(context.name(settings.param));
         else return settings.name;
     }
 
     std::string Knob::valueString() const {
-        if (isLinkedToParam()) return context.toString(settings.param);
+        if (useParamInfo()) return context.toString(settings.param);
         else return settings.format.format(settings.transform.transform(value()));
     }
 

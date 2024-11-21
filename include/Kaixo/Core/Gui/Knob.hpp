@@ -54,6 +54,10 @@ namespace Kaixo::Gui {
 
             // When selected, it will use parameter format/transform etc.
             const ParamID param = NoParam;
+            bool useParamInformation = true; 
+            // ^ Use parameter formatting and name when available
+            //   When set to false, it will use the values defined 
+            //   here in the Settings struct.
 
             // ------------------------------------------------
 
@@ -112,6 +116,7 @@ namespace Kaixo::Gui {
         // ------------------------------------------------
 
         bool isLinkedToParam() const;
+        bool useParamInfo() const;
 
         // ------------------------------------------------
 
