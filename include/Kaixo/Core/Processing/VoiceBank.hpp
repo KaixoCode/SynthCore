@@ -188,9 +188,46 @@ namespace Kaixo::Processing {
 
         void process() override {
             updateLastNote();
+
+            const std::size_t nofSamplesToGenerate = outputBuffer().size();
+
             for (auto& voice : m_Voices) {
-                voice.output.prepare(outputBuffer().size());
-                voice.process();
+                voice.output.prepare(nofSamplesToGenerate);
+            }
+
+            if (m_UseThreading) {
+                std::future<void> futures[Count]{};
+                bool onMain[Count]{};
+                int nofVoicesOnMainThread = 0;
+
+                for (int i = 0; i < Count; i++) {
+                    const bool isActive = m_Voices[i].active();
+                    // If generating less than 52 samples, do work on main thread always
+                    if (nofSamplesToGenerate < 52) onMain[i] = true; 
+                    // Always do at least 1 voice on main thread
+                    else if (isActive && nofVoicesOnMainThread < 1) onMain[i] = true, nofVoicesOnMainThread++; 
+                    // If not active, process on main thread because it should not use too much CPU anyway
+                    else if (!isActive) onMain[i] = true; 
+                    // Otherwise send work to threadpool
+                    else futures[i] = m_ThreadPool.push([this, i] { m_Voices[i].process(); }); 
+                }
+
+                // Process main thread voices
+                for (int i = 0; i < Count; i++) {
+                    if (onMain[i]) {
+                        m_Voices[i].process();
+                    }
+                }
+                // Wait for worker threads
+                for (int i = 0; i < Count; i++) {
+                    if (!onMain[i]) {
+                        futures[i].wait();
+                    }
+                }
+            } else {
+                for (auto& voice : m_Voices) {
+                    voice.process();
+                }
             }
 
             for (auto& voice : m_Voices) {
@@ -239,6 +276,10 @@ namespace Kaixo::Processing {
 
         std::array<VoiceClass, Count> m_Voices{};
         
+        // ------------------------------------------------
+        
+        cxxpool::thread_pool m_ThreadPool{ Count };
+
         // ------------------------------------------------
 
         bool m_UseThreading = false;
