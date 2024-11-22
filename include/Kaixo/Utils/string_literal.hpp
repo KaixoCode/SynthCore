@@ -144,6 +144,14 @@ namespace Kaixo {
         };
         template<std::size_t I>
         constexpr auto operator<=>(const string_literal<I, CharType>& other) const { return view() <=> other.view(); }
+        
+        template<std::size_t I>
+        constexpr auto operator==(const CharType(&other)[I]) const {
+            if constexpr (I != N) return false;
+            else return view() == other;
+        };
+        template<std::size_t I>
+        constexpr auto operator<=>(const CharType(&other)[I]) const { return view() <=> other; }
 
         constexpr auto starts_with(view_type t) const { return view().starts_with(t); }
         constexpr auto ends_with(view_type t) const { return view().ends_with(t); }

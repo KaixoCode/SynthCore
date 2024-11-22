@@ -9,7 +9,7 @@ namespace Kaixo::Processing {
 
     // ------------------------------------------------
 
-    template<class Self>
+    template<class Self, string_literal Name = "$self", string_literal ...Names>
     class ParameterDatabase : public Module, public ParameterListener {
     public:
 
@@ -63,16 +63,16 @@ namespace Kaixo::Processing {
                     m_Parameters[i].add = r * (m_Parameters[i].goal - m_Parameters[i].value);
 
                     if (!changing(i)) {
-                        Kaixo::Processing::assignParameter(*this, i, m_Parameters[i].goal);
+                        Kaixo::Processing::assignParameter<Name, Names...>(*this, i, m_Parameters[i].goal);
                         m_Changing.unset(i);
                     }
                 });
             }
 
 #ifdef KAIXO_INTERNAL_MODULATION
-            Kaixo::Processing::assignSources(*this);
+            Kaixo::Processing::assignSources<Name, Names...>(*this);
 #endif
-            Kaixo::Processing::assignParameters(*this);
+            Kaixo::Processing::assignParameters<Name, Names...>(*this);
         }
 
         void prepare(double sampleRate, std::size_t maxBufferSize) override {
@@ -106,7 +106,7 @@ namespace Kaixo::Processing {
         // ------------------------------------------------
 
         void param(ParamID id, ParamValue val) override { 
-            Kaixo::Processing::assignParameter(*this, id, val);
+            Kaixo::Processing::assignParameter<Name, Names...>(*this, id, val);
         }
 
         // ------------------------------------------------

@@ -642,23 +642,29 @@ namespace Kaixo::Generator {
             add();
             add("// ------------------------------------------------", 1);
             add();
+            add("template<string_literal ...Names>", 1);
             add("constexpr void assignSources(auto& database) {", 1);
+            add("using Self = std::decay_t<decltype(database.self())>;", 2);
             for (auto& [id, source] : sources) {
                 std::string idstr = std::to_string(id);
                 std::string accessor = source->interface;
+                std::string name = accessor;
 
-                replace_str(accessor, "$self", "database.self()");
-                replace_str(accessor, "$value", "p.access");
+                if (!accessor.empty()) {
+                    name = name.substr(name.find_first_of("$"));
+                    name = name.substr(0, name.find_first_not_of("$abcdefghijklmnopqrstuvwxyz_0123456789"));
+
+                    replace_str(accessor, name, "database.self()");
+                }
 
                 if (!accessor.empty()) {
                     add("// Source: " + source->fullVarName, 2);
-                    add("{", 2);
+                    add("if constexpr (((Names == \"" + name + "\") || ...)) {", 2);
                     add("auto& s = database.source(" + idstr + ");", 3);
                     if (source->bidirectional == "true") {
                         add("s.normalized = " + accessor + ";", 3);
                         add("s.value = s.normalized * 2 - 1;", 3);
-                    }
-                    else {
+                    } else {
                         add("s.value = s.normalized = " + accessor + ";", 3);
                     }
                     add("}", 2);
@@ -668,13 +674,22 @@ namespace Kaixo::Generator {
             add();
             add("// ------------------------------------------------", 1);
             add();
+            add("template<string_literal ...Names>", 1);
             add("constexpr void assignParameters(auto& database) {", 1);
+            add("using Self = std::decay_t<decltype(database.self())>;", 2);
             for (auto& [id, param] : parameters) {
                 std::string idstr = std::to_string(id);
                 std::string accessor = param->interface;
+                std::string name = accessor;
 
-                replace_str(accessor, "$self", "database.self()");
-                replace_str(accessor, "$value", "p.access");
+                if (!accessor.empty()) {
+                    replace_str(accessor, "$value", "p.access");
+
+                    name = name.substr(name.find_first_of("$"));
+                    name = name.substr(0, name.find_first_not_of("$abcdefghijklmnopqrstuvwxyz_0123456789"));
+
+                    replace_str(accessor, name, "database.self()");
+                }
 
                 if (param->steps == "0" && param->smooth != "false") {
                     add("// Parameter: " + param->fullVarName, 2);
@@ -695,35 +710,50 @@ namespace Kaixo::Generator {
 
                         if (param->constrain == "true") {
                             add("p.access = Math::Fast::clamp1(value);", 3);
-                        }
-                        else {
+                        } else {
                             add("p.access = value;", 3);
                         }
-                    }
-                    else {
+                    } else {
                         add("p.access = p.value += p.add;", 3);
                     }
-                    if (!accessor.empty()) add(accessor + ";", 3);
+                    if (!accessor.empty()) {
+                        add("if constexpr (((Names == \"" + name + "\") || ...)) {", 3);
+                        add(accessor + ";", 4);
+                        add("}", 3);
+                    }
                     add("}", 2);
                 }
             }
             add("}", 1);
         }
         else if (interfaceType == "normal") {
+            add("template<string_literal ...Names>", 1);
             add("constexpr void assignParameters(auto& database) {", 1);
             for (auto& [id, param] : parameters) {
                 std::string idstr = std::to_string(id);
                 std::string accessor = param->interface;
+                std::string name = accessor;
 
-                replace_str(accessor, "$self", "database.self()");
-                replace_str(accessor, "$value", "p.access");
+                if (!accessor.empty()) {
+                    replace_str(accessor, "$value", "p.access");
+
+                    name = name.substr(name.find_first_of("$"));
+                    name = name.substr(0, name.find_first_not_of("$abcdefghijklmnopqrstuvwxyz_0123456789"));
+
+                    replace_str(accessor, name, "database.self()");
+                }
+
 
                 if (param->steps == "0" && param->smooth != "false") {
                     add("// Parameter: " + param->fullVarName, 2);
                     add("if (database.necessary(" + idstr + ")) {", 2);
                     add("auto& p = database.parameter(" + idstr + ");", 3);
                     add("p.access = p.value += p.add;", 3);
-                    if (!accessor.empty()) add(accessor + ";", 3);
+                    if (!accessor.empty()) {
+                        add("if constexpr (((Names == \"" + name + "\") || ...)) {", 3);
+                        add(accessor + ";", 4);
+                        add("}", 3);
+                    }
                     add("}", 2);
                 }
             }
@@ -732,14 +762,22 @@ namespace Kaixo::Generator {
         add();
         add("// ------------------------------------------------", 1);
         add();
+        add("template<string_literal ...Names>", 1);
         add("constexpr void assignParameter(auto& database, ParamID id, ParamValue val) {", 1);
         add("switch(id) {", 2);
         for (auto& [id, param] : parameters) {
             std::string idstr = std::to_string(id);
             std::string accessor = param->interface;
+            std::string name = accessor;
 
-            replace_str(accessor, "$self", "database.self()");
-            replace_str(accessor, "$value", "p.access");
+            if (!accessor.empty()) {
+                replace_str(accessor, "$value", "p.access");
+
+                name = name.substr(name.find_first_of("$"));
+                name = name.substr(0, name.find_first_not_of("$abcdefghijklmnopqrstuvwxyz_0123456789"));
+
+                replace_str(accessor, name, "database.self()");
+            }
 
             add("case " + idstr + ": { // Parameter: " + param->fullVarName, 2);
             if (param->steps == "0" && param->smooth != "false") {
@@ -754,14 +792,22 @@ namespace Kaixo::Generator {
                     add("} else {", 3);
                     add("p.access = p.value = p.goal = val;", 4);
                     add("p.add = 0;", 4);
-                    if (!accessor.empty()) add(accessor + ";", 4);
+                    if (!accessor.empty()) {
+                        add("if constexpr (((Names == \"" + name + "\") || ...)) {", 4);
+                        add(accessor + ";", 5);
+                        add("}", 4);
+                    }
                     add("}", 3);
                 }
             } else {
                 add("auto& p = database.parameter(" + idstr + ");", 3);
                 add("p.access = p.value = p.goal = val;", 3);
                 add("p.add = 0;", 3);
-                if (!accessor.empty()) add(accessor + ";", 3);
+                if (!accessor.empty()) {
+                    add("if constexpr (((Names == \"" + name + "\") || ...)) {", 3);
+                    add(accessor + ";", 4);
+                    add("}", 3);
+                }
             }
             add("}", 2);
             add("break;", 2);
