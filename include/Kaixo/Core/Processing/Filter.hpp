@@ -44,8 +44,7 @@ namespace Kaixo::Processing {
 
     // ------------------------------------------------
 
-    template<class Sample = double, 
-             class MathQuality = Math, 
+    template<class MathQuality = Math, 
              std::size_t Parallel = 1, 
              std::size_t MaxPasses = 4,
              FilterType ...FilterTypes>
@@ -54,23 +53,23 @@ namespace Kaixo::Processing {
         // ------------------------------------------------
 
         struct Coefficients {
-            std::array<double, 3> a;
-            std::array<double, 3> b;
+            std::array<float, 3> a{};
+            std::array<float, 3> b{};
 
-            double a1a0;
-            double a2a0;
-            double b0a0;
-            double b1a0;
-            double b2a0;
+            float a1a0{};
+            float a2a0{};
+            float b0a0{};
+            float b1a0{};
+            float b2a0{};
         };
 
         // ------------------------------------------------
 
         struct State {
             struct Pass {
-                alignas(64) std::array<std::array<Sample, Parallel>, 3> y;
-                alignas(64) std::array<std::array<Sample, Parallel>, 3> x;
-            } pass[MaxPasses];
+                alignas(64) std::array<std::array<float, Parallel>, 3> y{};
+                alignas(64) std::array<std::array<float, Parallel>, 3> x{};
+            } pass[MaxPasses]{};
         };
 
         // ------------------------------------------------
@@ -78,13 +77,13 @@ namespace Kaixo::Processing {
         constexpr bool quadruple() const { return m_Type == FilterType::LowPass4 || m_Type == FilterType::HighPass4; }
         constexpr std::size_t passes() const { return m_Passes; }
         constexpr FilterType type() const { return m_Type; }
-        constexpr void sampleRate(double sr) { set(sr, m_SampleRate); }
-        constexpr void gain(double gain) { set(gain, m_Gain); }
-        constexpr void frequency(double frequency) { set(frequency, m_Frequency); }
-        constexpr void resonance(double q) { set(q, m_Q); }
+        constexpr void sampleRate(float sr) { set(sr, m_SampleRate); }
+        constexpr void gain(float gain) { set(gain, m_Gain); }
+        constexpr void frequency(float frequency) { set(frequency, m_Frequency); }
+        constexpr void resonance(float q) { set(q, m_Q); }
         constexpr void passes(std::size_t p) { set(p, m_SetPasses); }
         constexpr void type(FilterType type) { set(type, m_Type); }
-        constexpr void type(double t) { 
+        constexpr void type(float t) {
             if constexpr (sizeof...(FilterTypes) == 0) {
                 type(eqParamTypeToFilterType(t));
             } else {
@@ -131,34 +130,24 @@ namespace Kaixo::Processing {
             auto& coeff = getCoefficients();
             auto& state = getState(index);
 
-            constexpr auto aat = [](auto ptr, auto i) constexpr -> decltype(auto) {
-                if constexpr (std::floating_point<Type>) return ptr[i];
-                else return Type::aligned(ptr + i);
-            };
-
-            constexpr auto store = [](auto ptr, auto value) constexpr -> decltype(auto) {
-                if constexpr (std::floating_point<Type>) return *ptr = value;
-                else return value.store(ptr);
-            };
-
             if constexpr (MaxPasses != 1) {
                 auto singlePass = [&](auto& pass, auto input) {
                     store(pass.x[m_0].data() + i, input);
                     store(pass.y[m_0].data() + i,
                           coeff.b0a0 * input
-                        + coeff.b1a0 * aat(pass.x[m_1].data(), i)
-                        + coeff.b2a0 * aat(pass.x[m_2].data(), i)
-                        - coeff.a1a0 * aat(pass.y[m_1].data(), i)
-                        - coeff.a2a0 * aat(pass.y[m_2].data(), i));
+                        + coeff.b1a0 * load<Type>(pass.x[m_1].data(), i)
+                        + coeff.b2a0 * load<Type>(pass.x[m_2].data(), i)
+                        - coeff.a1a0 * load<Type>(pass.y[m_1].data(), i)
+                        - coeff.a2a0 * load<Type>(pass.y[m_2].data(), i));
                 };
 
                 singlePass(state.pass[0], in);
 
                 for (std::size_t j = 1; j < passes(); ++j) {
-                    singlePass(state.pass[j], aat(state.pass[j - 1].y[m_0].data(), i));
+                    singlePass(state.pass[j], load<Type>(state.pass[j - 1].y[m_0].data(), i));
                 }
 
-                return aat(state.pass[passes() - 1].y[m_0].data(), i);
+                return load<Type>(state.pass[passes() - 1].y[m_0].data(), i);
             }
             else {
                 auto& pass = state.pass[0];
@@ -167,10 +156,10 @@ namespace Kaixo::Processing {
 
                 auto result =
                     coeff.b0a0 * in
-                    + coeff.b1a0 * aat(pass.x[m_1].data(), i)
-                    + coeff.b2a0 * aat(pass.x[m_2].data(), i)
-                    - coeff.a1a0 * aat(pass.y[m_1].data(), i)
-                    - coeff.a2a0 * aat(pass.y[m_2].data(), i);
+                    + coeff.b1a0 * load<Type>(pass.x[m_1].data(), i)
+                    + coeff.b2a0 * load<Type>(pass.x[m_2].data(), i)
+                    - coeff.a1a0 * load<Type>(pass.y[m_1].data(), i)
+                    - coeff.a2a0 * load<Type>(pass.y[m_2].data(), i);
 
                 store(pass.y[m_0].data() + i, result);
 
@@ -188,10 +177,10 @@ namespace Kaixo::Processing {
         // ------------------------------------------------
 
     protected:
-        double m_SampleRate = 48000;
-        double m_Frequency = 22000;
-        double m_Gain = 0;
-        double m_Q = 0;
+        float m_SampleRate = 48000;
+        float m_Frequency = 22000;
+        float m_Gain = 0;
+        float m_Q = 0;
         FilterType m_Type = FilterType::LowPass;
         bool dirty = true;
         Coefficients m_Coefficients;
@@ -205,8 +194,8 @@ namespace Kaixo::Processing {
         // ------------------------------------------------
 
         constexpr void set(auto v, auto& me) { if (v != me) { me = v; dirty = true; } }
-        constexpr double normalizedFrequency() const { return MathQuality::clamp(m_Frequency / m_SampleRate, 0., 0.5); }
-        constexpr double normalizedQ() const { 
+        constexpr float normalizedFrequency() const { return MathQuality::clamp(m_Frequency / m_SampleRate, 0., 0.5); }
+        constexpr float normalizedQ() const {
             using enum FilterType;
             switch (m_Type) {
             case LowPass4:
@@ -232,24 +221,24 @@ namespace Kaixo::Processing {
 
         constexpr void recalculate() {
             dirty = false;
-            constexpr double log10_2 = std::numbers::ln2 / std::numbers::ln10;
+            constexpr float log10_2 = std::numbers::ln2 / std::numbers::ln10;
             using enum FilterType;
-            const double frequency = normalizedFrequency();
-            const double omega = 2 * std::numbers::pi * frequency;
-            const double cosOmega = MathQuality::ncos(frequency);
-            const double sinOmega = MathQuality::nsin(frequency);
-            const double Q = normalizedQ();
-            const double gain = m_Gain;
+            const float frequency = normalizedFrequency();
+            const float omega = 2 * std::numbers::pi * frequency;
+            const float cosOmega = MathQuality::ncos(frequency);
+            const float sinOmega = MathQuality::nsin(frequency);
+            const float Q = normalizedQ();
+            const float gain = m_Gain;
             auto& coeffs = m_Coefficients;
 
             if (quadruple()) m_Passes = 4;
             else m_Passes = m_SetPasses;
 
-            const auto defaultA = [&](double alpha) {
+            const auto defaultA = [&](float alpha) {
                 coeffs.a = {
-                    1.0 + alpha,
-                   -2.0 * cosOmega,
-                    1.0 - alpha
+                    1.0f + alpha,
+                   -2.0f * cosOmega,
+                    1.0f - alpha
                 };
             };
 
@@ -261,11 +250,11 @@ namespace Kaixo::Processing {
 
             case LowPass:
             case LowPass4: {
-                defaultA(sinOmega / (2.0 * (Q * 6 + 0.4)));
+                defaultA(sinOmega / (2.0f * (Q * 6 + 0.4f)));
                 coeffs.b = {
-                    (1.0 - cosOmega) / 2.0,
-                    (1.0 - cosOmega),
-                    (1.0 - cosOmega) / 2.0
+                    (1.0f - cosOmega) / 2.0f,
+                    (1.0f - cosOmega),
+                    (1.0f - cosOmega) / 2.0f
                 };
             } break;
 
@@ -273,103 +262,103 @@ namespace Kaixo::Processing {
 
             case HighPass:
             case HighPass4: {
-                defaultA(sinOmega / (2.0 * (Q * 6 + 0.4)));
+                defaultA(sinOmega / (2.0f * (Q * 6 + 0.4f)));
                 coeffs.b = {
-                    (1.0 + cosOmega) / 2.0,
-                   -(1.0 + cosOmega),
-                    (1.0 + cosOmega) / 2.0
+                    (1.0f + cosOmega) / 2.0f,
+                   -(1.0f + cosOmega),
+                    (1.0f + cosOmega) / 2.0f
                 };
             } break;
 
                 // ------------------------------------------------
 
             case BandPass: {
-                defaultA(sinOmega * MathQuality::sinh((log10_2 / 2.0) * (1 / (Q * 4 + 0.2)) * (omega / sinOmega)));
+                defaultA(sinOmega * MathQuality::sinh((log10_2 / 2.0f) * (1 / (Q * 4 + 0.2f)) * (omega / sinOmega)));
                 coeffs.b = {
-                    sinOmega / 2.0,
-                    0.0,
-                   -sinOmega / 2.0
+                    sinOmega / 2.0f,
+                    0.0f,
+                   -sinOmega / 2.0f
                 };
             } break;
 
                 // ------------------------------------------------
 
             case Notch: {
-                defaultA(sinOmega * MathQuality::sinh((log10_2 / 2.0) * Q * (omega / sinOmega)));
+                defaultA(sinOmega * MathQuality::sinh((log10_2 / 2.0f) * Q * (omega / sinOmega)));
                 coeffs.b = {
-                    1.0,
-                   -2.0 * cosOmega,
-                    1.0
+                    1.0f,
+                   -2.0f * cosOmega,
+                    1.0f
                 };
             } break;
 
                 // ------------------------------------------------
 
             case AllPass: {
-                double alpha = sinOmega / (2.0 * (Q * 4 + 0.2));
+                float alpha = sinOmega / (2.0f * (Q * 4 + 0.2f));
                 defaultA(alpha);
                 coeffs.b = {
-                    1.0 - alpha,
-                   -2.0 * cosOmega,
-                    1.0 + alpha
+                    1.0f - alpha,
+                   -2.0f * cosOmega,
+                    1.0f + alpha
                 };
             } break;
 
                 // ------------------------------------------------
 
             case PeakingEQ: {
-                double A = MathQuality::pow(10, gain / 40.0);
-                double alpha = sinOmega * MathQuality::sinh((log10_2 / 2.0) * (Q * 4 + 0.2) * (omega / sinOmega));
+                float A = MathQuality::pow(10, gain / 40.0f);
+                float alpha = sinOmega * MathQuality::sinh((log10_2 / 2.0f) * (Q * 4 + 0.2f) * (omega / sinOmega));
                 coeffs.a = {
-                    1.0 + alpha / A,
-                   -2.0 * cosOmega,
-                    1.0 - alpha / A
+                    1.0f + alpha / A,
+                   -2.0f * cosOmega,
+                    1.0f - alpha / A
                 };
 
                 coeffs.b = {
-                    1.0 + alpha * A,
-                   -2.0 * cosOmega,
-                    1.0 - alpha * A
+                    1.0f + alpha * A,
+                   -2.0f * cosOmega,
+                    1.0f - alpha * A
                 };
             } break;
 
                 // ------------------------------------------------
 
             case LowShelf: {
-                double A = MathQuality::pow(10, gain / 40.0);
-                double t = MathQuality::max((A + 1.0 / A) * (1.0 / (Q * 3 + 0.5) - 1.0) + 2, 0.0);
-                double alpha = (sinOmega / 2.0) * MathQuality::sqrt(t);
-                double sqrtAa = MathQuality::sqrt(A) * alpha;
+                float A = MathQuality::pow(10, gain / 40.0f);
+                float t = MathQuality::max((A + 1.0f / A) * (1.0f / (Q * 3 + 0.5f) - 1.0f) + 2, 0.0f);
+                float alpha = (sinOmega / 2.0f) * MathQuality::sqrt(t);
+                float sqrtAa = MathQuality::sqrt(A) * alpha;
                 coeffs.a = {
-                           (A + 1.0) + (A - 1.0) * cosOmega + 2.0 * sqrtAa,
-                   -2.0 * ((A - 1.0) + (A + 1.0) * cosOmega),
-                           (A + 1.0) + (A - 1.0) * cosOmega - 2.0 * sqrtAa,
+                            (A + 1.0f) + (A - 1.0f) * cosOmega + 2.0f * sqrtAa,
+                   -2.0f * ((A - 1.0f) + (A + 1.0f) * cosOmega),
+                            (A + 1.0f) + (A - 1.0f) * cosOmega - 2.0f * sqrtAa,
                 };
 
                 coeffs.b = {
-                          A * ((A + 1.0) - (A - 1.0) * cosOmega + 2.0 * sqrtAa),
-                    2.0 * A * ((A - 1.0) - (A + 1.0) * cosOmega),
-                          A * ((A + 1.0) - (A - 1.0) * cosOmega - 2.0 * sqrtAa),
+                           A * ((A + 1.0f) - (A - 1.0f) * cosOmega + 2.0f * sqrtAa),
+                    2.0f * A * ((A - 1.0f) - (A + 1.0f) * cosOmega),
+                           A * ((A + 1.0f) - (A - 1.0f) * cosOmega - 2.0f * sqrtAa),
                 };
             } break;
 
                 // ------------------------------------------------
 
             case HighShelf: {
-                double A = MathQuality::pow(10, gain / 40.0);
-                double t = MathQuality::max((A + 1.0 / A) * (1.0 / (Q * 3 + 0.5) - 1.0) + 2, 0.0);
-                double alpha = (sinOmega / 2.0) * MathQuality::sqrt(t);
-                double sqrtAa = MathQuality::sqrt(A) * alpha;
+                float A = MathQuality::pow(10, gain / 40.0f);
+                float t = MathQuality::max((A + 1.0f / A) * (1.0f / (Q * 3 + 0.5f) - 1.0f) + 2, 0.0f);
+                float alpha = (sinOmega / 2.0f) * MathQuality::sqrt(t);
+                float sqrtAa = MathQuality::sqrt(A) * alpha;
                 coeffs.a = {
-                           (A + 1.0) - (A - 1.0) * cosOmega + 2.0 * sqrtAa,
-                    2.0 * ((A - 1.0) - (A + 1.0) * cosOmega),
-                           (A + 1.0) - (A - 1.0) * cosOmega - 2.0 * sqrtAa,
+                            (A + 1.0f) - (A - 1.0f) * cosOmega + 2.0f * sqrtAa,
+                    2.0f * ((A - 1.0f) - (A + 1.0f) * cosOmega),
+                            (A + 1.0f) - (A - 1.0f) * cosOmega - 2.0f * sqrtAa,
                 };
 
                 coeffs.b = {
-                          A * ((A + 1.0) + (A - 1.0) * cosOmega + 2.0 * sqrtAa),
-                   -2.0 * A * ((A - 1.0) + (A + 1.0) * cosOmega),
-                          A * ((A + 1.0) + (A - 1.0) * cosOmega - 2.0 * sqrtAa),
+                           A * ((A + 1.0f) + (A - 1.0f) * cosOmega + 2.0f * sqrtAa),
+                   -2.0f * A * ((A - 1.0f) + (A + 1.0f) * cosOmega),
+                           A * ((A + 1.0f) + (A - 1.0f) * cosOmega - 2.0f * sqrtAa),
                 };
             } break;
             }
@@ -673,8 +662,8 @@ namespace Kaixo::Processing {
 
     // ------------------------------------------------
 
-    template<std::size_t N, class Sample = double, class MathQuality = Math, bool Quadruple = true>
-    class StereoEqualizer : public std::array<Biquad<Sample, MathQuality, 1, Quadruple>, N>, public Module {
+    template<std::size_t N, class MathQuality = Math, std::size_t MaxPasses = 4, FilterType ...FilterTypes>
+    class StereoEqualizer : public std::array<Biquad<MathQuality, 1, MaxPasses, FilterTypes...>, N>, public Module {
     public:
 
         // ------------------------------------------------
@@ -710,8 +699,8 @@ namespace Kaixo::Processing {
 
     // ------------------------------------------------
 
-    template<std::size_t N, class Sample = double, class MathQuality = Math, std::size_t Parallel = 1, bool Quadruple = true>
-    class BatchEqualizer : public std::array<Biquad<Sample, MathQuality, Parallel, Quadruple>, N>, public Module {
+    template<std::size_t N, class MathQuality = Math, std::size_t Parallel = 1, std::size_t MaxPasses = 4, FilterType ...FilterTypes>
+    class BatchEqualizer : public std::array<Biquad<MathQuality, Parallel, MaxPasses, FilterTypes...>, N>, public Module {
     public:
 
         // ------------------------------------------------
@@ -743,8 +732,8 @@ namespace Kaixo::Processing {
     };
 
     // Simple specialization for 0 filters, does nothing
-    template<class Sample, class MathQuality, std::size_t Parallel, bool Quadruple>
-    class BatchEqualizer<0, Sample, MathQuality, Parallel, Quadruple> {
+    template<class MathQuality, std::size_t Parallel, std::size_t MaxPasses, FilterType ...FilterTypes>
+    class BatchEqualizer<0, MathQuality, Parallel, MaxPasses, FilterTypes...> {
     public:
         template<class Type>
         constexpr Type processBatch(Type value, std::size_t, std::size_t = 0) const noexcept { return value; }

@@ -201,6 +201,10 @@ namespace Kaixo {
         KAIXO_STEREO(cosh)
 
         // ------------------------------------------------
+            
+        KAIXO_MONO mod(is_mono auto a, is_mono auto b) noexcept { return a % b; }
+        KAIXO_POLY mod(is_poly auto a, is_mono auto b) noexcept { return a - (a / b) * b; }
+        KAIXO_POLY mod(is_poly auto a, is_poly auto b) noexcept { return a - (a / b) * b; }
 
         KAIXO_MONO fmod(is_mono auto a, is_mono auto b) noexcept { return std::fmod(a, b); }
         KAIXO_POLY fmod(is_poly auto a, is_mono auto b) noexcept { return a - trunc(a / b) * b; }
@@ -553,6 +557,10 @@ namespace Kaixo {
             KAIXO_STEREO(cosh)
 
             // ------------------------------------------------
+
+            KAIXO_MONO mod(is_mono auto a, is_mono auto b) noexcept { return a % b; }
+            KAIXO_POLY mod(is_poly auto a, is_mono auto b) noexcept { return a - (a / b) * b; }
+            KAIXO_POLY mod(is_poly auto a, is_poly auto b) noexcept { return a - (a / b) * b; }
 
             KAIXO_MONO fmod(is_mono auto a, is_mono auto b) noexcept { return a - trunc(a / b) * b; }
             KAIXO_POLY fmod(is_poly auto a, is_mono auto b) noexcept { return a - trunc(a / b) * b; }

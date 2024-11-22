@@ -4,7 +4,7 @@ namespace Kaixo::Processing {
 
     // ------------------------------------------------
     
-    using Sample = double;
+    using Sample = float;
 
     // ------------------------------------------------
 
