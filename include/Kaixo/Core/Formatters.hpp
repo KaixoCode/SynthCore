@@ -105,6 +105,14 @@ namespace Kaixo {
             [](std::string_view str) -> ParamValue { return DefaultImpl.parse(str); },
         };
 
+        template<std::int64_t Dec, string_literal Unit = "">
+        constexpr FormatterDefinition<0> DecimalsImpl{ .decimals = Dec, .unit = Unit.view() };
+        template<std::int64_t Dec, string_literal Unit = "">
+        constexpr Formatter Decimals{
+            [](ParamValue value) -> std::string { return DecimalsImpl<Dec, Unit>.format(value); },
+            [](std::string_view str) -> ParamValue { return DecimalsImpl<Dec, Unit>.parse(str); },
+        };
+
         constexpr FormatterDefinition<0> IntegerImpl{ .decimals = 0, .unit = "" };
         constexpr Formatter Integer{
             [](ParamValue value) -> std::string { return IntegerImpl.format(value); },
