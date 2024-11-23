@@ -26,7 +26,7 @@ namespace Kaixo::Gui {
 
     void Button::parameterChanged(ParamID id, ParamValue value) {
         if (settings.param == id) {
-            callback(value > 0.5);
+            callback(value > 0.5, false);
             repaint();
         }
     }
@@ -85,7 +85,7 @@ namespace Kaixo::Gui {
 
     // ------------------------------------------------
 
-    void Button::callback(bool value) {
+    void Button::callback(bool value, bool withEdit) {
         if (m_Value == value) return; // Prevents recursion with parameterChanged
         m_Value = value;
 
@@ -97,7 +97,7 @@ namespace Kaixo::Gui {
 
         if (behaviour() == Toggle) selected(value);
 
-        if (linkedToParam()) {
+        if (linkedToParam() && withEdit) {
             context.beginEdit(settings.param);
             context.performEdit(settings.param, value);
             context.endEdit(settings.param);

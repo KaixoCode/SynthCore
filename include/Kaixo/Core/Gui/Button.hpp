@@ -80,7 +80,7 @@ namespace Kaixo::Gui {
 
         // ------------------------------------------------
 
-        void callback(bool value);
+        void callback(bool value, bool withEdit = true);
 
         // ------------------------------------------------
         
