@@ -238,6 +238,40 @@ namespace Kaixo {
 
         template<auto y0, auto y1> KAIXO_MONO log_to_magnitude(is_mono auto x) { return -log(x / y0) / log(y0 / y1); }
         template<auto y0, auto y1> KAIXO_POLY log_to_magnitude(is_poly auto x) { return -log(x / y0) / log(y0 / y1); }
+        
+        template<auto N>
+        KAIXO_MONO discrete_xsquared(is_mono auto x) {
+            const auto nx = N * x;
+            const auto floornx = trunc(nx);
+            return ((2 * nx - floornx - 1) * floornx + nx) / (N * N);
+        }
+            
+        template<auto N>
+        KAIXO_POLY discrete_xsquared(is_poly auto x) {
+            const auto nx = N * x;
+            const auto floornx = trunc(nx);
+            return ((2 * nx - floornx - 1) * floornx + nx) / (N * N);
+        }
+            
+        KAIXO_MONO discrete_xsquared(is_mono auto x, is_mono auto n) {
+            const auto nx = n * x;
+            const auto floornx = trunc(nx);
+            return ((2 * nx - floornx - 1) * floornx + nx) / (n * n);
+        }
+
+        KAIXO_POLY discrete_xsquared(is_poly auto x, is_mono auto n) {
+            const auto nx = n * x;
+            const auto floornx = trunc(nx);
+            return ((2 * nx - floornx - 1) * floornx + nx) / (n * n);
+        }
+
+        KAIXO_POLY discrete_xsquared(is_poly auto x, is_poly auto n) {
+            const auto nx = n * x;
+            const auto floornx = trunc(nx);
+            return ((2 * nx - floornx - 1) * floornx + nx) / (n * n);
+        }
+
+        KAIXO_STEREO(discrete_xsquared)
 
         // ------------------------------------------------
 
@@ -594,6 +628,40 @@ namespace Kaixo {
 
             template<auto y0, auto y1> KAIXO_MONO log_to_magnitude(is_mono auto x) { return -log(x / y0) / log(y0 / y1); }
             template<auto y0, auto y1> KAIXO_POLY log_to_magnitude(is_poly auto x) { return -log(x / y0) / log(y0 / y1); }
+
+            template<auto N>
+            KAIXO_MONO discrete_xsquared(is_mono auto x) {
+                const auto nx = N * x;
+                const auto floornx = trunc(nx);
+                return ((2 * nx - floornx - 1) * floornx + nx) / (N * N);
+            }
+            
+            template<auto N>
+            KAIXO_POLY discrete_xsquared(is_poly auto x) {
+                const auto nx = N * x;
+                const auto floornx = trunc(nx);
+                return ((2 * nx - floornx - 1) * floornx + nx) / (N * N);
+            }
+            
+            KAIXO_MONO discrete_xsquared(is_mono auto x, is_mono auto n) {
+                const auto nx = n * x;
+                const auto floornx = trunc(nx);
+                return ((2 * nx - floornx - 1) * floornx + nx) / (n * n);
+            }
+            
+            KAIXO_POLY discrete_xsquared(is_poly auto x, is_mono auto n) {
+                const auto nx = n * x;
+                const auto floornx = trunc(nx);
+                return ((2 * nx - floornx - 1) * floornx + nx) / (n * n);
+            }
+            
+            KAIXO_POLY discrete_xsquared(is_poly auto x, is_poly auto n) {
+                const auto nx = n * x;
+                const auto floornx = trunc(nx);
+                return ((2 * nx - floornx - 1) * floornx + nx) / (n * n);
+            }
+
+            KAIXO_STEREO(discrete_xsquared)
 
             // ------------------------------------------------
 
