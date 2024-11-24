@@ -473,7 +473,7 @@ namespace Kaixo::Gui {
             float distance1 = std::sqrt((position1.x() - point.x()) * (position1.x() - point.x())
                 + (position1.y() - point.y()) * (position1.y() - point.y()));
 
-            if (distance1 < closestDistance && distance1 < 20) {
+            if (distance1 < closestDistance && distance1 < settings.hoverWithin) {
                 closestDistance = distance1;
                 closestNext = part;
                 isClosestCurve = false;
@@ -485,7 +485,7 @@ namespace Kaixo::Gui {
             float distance2 = std::sqrt((position2.x() - point.x()) * (position2.x() - point.x())
                 + (position2.y() - point.y()) * (position2.y() - point.y()));
 
-            if (distance2 < closestDistance && distance2 < 20) {
+            if (distance2 < closestDistance && distance2 < settings.hoverWithin) {
                 closestDistance = distance2;
                 closestNext = part;
                 isClosestCurve = true;

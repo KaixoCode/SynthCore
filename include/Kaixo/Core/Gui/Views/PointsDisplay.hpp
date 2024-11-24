@@ -89,6 +89,7 @@ namespace Kaixo::Gui {
             Theme::Drawable curvePoint{};
 
             float size = 20;     // Size of the points
+            float hoverWithin = size / 2; // Hover radius of a point
             float maxCurve = 10; // Maximum curve value of line between points
 
             bool enableAddPoints = true;
