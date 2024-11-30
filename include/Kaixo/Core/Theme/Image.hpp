@@ -77,7 +77,7 @@ namespace Kaixo::Theme {
         const TiledDescription* tiled    = nullptr;
         Rect<int>               clip     = { 0, 0, 0, 0 };
         Align                   align    = Align::TopLeft;
-        Point<float>            position = { 0, 0 };
+        Rect<float>             position = { 0, 0, 0, 0 };
         Rect<float>             bounds   = { 0, 0, 0, 0 };
 
         bool                    fillAlphaWithColor = false;

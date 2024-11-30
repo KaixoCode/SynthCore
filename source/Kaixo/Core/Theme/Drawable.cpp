@@ -32,9 +32,9 @@ namespace Kaixo::Theme {
 
         image.interpret(json, [&](auto& image, const basic_json& json, View::State state) {
             bool containsImage = json.contains("image", basic_json::Object);
-            if (json.try_get(str) || 
+            if (json.try_get(str) ||
                 json.try_get("image", str) ||
-                containsImage && json["image"].try_get("source", str)) 
+                containsImage && json["image"].try_get("source", str))
             {
                 image = self->registerImage(str);
                 return true;
@@ -63,7 +63,7 @@ namespace Kaixo::Theme {
 
             return false;
         }, state);
-        
+
         // ------------------------------------------------
 
         tiled.interpret(json, [&](auto& tiled, const basic_json& json, View::State state) {
@@ -81,83 +81,95 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
-        positionOffset.interpret(json, [&](auto& position, const basic_json& json, View::State state) {
-            bool containsImage = json.contains("image", basic_json::Object);
-            if (json.try_get("image-position", arr4) || 
-                containsImage && json["image"].try_get("position", arr4)) 
-            {
-                position = Point{ arr4[0], arr4[1] };
-                return true;
-            }
-            if (json.try_get("image-position", arr2) || 
-                containsImage && json["image"].try_get("position", arr2)) 
-            {
-                position = Point{ arr2[0], arr2[1] };
-                return true;
-            }
-
+        bool success = false;
+        const auto parseArr24F2 = [&](auto& val, const basic_json& json, View::State state) {
+            if (json.try_get(arr4)) return success = true, val = Point{ arr4[0], arr4[1] }, true;
+            if (json.try_get(arr2)) return success = true, val = Point{ arr2[0], arr2[1] }, true;
             return false;
-        }, state);
+        };
+
+        const auto parseArr2 = [&](auto& val, const basic_json& json, View::State state) {
+            if (json.try_get(arr2)) return success = true, val = Point{ arr2[0], arr2[1] }, true;
+            return false;
+        };
+
+        const auto parseArr4 = [&](auto& val, const basic_json& json, View::State state) {
+            if (json.try_get(arr4)) return success = true, val = Rect{ arr4[0], arr4[1], arr4[2], arr4[3] }, true;
+            return false;
+        };
+
+        const auto parseArr4F2 = [&](auto& val, const basic_json& json, View::State state) {
+            if (json.try_get(arr4)) return success = true, val = Point{ arr4[0], arr4[1] }, true;
+            return false;
+        };
+
+        const auto parseArr4B2 = [&](auto& val, const basic_json& json, View::State state) {
+            if (json.try_get(arr4)) return success = true, val = Point{ arr4[2], arr4[3] }, true;
+            return false;
+        };
         
-        positionSize.interpret(json, [&](auto& position, const basic_json& json, View::State state) {
-            bool containsImage = json.contains("image", basic_json::Object);
-            if (json.try_get("image-position", arr4) || 
-                containsImage && json["image"].try_get("position", arr4)) 
-            {
-                position = Point{ arr4[2], arr4[3] };
-                return true;
-            }
-
+        const auto parseAlign = [&](auto& align, const basic_json& json, View::State state) {
+            if (json.try_get(str)) return success = true, align = alignFromString(str), true;
             return false;
-        }, state);
+        };
 
         // ------------------------------------------------
 
-        offset.interpret(json, [&](auto& offset, const basic_json& json, View::State state) {
-            bool containsImage = json.contains("image", basic_json::Object);
-            if (json.try_get("image-clip", arr4) ||
-                containsImage && json["image"].try_get("clip", arr4)) 
-            {
-                offset = Point{ arr4[0], arr4[1] };
-                return true;
-            } else if (json.try_get("image-offset", arr2) ||
-                containsImage && json["image"].try_get("offset", arr2))
-            {
-                offset = Point{ arr2[0], arr2[1] };
-                return true;
+        if (json.contains("image", basic_json::Object)) {
+            auto& image = json["image"];
+
+            if (image.contains("position")) {
+                positionOffset.interpret(image["position"], parseArr24F2, state);
+                success = false;
+                positionSize.interpret(image["position"], parseArr4B2, state);
+                if (success) hasPositionSize = true;
             }
-            return false;
-        }, state);
+
+            if (image.contains("clip")) {
+                offset.interpret(image["clip"], parseArr4F2, state);
+                size.interpret(image["clip"], parseArr4B2, state);
+                hasSize = true;
+            }
+
+            if (image.contains("offset")) {
+                offset.interpret(image["offset"], parseArr2, state);
+            }
+
+            if (image.contains("size")) {
+                size.interpret(image["size"], parseArr2, state);
+                hasSize = true;
+            }
+
+            if (image.contains("align")) {
+                align.interpret(image["align"], parseAlign, state);
+            }
+        }
+
+        if (json.contains("image-position")) {
+            positionOffset.interpret(json["image-position"], parseArr24F2, state);
+            success = false;
+            positionSize.interpret(json["image-position"], parseArr4B2, state);
+            if (success) hasPositionSize = true;
+        }
+
+        if (json.contains("image-clip")) {
+            offset.interpret(json["image-clip"], parseArr4F2, state);
+            size.interpret(json["image-clip"], parseArr4B2, state);
+            hasSize = true;
+        }
+
+        if (json.contains("image-offset")) {
+            offset.interpret(json["image-offset"], parseArr2, state);
+        }
+
+        if (json.contains("image-size")) {
+            size.interpret(json["image-size"], parseArr2, state);
+            hasSize = true;
+        }
         
-        size.interpret(json, [&](auto& size, const basic_json& json, View::State state) {
-            bool containsImage = json.contains("image", basic_json::Object);
-            if (json.try_get("image-clip", arr4) ||
-                containsImage && json["image"].try_get("clip", arr4)) 
-            {
-                size = Point{ arr4[2], arr4[3] };
-                return true;
-            } else if (json.try_get("image-size", arr2) ||
-                containsImage && json["image"].try_get("size", arr2))
-            {
-                size = Point{ arr2[0], arr2[1] };
-                return true;
-            }
-            return false;
-        }, state);
-
-        // ------------------------------------------------
-
-        align.interpret(json, [&](Align& align, const basic_json& json, View::State state) {
-            bool containsImage = json.contains("image", basic_json::Object);
-            if (json.try_get("image-align", str) ||
-                containsImage && json["image"].try_get("align", str))
-            {
-                align = alignFromString(str);
-                return true;
-            }
-
-            return false;
-        }, state);
+        if (json.contains("image-align")) {
+            align.interpret(json["image-align"], parseAlign, state);
+        }
 
         // ------------------------------------------------
 
@@ -166,11 +178,13 @@ namespace Kaixo::Theme {
     // ------------------------------------------------
 
     void DrawableElement::ImagePart::reset() {
+        hasSize = false;
+        hasPositionSize = false;
         image = { NoImage };
         offset = { { 0, 0 } };
-        size = {};
+        size = { { 0, 0 } };
         positionOffset = { { 0, 0 } };
-        positionSize = {};
+        positionSize = { { 0, 0 } };
         align = { Align::TopLeft };
         multiframe = {};
         tiled = {};
@@ -186,15 +200,30 @@ namespace Kaixo::Theme {
     void DrawableElement::ImageDrawable::draw(const Drawable::Instruction& instr, Theme& self, ImagePart& part) {
 
         // ------------------------------------------------
+
+        if (state != instr.state) {
+            state = instr.state;
+            positionOffsetValue = part.positionOffset[instr.state];
+            positionSizeValue = part.positionSize[instr.state];
+            offsetValue = part.offset[instr.state];
+            sizeValue = part.size[instr.state];
+        }
+
+        changingCache = positionOffsetValue.changing()
+                     || positionSizeValue.changing()
+                     || sizeValue.changing()
+                     || offsetValue.changing();
+
+        // ------------------------------------------------
         
         auto& image = part.image[instr.state];
         auto& align = part.align[instr.state];
-        auto& positionOffset = part.positionOffset[instr.state];
-        auto& positionSize = part.positionSize[instr.state];
+        auto posOffset = positionOffsetValue.get();
+        auto posSize = positionSizeValue.get();
         auto& multiframe = part.multiframe[instr.state];
         auto& tiled = part.tiled[instr.state];
-        auto& offset = part.offset[instr.state];
-        auto& size = part.size[instr.state];
+        auto offset = offsetValue.get();
+        auto size = sizeValue.get();
 
         // ------------------------------------------------
 
@@ -208,7 +237,7 @@ namespace Kaixo::Theme {
 
                 int _width = img->getWidth() / multiframe->framesPerRow;
                 int _height = img->getHeight() / Math::ceil(multiframe->numFrames / static_cast<float>(multiframe->framesPerRow));
-                auto _size = size ? *size : Point{ _width, _height };
+                auto _size = part.hasSize ? size : Point{ _width, _height };
                 auto _clip = Rect{ offset.x(), offset.y(), _size.x(), _size.y() };
 
                 // ------------------------------------------------
@@ -227,10 +256,10 @@ namespace Kaixo::Theme {
                     .align = align,
                     .frame = _index,
                     .position = { 
-                        positionOffset.x(),
-                        positionOffset.y(),
-                        positionSize.has_value() ? positionSize->x() : _clip.width(),
-                        positionSize.has_value() ? positionSize->y() : _clip.height(),
+                        posOffset.x(),
+                        posOffset.y(),
+                        part.hasPositionSize ? posSize.x() : _clip.width(),
+                        part.hasPositionSize ? posSize.y() : _clip.height(),
                     },
                     .bounds = instr.bounds
                 });
@@ -243,7 +272,7 @@ namespace Kaixo::Theme {
 
                 int _width = img->getWidth();
                 int _height = img->getHeight();
-                auto _size = size ? *size : Point{ _width, _height };
+                auto _size = part.hasSize ? size : Point{ _width, _height };
                 auto _clip = Rect{ offset.x(), offset.y(), _size.x(), _size.y() };
 
                 // ------------------------------------------------
@@ -261,7 +290,12 @@ namespace Kaixo::Theme {
                         .tiled = nullptr,
                         .clip = _clip,
                         .align = align,
-                        .position = positionOffset,
+                        .position = {
+                            posOffset.x(),
+                            posOffset.y(),
+                            part.hasPositionSize ? posSize.x() : _clip.width(),
+                            part.hasPositionSize ? posSize.y() : _clip.height(),
+                        },
                         .bounds = instr.bounds,
                     });
                 }
@@ -274,7 +308,9 @@ namespace Kaixo::Theme {
 
     // ------------------------------------------------
 
-    bool DrawableElement::ImageDrawable::changing() const { return false; };
+    bool DrawableElement::ImageDrawable::changing() const { 
+        return changingCache;
+    }
 
     // ------------------------------------------------
 

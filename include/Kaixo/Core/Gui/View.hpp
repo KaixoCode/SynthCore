@@ -43,6 +43,7 @@ namespace Kaixo::Gui {
         // ------------------------------------------------
 
         enum State {
+            NoState = -1, // Invalid state
             Default = 0,
             Selected = 1 << 0,
             Hovering = 1 << 1,

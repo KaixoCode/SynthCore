@@ -118,10 +118,12 @@ namespace Kaixo::Theme {
             using Element::Element;
 
             StateLinked<ImageID> image{};
-            StateLinked<Point<int>> offset{};
-            StateLinked<std::optional<Point<int>>> size{};
-            StateLinked<Point<int>> positionOffset{};
-            StateLinked<std::optional<Point<int>>> positionSize{};
+            StateLinked<Animated<Point<int>>> offset{};
+            StateLinked<Animated<Point<int>>> size{};
+            bool hasSize = false;
+            StateLinked<Animated<Point<int>>> positionOffset{};
+            StateLinked<Animated<Point<int>>> positionSize{};
+            bool hasPositionSize = false;
             StateLinked<Align> align{};
             StateLinked<std::optional<MultiFrameDescription>> multiframe{};
             StateLinked<std::optional<TiledDescription>> tiled{};
@@ -131,6 +133,14 @@ namespace Kaixo::Theme {
         };
 
         struct ImageDrawable : Animation {
+            
+            View::State state = View::State::NoState;
+            Animated<Point<int>> offsetValue{};
+            Animated<Point<int>> sizeValue{};
+            Animated<Point<int>> positionOffsetValue{};
+            Animated<Point<int>> positionSizeValue{};
+            bool changingCache = false;
+
             void link(ImagePart& part);
             void draw(const Drawable::Instruction& instr, Theme& self, ImagePart& part);
             bool changing() const override;

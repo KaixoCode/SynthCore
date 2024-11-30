@@ -28,7 +28,10 @@ namespace Kaixo::Theme {
             m_Current = get();
             m_Goal = a.value;
             m_TransitionTime = a.transition;
-            m_PointOfChange = std::chrono::steady_clock::now();
+            if (m_IsInitialized) {
+                m_PointOfChange = std::chrono::steady_clock::now();
+            }
+            m_IsInitialized = true;
             return *this;
         }
 
@@ -53,12 +56,17 @@ namespace Kaixo::Theme {
         bool changing() const override { return percent() != 1; }
 
         // ------------------------------------------------
+        
+        void uninitialize() { m_IsInitialized = false; }
+
+        // ------------------------------------------------
 
     private:
         Ty m_Current{};
         Ty m_Goal{};
         double m_TransitionTime{}; // Millis
         std::chrono::steady_clock::time_point m_PointOfChange{}; // Time point when change happened
+        bool m_IsInitialized = false;
 
         // ------------------------------------------------
 

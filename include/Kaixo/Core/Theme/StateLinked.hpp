@@ -49,7 +49,11 @@ namespace Kaixo::Theme {
 
         void interpret(const basic_json& theme, auto interpret, View::State state = View::State::Default) {
             if (state == View::State::Default) {
-                interpret(base, theme, state);
+                if (theme.contains("value")) {
+                    interpret(base, theme["value"], state);
+                } else {
+                    interpret(base, theme, state);
+                }
 
                 theme.foreach([&](std::string_view key, const basic_json& theme) {
                     View::State state = View::State::Default;

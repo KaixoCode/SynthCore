@@ -103,7 +103,15 @@ namespace Kaixo::Theme {
     }
 
     void Image::draw(ClippedInstruction i) const {
-        auto _clipped = m_Image.getClippedImage(getClippedArea(i.clip, i.bounds));
+
+        auto _clip = Rect<int>{
+            i.clip.x(),
+            i.clip.y(),
+            Math::min(i.clip.width(), static_cast<int>(i.position.width())),
+            Math::min(i.clip.height(), static_cast<int>(i.position.height()))
+        };
+
+        auto _clipped = m_Image.getClippedImage(getClippedArea(_clip, i.bounds));
 
         if (i.tiled) {
             drawTiledImage(i.graphics, _clipped, i.bounds, *i.tiled, i.fillAlphaWithColor);
@@ -113,7 +121,7 @@ namespace Kaixo::Theme {
             i.graphics.reduceClipRegion(i.bounds.getSmallestIntegerContainer());
             // TODO: add proper placement using align and position
             // alignment should be relative to position, which itself is relative to bounds
-            i.graphics.drawImage(_clipped, i.bounds + i.position, getPlacement(i.align), i.fillAlphaWithColor);
+            i.graphics.drawImage(_clipped, i.bounds + i.position.position(), getPlacement(i.align), i.fillAlphaWithColor);
             i.graphics.restoreState();
         }
     }
