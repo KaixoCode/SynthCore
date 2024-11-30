@@ -1,4 +1,7 @@
 #pragma once
+
+// ------------------------------------------------
+
 #include "Kaixo/Core/Definitions.hpp"
 #include "Kaixo/Core/Gui/View.hpp"
 #include "Kaixo/Core/Theme/StateLinked.hpp"
@@ -7,6 +10,7 @@
 #include "Kaixo/Core/Theme/Image.hpp"
 #include "Kaixo/Core/Theme/FontMap.hpp"
 #include "Kaixo/Core/Theme/Color.hpp"
+#include "Kaixo/Core/Theme/ExpressionParser.hpp"
 
 // ------------------------------------------------
 
@@ -40,6 +44,14 @@ namespace Kaixo::Theme {
      *     align: top-left           // text alignment relative to position
      *     frames: 1                 // used for $frame variable
      *     overflow: visible         // Overflow [visible, dots]
+     *   }
+     * 
+     *   rect: {
+     *     position: [0, 0, 0, 0]   // position [x, y, w, h]
+     *     align: top-left          // relative position in drawable
+     *     fill: [0, 0, 0]          // fill color
+     *     stroke: [0, 0, 0]        // stroke color
+     *     stroke-weight: 1         // stroke weight
      *   }
      * 
      *   background-color: [0, 0, 0] // Background color
@@ -104,6 +116,32 @@ namespace Kaixo::Theme {
     };
 
     // ------------------------------------------------
+    
+    //struct RectangleElement : Element {
+    //    using Element::Element;
+
+    //    StateLinked<Animated<ExpressionParser::Function>> x;
+    //    StateLinked<Animated<ExpressionParser::Function>> y;
+    //    StateLinked<Animated<ExpressionParser::Function>> w;
+    //    StateLinked<Animated<ExpressionParser::Function>> h;
+
+    //    void reset();
+    //    void interpret(const basic_json& theme, View::State state = View::State::Default);
+    //};
+
+    //struct Rectangle : Animation {
+    //    Animated<int> x;
+    //    Animated<int> y;
+    //    Animated<int> w;
+    //    Animated<int> h;
+    //    bool changingCache = false;
+
+    //    void link(RectPart& part);
+    //    void draw(const Drawable::Instruction& instr, Theme& self, RectPart& part);
+    //    bool changing() const override;
+    //};
+
+    // ------------------------------------------------
 
     class DrawableElement : public Element {
     public:
@@ -111,6 +149,34 @@ namespace Kaixo::Theme {
         // ------------------------------------------------
 
         using Element::Element;
+
+        // ------------------------------------------------
+        
+        struct RectPart : Element {
+            using Element::Element;
+
+            ColorElement fill{ self };
+            StateLinked<Animated<ExpressionParser::Function>> x;
+            StateLinked<Animated<ExpressionParser::Function>> y;
+            StateLinked<Animated<ExpressionParser::Function>> w;
+            StateLinked<Animated<ExpressionParser::Function>> h;
+
+            void reset();
+            void interpret(const basic_json& theme, View::State state = View::State::Default);
+        };
+
+        struct RectDrawable : Animation {
+            Color fill;
+            Animated<float> x;
+            Animated<float> y;
+            Animated<float> w;
+            Animated<float> h;
+            bool changingCache = false;
+
+            void link(RectPart& part);
+            void draw(const Drawable::Instruction& instr, Theme& self, RectPart& part);
+            bool changing() const override;
+        };
 
         // ------------------------------------------------
 
@@ -211,6 +277,7 @@ namespace Kaixo::Theme {
             ImagePart image{ self };
             TextPart text{ self };
             BackgroundColorPart backgroundColor{ self };
+            RectPart rect{ self };
 
             void interpret(const basic_json& theme);
         };
@@ -221,6 +288,7 @@ namespace Kaixo::Theme {
             ImageDrawable image{ };
             TextDrawable text{ };
             BackgroundColorDrawable backgroundColor{ };
+            RectDrawable rect{ };
 
             void link(Layer& part);
             void draw(const Drawable::Instruction& instr, Theme& self, Layer& part);

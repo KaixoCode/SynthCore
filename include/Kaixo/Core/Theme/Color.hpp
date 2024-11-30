@@ -4,6 +4,7 @@
 #include "Kaixo/Core/Theme/Element.hpp"
 #include "Kaixo/Core/Theme/Container.hpp"
 #include "Kaixo/Core/Theme/ZoomMultiplier.hpp"
+#include "Kaixo/Core/Theme/ExpressionParser.hpp"
 
 // ------------------------------------------------
 
@@ -27,7 +28,7 @@ namespace Kaixo::Theme {
 
         struct Interface : Animation {
             virtual ~Interface() = default;
-            virtual Kaixo::Color get(View::State state = View::State::Default) = 0;
+            virtual Kaixo::Color get(View::State state = View::State::Default, const ExpressionParser::ValueMap& values = {}) = 0;
         };
 
         // ------------------------------------------------
@@ -44,7 +45,7 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
-        Kaixo::Color get(View::State state) const;
+        Kaixo::Color get(View::State state, const ExpressionParser::ValueMap& values = {}) const;
 
         // ------------------------------------------------
         
@@ -72,7 +73,10 @@ namespace Kaixo::Theme {
         // ------------------------------------------------
         
         std::size_t loadIndex = 0;
-        StateLinked<Animated<Kaixo::Color>> color;
+        StateLinked<Animated<ExpressionParser::Function>> r;
+        StateLinked<Animated<ExpressionParser::Function>> g;
+        StateLinked<Animated<ExpressionParser::Function>> b;
+        StateLinked<Animated<ExpressionParser::Function>> a;
 
         // ------------------------------------------------
 

@@ -6,11 +6,100 @@
 // ------------------------------------------------
 
 #include "Kaixo/Core/Theme/Theme.hpp"
-#include "Kaixo/Core/Theme/ExpressionParser.hpp"
 
 // ------------------------------------------------
 
 namespace Kaixo::Theme {
+
+    // ------------------------------------------------
+    
+    void DrawableElement::RectPart::reset() {
+        x = {};
+        y = {};
+        w = {};
+        h = {};
+    }
+
+    void DrawableElement::RectPart::interpret(const basic_json& theme, View::State state) {
+        const auto parser = [&](auto& value, const basic_json& json, View::State state) -> bool {
+            if (json.is(basic_json::Number)) return value = [value = json.as<int>()](auto&) { return value; }, true;
+            if (json.is(basic_json::String)) return value = ExpressionParser::parse(json.as<std::string_view>()), true;
+            return false;
+        };
+
+        if (theme.contains("rect", basic_json::Object)) {
+            auto& rect = theme["rect"];
+            if (rect.contains("position", basic_json::Array) && rect["position"].size() == 2) {
+                x.interpret(rect["position"][0], parser, state);
+                y.interpret(rect["position"][1], parser, state);
+            }
+
+            if (rect.contains("size", basic_json::Array) && rect["position"].size() == 2) {
+                w.interpret(rect["size"][0], parser, state);
+                h.interpret(rect["size"][1], parser, state);
+            }
+
+            if (rect.contains("x")) x.interpret(rect["x"], parser, state);
+            if (rect.contains("y")) y.interpret(rect["y"], parser, state);
+            if (rect.contains("width")) w.interpret(rect["width"], parser, state);
+            if (rect.contains("height")) h.interpret(rect["height"], parser, state);
+
+            if (rect.contains("fill")) fill.interpret(rect["fill"], state);
+        }
+
+        if (theme.contains("rect-position", basic_json::Array) && theme["rect-position"].size() == 2) {
+            x.interpret(theme["rect-position"][0], parser, state);
+            y.interpret(theme["rect-position"][1], parser, state);
+        }
+        
+        if (theme.contains("rect-ize", basic_json::Array) && theme["rect-position"].size() == 2) {
+            w.interpret(theme["rect-size"][0], parser, state);
+            h.interpret(theme["rect-size"][1], parser, state);
+        }
+        
+        if (theme.contains("rect-x")) x.interpret(theme["rect-x"], parser, state);
+        if (theme.contains("rect-y")) y.interpret(theme["rect-y"], parser, state);
+        if (theme.contains("rect-width")) w.interpret(theme["rect-width"], parser, state);
+        if (theme.contains("rect-height")) h.interpret(theme["rect-height"], parser, state);
+
+        if (theme.contains("rect-fill")) fill.interpret(theme["rect-fill"], state);
+    }
+
+    // ------------------------------------------------
+
+    // ------------------------------------------------
+
+    void DrawableElement::RectDrawable::link(RectPart& part) {
+        fill = part.fill;
+    }
+
+    void DrawableElement::RectDrawable::draw(const Drawable::Instruction& instr, Theme& self, RectPart& part) {
+        auto xe = part.x[instr.state];
+        auto ye = part.y[instr.state];
+        auto we = part.w[instr.state];
+        auto he = part.h[instr.state];
+        if (xe.value) x = { xe.value(instr.values), xe.transition };
+        if (ye.value) y = { ye.value(instr.values), ye.transition };
+        if (we.value) w = { we.value(instr.values), we.transition };
+        if (he.value) h = { he.value(instr.values), he.transition };
+
+        changingCache = x.changing() || y.changing() || w.changing() || h.changing();
+
+        auto color = fill.get(instr.state, instr.values);
+
+        Rect<float> position{
+            instr.bounds.x() + x.get(),
+            instr.bounds.y() + y.get(),
+            w.get(), h.get(),
+        };
+
+        instr.graphics.setColour(color);
+        instr.graphics.fillRect(position);
+    }
+
+    bool DrawableElement::RectDrawable::changing() const {
+        return changingCache;
+    }
 
     // ------------------------------------------------
 
@@ -623,10 +712,12 @@ namespace Kaixo::Theme {
         image.reset();
         text.reset();
         backgroundColor.reset();
+        rect.reset();
 
         image.interpret(theme);
         text.interpret(theme);
         backgroundColor.interpret(theme);
+        rect.interpret(theme);
 
         // ------------------------------------------------
         
@@ -642,6 +733,7 @@ namespace Kaixo::Theme {
                 image.interpret(theme, state);
                 text.interpret(theme, state);
                 backgroundColor.interpret(theme, state);
+                rect.interpret(theme, state);
             }
         });
 
@@ -656,6 +748,7 @@ namespace Kaixo::Theme {
         backgroundColor.link(part.backgroundColor);
         image.link(part.image);
         text.link(part.text);
+        rect.link(part.rect);
     }
 
     // ------------------------------------------------
@@ -667,6 +760,7 @@ namespace Kaixo::Theme {
         backgroundColor.draw(instr, self, part.backgroundColor);
         image.draw(instr, self, part.image);
         text.draw(instr, self, part.text);
+        rect.draw(instr, self, part.rect);
 
         // ------------------------------------------------
 

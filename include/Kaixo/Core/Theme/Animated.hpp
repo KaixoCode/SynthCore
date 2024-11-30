@@ -25,6 +25,7 @@ namespace Kaixo::Theme {
         // ------------------------------------------------
 
         Animated& operator=(Assign a) {
+            if (m_Goal == a.value && m_TransitionTime == a.transition) return *this; // Already assigned
             m_Current = get();
             m_Goal = a.value;
             m_TransitionTime = a.transition;

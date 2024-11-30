@@ -21,7 +21,9 @@ namespace Kaixo::Theme {
     Color::operator Kaixo::Color() const { return m_Graphics ? m_Graphics->get() : m_DefaultColor; }
     Color::operator bool() const { return (bool)m_Graphics; }
 
-    Kaixo::Color Color::get(View::State state) const { return m_Graphics ? m_Graphics->get(state) : m_DefaultColor; }
+    Kaixo::Color Color::get(View::State state, const ExpressionParser::ValueMap& values) const { 
+        return m_Graphics ? m_Graphics->get(state, values) : m_DefaultColor;
+    }
 
     // ------------------------------------------------
 
@@ -29,93 +31,97 @@ namespace Kaixo::Theme {
         
         // ------------------------------------------------
         
-        auto parseColor = [&](Kaixo::Color& color, const basic_json& theme) -> bool {
-
-            // ------------------------------------------------
-
+        auto parseRed = [&](ExpressionParser::Function& red, const basic_json& theme, View::State) -> bool {
             if (!theme.is(basic_json::Array)) return false;
 
-            // ------------------------------------------------
+            auto& arr = theme.as<basic_json::array>();
+            if (arr.empty() || arr.size() > 4) return false;
 
-            float red = 0, green = 0, blue = 0, alpha = 0;
+            if (arr[0].is(basic_json::Number)) {
+                red = [v = arr[0].as<float>()](auto&) { return v; };
+            } else if (arr[0].is(basic_json::String)) {
+                red = ExpressionParser::parse(arr[0].as<std::string>());
+            } else {
+                return false;
+            }
 
-            // ------------------------------------------------
+            return true;
+        };
+        
+        auto parseGreen = [&](ExpressionParser::Function& green, const basic_json& theme, View::State) -> bool {
+            if (!theme.is(basic_json::Array)) return false;
 
             auto& arr = theme.as<basic_json::array>();
+            if (arr.empty() || arr.size() > 4) return false;
 
-            // ------------------------------------------------
+            std::size_t index = 0;
+            if (arr.size() == 3) index = 1;
+            else if (arr.size() == 4) index = 1;
 
-            if (arr.size() == 1 &&
-                arr[0].is(basic_json::Number))
-            {
-                red = arr[0].as<float>();
-                green = arr[0].as<float>();
-                blue = arr[0].as<float>();
-                alpha = 255;
+            if (arr[index].is(basic_json::Number)) {
+                green = [v = arr[index].as<float>()](auto&) { return v; };
+            } else if (arr[index].is(basic_json::String)) {
+                green = ExpressionParser::parse(arr[index].as<std::string>());
+            } else {
+                return false;
             }
 
-            // ------------------------------------------------
-
-            else if (arr.size() == 2 &&
-                arr[0].is(basic_json::Number) &&
-                arr[1].is(basic_json::Number))
-            {
-                red = arr[0].as<float>();
-                green = arr[0].as<float>();
-                blue = arr[0].as<float>();
-                alpha = arr[1].as<float>();
-            }
-
-            // ------------------------------------------------
-
-            else if (arr.size() == 3 &&
-                arr[0].is(basic_json::Number) &&
-                arr[1].is(basic_json::Number) &&
-                arr[2].is(basic_json::Number))
-            {
-                red = arr[0].as<float>();
-                green = arr[1].as<float>();
-                blue = arr[2].as<float>();
-                alpha = 255;
-            }
-
-            // ------------------------------------------------
-
-            else if (arr.size() == 4 &&
-                arr[0].is(basic_json::Number) &&
-                arr[1].is(basic_json::Number) &&
-                arr[2].is(basic_json::Number) &&
-                arr[3].is(basic_json::Number))
-            {
-                red = arr[0].as<float>();
-                green = arr[1].as<float>();
-                blue = arr[2].as<float>();
-                alpha = arr[3].as<float>();
-            }
-
-            // ------------------------------------------------
-
-            else return false;
-
-            // ------------------------------------------------
-            
-            color = { red, green, blue, alpha };
-            
-            // ------------------------------------------------
-            
             return true;
+        };
+        
+        auto parseBlue = [&](ExpressionParser::Function& blue, const basic_json& theme, View::State) -> bool {
+            if (!theme.is(basic_json::Array)) return false;
 
-            // ------------------------------------------------
+            auto& arr = theme.as<basic_json::array>();
+            if (arr.empty() || arr.size() > 4) return false;
 
+            std::size_t index = 0;
+            if (arr.size() == 3) index = 2;
+            else if (arr.size() == 4) index = 2;
+
+            if (arr[index].is(basic_json::Number)) {
+                blue = [v = arr[index].as<float>()](auto&) { return v; };
+            } else if (arr[index].is(basic_json::String)) {
+                blue = ExpressionParser::parse(arr[index].as<std::string>());
+            } else {
+                return false;
+            }
+
+            return true;
+        };
+        
+        auto parseAlpha = [&](ExpressionParser::Function& alpha, const basic_json& theme, View::State) -> bool {
+            if (!theme.is(basic_json::Array)) return false;
+
+            auto& arr = theme.as<basic_json::array>();
+            if (arr.empty() || arr.size() > 4) return false;
+
+            if (arr.size() == 1 || arr.size() == 3) {
+                alpha = [](auto&) { return 255; };
+                return true;
+            }
+
+            std::size_t index = 0;
+            if (arr.size() == 2) index = 1;
+            else if (arr.size() == 4) index = 3;
+
+            if (arr[index].is(basic_json::Number)) {
+                alpha = [v = arr[index].as<float>()](auto&) { return v; };
+            } else if (arr[index].is(basic_json::String)) {
+                alpha = ExpressionParser::parse(arr[index].as<std::string>());
+            } else {
+                return false;
+            }
+
+            return true;
         };
 
         // ------------------------------------------------
         
-        color.interpret(theme, [&](Kaixo::Color& color, const basic_json& theme, View::State state) {
-            if (parseColor(color, theme)) return true;
-            if (theme.contains("color") && parseColor(color, theme["color"])) return true;
-            return false;
-        }, state);
+        r.interpret(theme, parseRed, state);
+        g.interpret(theme, parseGreen, state);
+        b.interpret(theme, parseBlue, state);
+        a.interpret(theme, parseAlpha, state);
 
         // ------------------------------------------------
         
@@ -126,7 +132,10 @@ namespace Kaixo::Theme {
     }
 
     void ColorElement::interpret(const basic_json& theme) {
-        color.reset();
+        r.reset();
+        g.reset();
+        b.reset();
+        a.reset();
         interpret(theme, View::State::Default);
     }
 
@@ -138,22 +147,45 @@ namespace Kaixo::Theme {
 
             std::size_t loadIndex = npos;
             const ColorElement* self;
-            Animated<Kaixo::Color> color;
-            View::State state = static_cast<View::State>(-1);
+            Animated<float> r;
+            Animated<float> g;
+            Animated<float> b;
+            Animated<float> a;
+            ExpressionParser::ValueMap valuesCache;
+            View::State state = View::State::NoState;
             bool changingCache = false;
 
-            Kaixo::Color get(View::State s = View::State::Default) override {
+            Kaixo::Color get(View::State s = View::State::Default, const ExpressionParser::ValueMap& values = {}) override {
+                const auto reassign = [&] {
+                    auto re = self->r[s];
+                    auto ge = self->g[s];
+                    auto be = self->b[s];
+                    auto ae = self->a[s];
+
+                    if (re.value) r = { re.value(values), re.transition };
+                    if (ge.value) g = { ge.value(values), ge.transition };
+                    if (be.value) b = { be.value(values), be.transition };
+                    if (ae.value) a = { ae.value(values), ae.transition };
+                };
+
                 if (loadIndex != self->loadIndex) {
                     loadIndex = self->loadIndex;
-                    color = self->color[s];
+                    reassign();
+                }
+
+                if (valuesCache != values) {
+                    valuesCache = values;
+                    reassign();
                 }
 
                 if (state != s) {
-                    color = self->color[s];
                     state = s;
+                    reassign();
                 }
-                changingCache = color.changing();
-                return color.get();
+
+                changingCache = r.changing() || g.changing() || b.changing() || a.changing();\
+
+                return { r.get(), g.get(), b.get(), a.get() };
             }
 
             bool changing() const override { return changingCache; }
