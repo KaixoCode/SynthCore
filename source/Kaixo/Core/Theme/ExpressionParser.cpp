@@ -108,7 +108,7 @@ namespace Kaixo::Theme {
         if (m_Value[0] != '$') return {}; // Variable must start with '$'
 
         std::size_t size = 1;
-        while (m_Value.size() != size && oneOf(m_Value[size], "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")) {
+        while (m_Value.size() != size && oneOf(m_Value[size], "-_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")) {
             ++size;
         }
 

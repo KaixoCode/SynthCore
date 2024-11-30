@@ -27,16 +27,31 @@ namespace Kaixo::Theme {
             return false;
         };
 
+        std::size_t index = 0;
+        const auto parserIdx = [&](auto& value, const basic_json& json, View::State state) -> bool {
+            if (!json.is(basic_json::Array) || index >= json.size()) return false;
+            if (json[index].is(basic_json::Number)) return value = [value = json[index].as<int>()](auto&) { return value; }, true;
+            if (json[index].is(basic_json::String)) return value = ExpressionParser::parse(json[index].as<std::string_view>()), true;
+            return false;
+        };
+
         if (theme.contains("rect", basic_json::Object)) {
             auto& rect = theme["rect"];
-            if (rect.contains("position", basic_json::Array) && rect["position"].size() == 2) {
-                x.interpret(rect["position"][0], parser, state);
-                y.interpret(rect["position"][1], parser, state);
+            if (rect.contains("dimensions")) {
+                index = 0, x.interpret(rect["dimensions"], parserIdx, state);
+                index = 1, y.interpret(rect["dimensions"], parserIdx, state);
+                index = 2, w.interpret(rect["dimensions"], parserIdx, state);
+                index = 3, h.interpret(rect["dimensions"], parserIdx, state);
             }
 
-            if (rect.contains("size", basic_json::Array) && rect["position"].size() == 2) {
-                w.interpret(rect["size"][0], parser, state);
-                h.interpret(rect["size"][1], parser, state);
+            if (rect.contains("position")) {
+                index = 0, x.interpret(rect["position"], parserIdx, state);
+                index = 1, y.interpret(rect["position"], parserIdx, state);
+            }
+
+            if (rect.contains("size")) {
+                index = 0, w.interpret(rect["size"], parserIdx, state);
+                index = 1, h.interpret(rect["size"], parserIdx, state);
             }
 
             if (rect.contains("x")) x.interpret(rect["x"], parser, state);
@@ -47,14 +62,21 @@ namespace Kaixo::Theme {
             if (rect.contains("fill")) fill.interpret(rect["fill"], state);
         }
 
-        if (theme.contains("rect-position", basic_json::Array) && theme["rect-position"].size() == 2) {
-            x.interpret(theme["rect-position"][0], parser, state);
-            y.interpret(theme["rect-position"][1], parser, state);
+        if (theme.contains("rect-dimensions")) {
+            index = 0, x.interpret(theme["rect-dimensions"], parserIdx, state);
+            index = 1, y.interpret(theme["rect-dimensions"], parserIdx, state);
+            index = 2, w.interpret(theme["rect-dimensions"], parserIdx, state);
+            index = 3, h.interpret(theme["rect-dimensions"], parserIdx, state);
         }
         
-        if (theme.contains("rect-ize", basic_json::Array) && theme["rect-position"].size() == 2) {
-            w.interpret(theme["rect-size"][0], parser, state);
-            h.interpret(theme["rect-size"][1], parser, state);
+        if (theme.contains("rect-position")) {
+            index = 0, x.interpret(theme["rect-position"], parserIdx, state);
+            index = 1, y.interpret(theme["rect-position"], parserIdx, state);
+        }
+        
+        if (theme.contains("rect-size")) {
+            index = 0, w.interpret(theme["rect-size"], parserIdx, state);
+            index = 1, h.interpret(theme["rect-size"], parserIdx, state);
         }
         
         if (theme.contains("rect-x")) x.interpret(theme["rect-x"], parser, state);
