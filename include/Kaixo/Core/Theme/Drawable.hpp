@@ -11,6 +11,7 @@
 #include "Kaixo/Core/Theme/FontMap.hpp"
 #include "Kaixo/Core/Theme/Color.hpp"
 #include "Kaixo/Core/Theme/ExpressionParser.hpp"
+#include "Kaixo/Core/Theme/Rectangle.hpp"
 
 // ------------------------------------------------
 
@@ -116,32 +117,6 @@ namespace Kaixo::Theme {
     };
 
     // ------------------------------------------------
-    
-    //struct RectangleElement : Element {
-    //    using Element::Element;
-
-    //    StateLinked<Animated<ExpressionParser::Function>> x;
-    //    StateLinked<Animated<ExpressionParser::Function>> y;
-    //    StateLinked<Animated<ExpressionParser::Function>> w;
-    //    StateLinked<Animated<ExpressionParser::Function>> h;
-
-    //    void reset();
-    //    void interpret(const basic_json& theme, View::State state = View::State::Default);
-    //};
-
-    //struct Rectangle : Animation {
-    //    Animated<int> x;
-    //    Animated<int> y;
-    //    Animated<int> w;
-    //    Animated<int> h;
-    //    bool changingCache = false;
-
-    //    void link(RectPart& part);
-    //    void draw(const Drawable::Instruction& instr, Theme& self, RectPart& part);
-    //    bool changing() const override;
-    //};
-
-    // ------------------------------------------------
 
     class DrawableElement : public Element {
     public:
@@ -156,22 +131,15 @@ namespace Kaixo::Theme {
             using Element::Element;
 
             ColorElement fill{ self };
-            StateLinked<Animated<ExpressionParser::Function>> x;
-            StateLinked<Animated<ExpressionParser::Function>> y;
-            StateLinked<Animated<ExpressionParser::Function>> w;
-            StateLinked<Animated<ExpressionParser::Function>> h;
+            RectangleElement position{ self }; // Part of drawable
 
             void reset();
             void interpret(const basic_json& theme, View::State state = View::State::Default);
         };
 
         struct RectDrawable : Animation {
-            Color fill;
-            Animated<float> x;
-            Animated<float> y;
-            Animated<float> w;
-            Animated<float> h;
-            bool changingCache = false;
+            Color fill{};
+            Rectangle position{};
 
             void link(RectPart& part);
             void draw(const Drawable::Instruction& instr, Theme& self, RectPart& part);
@@ -184,12 +152,8 @@ namespace Kaixo::Theme {
             using Element::Element;
 
             StateLinked<ImageID> image{};
-            StateLinked<Animated<Point<int>>> offset{};
-            StateLinked<Animated<Point<int>>> size{};
-            bool hasSize = false;
-            StateLinked<Animated<Point<int>>> positionOffset{};
-            StateLinked<Animated<Point<int>>> positionSize{};
-            bool hasPositionSize = false;
+            RectangleElement clip{ self }; // Part of image
+            RectangleElement position{ self }; // Part of drawable
             StateLinked<Align> align{};
             StateLinked<std::optional<MultiFrameDescription>> multiframe{};
             StateLinked<std::optional<TiledDescription>> tiled{};
@@ -199,13 +163,8 @@ namespace Kaixo::Theme {
         };
 
         struct ImageDrawable : Animation {
-            
-            View::State state = View::State::NoState;
-            Animated<Point<int>> offsetValue{};
-            Animated<Point<int>> sizeValue{};
-            Animated<Point<int>> positionOffsetValue{};
-            Animated<Point<int>> positionSizeValue{};
-            bool changingCache = false;
+            Rectangle clip{};
+            Rectangle position{};
 
             void link(ImagePart& part);
             void draw(const Drawable::Instruction& instr, Theme& self, ImagePart& part);

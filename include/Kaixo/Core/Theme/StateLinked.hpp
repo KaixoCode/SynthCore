@@ -102,7 +102,7 @@ namespace Kaixo::Theme {
         double transition = 0;
 
         // ------------------------------------------------
-
+        
         Animated<Ty>::Assign operator[](View::State state) const {
             double trns = transition;
             const Ty* match = &base;

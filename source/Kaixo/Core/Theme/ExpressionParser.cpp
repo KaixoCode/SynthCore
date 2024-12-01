@@ -276,7 +276,7 @@ namespace Kaixo::Theme {
                     expressionStack.pop();
 
                     auto fun = [a = std::move(a), b = std::move(b), operation = std::move(op.operation)] (const ValueMap& values) -> float {
-                        return operation(a(values), b(values));
+                        return operation(b(values), a(values));
                     };
 
                     m_Tokens.pop_front();
@@ -289,7 +289,7 @@ namespace Kaixo::Theme {
                     expressionStack.pop();
 
                     auto fun = [a = std::move(a), operation = std::move(op.operation)] (const ValueMap& values) -> float {
-                        return operation(a(values), 0);
+                        return operation(0, a(values));
                     };
 
                     m_Tokens.pop_front();
