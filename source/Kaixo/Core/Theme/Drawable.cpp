@@ -15,27 +15,25 @@ namespace Kaixo::Theme {
     
     void DrawableElement::RectPart::reset() {
         fill = { self };
+        stroke = { self };
+        strokeWeight.reset();
         position.reset();
+        align = {};
     }
 
     void DrawableElement::RectPart::interpret(const basic_json& theme, View::State state) {
-        const auto parser = [&](auto& value, const basic_json& json, View::State state) -> bool {
-            if (json.is(basic_json::Number)) return value = [value = json.as<int>()](auto&) { return value; }, true;
-            if (json.is(basic_json::String)) return value = ExpressionParser::parse(json.as<std::string_view>()), true;
-            return false;
-        };
-
-        std::size_t index = 0;
-        const auto parserIdx = [&](auto& value, const basic_json& json, View::State state) -> bool {
-            if (!json.is(basic_json::Array) || index >= json.size()) return false;
-            if (json[index].is(basic_json::Number)) return value = [value = json[index].as<int>()](auto&) { return value; }, true;
-            if (json[index].is(basic_json::String)) return value = ExpressionParser::parse(json[index].as<std::string_view>()), true;
+        const auto parseAlign = [&](auto& align, const basic_json& json, View::State state) {
+            std::string str;
+            if (json.try_get(str)) return align = alignFromString(str), true;
             return false;
         };
 
         if (theme.contains("rect", basic_json::Object)) {
             auto& rect = theme["rect"];
+            if (rect.contains("align")) align.interpret(rect["align"], parseAlign, state);
             if (rect.contains("fill")) fill.interpret(rect["fill"], state);
+            if (rect.contains("stroke")) stroke.interpret(rect["stroke"], state);
+            if (rect.contains("stroke-weight")) strokeWeight.interpret(rect["stroke-weight"], state);
             if (rect.contains("dimensions")) position.interpret(rect["dimensions"], state);
             if (rect.contains("position")) position.interpretPosition(rect["position"], state);
             if (rect.contains("size")) position.interpretSize(rect["size"], state);
@@ -45,7 +43,10 @@ namespace Kaixo::Theme {
             if (rect.contains("height")) position.interpretHeight(rect["height"], state);
         }
 
+        if (theme.contains("rect-align")) align.interpret(theme["rect-align"], parseAlign, state);
         if (theme.contains("rect-fill")) fill.interpret(theme["rect-fill"], state);
+        if (theme.contains("rect-stroke")) stroke.interpret(theme["rect-stroke"], state);
+        if (theme.contains("rect-stroke-weight")) strokeWeight.interpret(theme["rect-stroke-weight"], state);
         if (theme.contains("rect-dimensions")) position.interpret(theme["rect-dimensions"], state);
         if (theme.contains("rect-position")) position.interpretPosition(theme["rect-position"], state);
         if (theme.contains("rect-size")) position.interpretSize(theme["rect-size"], state);
@@ -61,26 +62,46 @@ namespace Kaixo::Theme {
 
     void DrawableElement::RectDrawable::link(RectPart& part) {
         fill = part.fill;
+        stroke = part.stroke;
         position = part.position;
+        strokeWeight = part.strokeWeight;
     }
 
     void DrawableElement::RectDrawable::draw(const Drawable::Instruction& instr, Theme& self, RectPart& part) {
-
-        auto color = fill.get(instr.state, instr.values);
+        auto& align = part.align[instr.state];
+        auto weight = strokeWeight.get(instr.state, instr.values);
+        auto strokeColor = stroke.get(instr.state, instr.values);
+        auto fillColor = fill.get(instr.state, instr.values);
         auto pos = position.get(instr.state, instr.values);
 
-        Rect<float> position{
-            instr.bounds.x() + pos.x(),
-            instr.bounds.y() + pos.y(),
-            pos.width(), pos.height(),
-        };
+        switch (align & Align::X) {
+        case Align::CenterX: pos.x(pos.x() + instr.bounds.centerX() - pos.width() / 2); break;
+        case Align::Right: pos.x(pos.x() + instr.bounds.right() - pos.width()); break;
+        default: pos.x(pos.x() + instr.bounds.left()); break;
+        }
 
-        instr.graphics.setColour(color);
-        instr.graphics.fillRect(position);
+        switch (align & Align::Y) {
+        case Align::CenterY: pos.y(pos.y() + instr.bounds.centerY() - pos.height() / 2); break;
+        case Align::Bottom: pos.y(pos.y() + instr.bounds.bottom() - pos.height()); break;
+        default: pos.y(pos.y() + instr.bounds.top()); break;
+        }
+
+        if (part.fill.hasValue()) {
+            instr.graphics.setColour(fillColor);
+            instr.graphics.fillRect(pos);
+        }
+
+        if (weight != 0 && part.stroke.hasValue()) {
+            instr.graphics.setColour(strokeColor);
+            instr.graphics.drawRect(pos, weight);
+        }
     }
 
     bool DrawableElement::RectDrawable::changing() const {
-        return fill.changing() || position.changing();
+        return fill.changing() 
+            || position.changing() 
+            || stroke.changing() 
+            || strokeWeight.changing();
     }
 
     // ------------------------------------------------
@@ -365,17 +386,14 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
-        position.interpret(json, [&](auto& position, const basic_json& json, View::State state) {
-            bool containsText = json.contains("text", basic_json::Object);
-            if (json.try_get("text-position", arr2) || 
-                containsText && json["text"].try_get("position", arr2))
-            {
-                position = Point{ arr2[0], arr2[1] };
-                return true;
-            }
+        if (json.contains("text", basic_json::Object)) {
+            auto& text = json["text"];
+            if (text.contains("position")) position.interpret(text["position"], state);
+        }
 
-            return false;
-        }, state);
+        if (json.contains("text-position")) position.interpret(json["text-position"], state);
+        if (json.contains("text-position-x")) position.interpretX(json["text-position-x"], state);
+        if (json.contains("text-position-y")) position.interpretY(json["text-position-y"], state);
 
         // ------------------------------------------------
         
@@ -432,6 +450,7 @@ namespace Kaixo::Theme {
     void DrawableElement::TextDrawable::link(TextPart& part) {
         color = part.color;
         font = part.font;
+        position = part.position;
     }
 
     // ------------------------------------------------
@@ -442,7 +461,7 @@ namespace Kaixo::Theme {
         
         auto& content = part.content[instr.state];
         auto& align = part.align[instr.state];
-        auto& position = part.position[instr.state];
+        auto pos = position.get(instr.state, instr.values);
         auto& frames = part.frames[instr.state];
 
         // ------------------------------------------------
@@ -502,7 +521,7 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
-        Point<float> at = pointFromAlign(align, instr.bounds) + position.toFloat();
+        Kaixo::Point<float> at = pointFromAlign(align, instr.bounds) + pos;
 
         switch (part.roundMode) {
         case TextPart::RoundMode::Ceil: at = { Math::ceil(at.x()), Math::ceil(at.y()) }; break;
@@ -532,7 +551,7 @@ namespace Kaixo::Theme {
         font = { self };
         color = { self };
         content = {};
-        position = { { 0, 0 } };
+        position = { self };
         frames = {};
         align = { Align::Center };
         overflow = Overflow::Visible;
@@ -541,7 +560,7 @@ namespace Kaixo::Theme {
     // ------------------------------------------------
 
     bool DrawableElement::TextDrawable::changing() const { 
-        return color.changing();
+        return color.changing() || position.changing();
     }
 
     // ------------------------------------------------
@@ -661,6 +680,7 @@ namespace Kaixo::Theme {
     bool DrawableElement::LayerDrawable::changing() const {
         return backgroundColor.changing()
             || image.changing()
+            || rect.changing()
             || text.changing();
     }
 
@@ -700,6 +720,10 @@ namespace Kaixo::Theme {
         std::size_t loadIndex = npos;
         DrawableElement* self;
         std::vector<DrawableElement::LayerDrawable> layers{};
+
+        std::unique_ptr<Interface> copy() const override {
+            return std::make_unique<Implementation>(self);
+        }
 
         void resync() {
             if (loadIndex != self->loadIndex) {

@@ -140,6 +140,15 @@ namespace Kaixo::Theme {
     }
 
     // ------------------------------------------------
+
+    bool ColorElement::hasR(View::State state) const { return r[state].value.operator bool(); }
+    bool ColorElement::hasG(View::State state) const { return g[state].value.operator bool(); }
+    bool ColorElement::hasB(View::State state) const { return b[state].value.operator bool(); }
+    bool ColorElement::hasA(View::State state) const { return a[state].value.operator bool(); }
+
+    bool ColorElement::hasValue(View::State state) const { return hasR(state) && hasG(state) && hasB(state) && hasA(state); }
+
+    // ------------------------------------------------
     
     ColorElement::operator Color() const {
         struct Implementation : public Color::Interface {
@@ -163,9 +172,13 @@ namespace Kaixo::Theme {
                     auto ae = self->a[s];
 
                     if (re.value) r = { re.value(values), re.transition };
+                    else r = { 0, 0 };
                     if (ge.value) g = { ge.value(values), ge.transition };
+                    else g = { 0, 0 };
                     if (be.value) b = { be.value(values), be.transition };
+                    else b = { 0, 0 };
                     if (ae.value) a = { ae.value(values), ae.transition };
+                    else a = { 0, 0 };
                 };
 
                 if (loadIndex != self->loadIndex) {

@@ -33,8 +33,7 @@ namespace Kaixo::Gui {
         } else {
             if (settings.enableAddPoints) {
                 removePoint(part);
-            }
-            else {
+            } else {
                 resetPoint(part);
             }
         }
@@ -237,7 +236,7 @@ namespace Kaixo::Gui {
                     if (m_UIPoints[i].dragging) state |= Pressed;
                     if (m_UIPoints[i].hovering) state |= Hovering;
                 }
-                settings.mainPoint.draw({
+                m_UIPoints[i].main.draw({
                     .graphics = g,
                     .bounds = handleRectAt(positionOfPoint(i)),
                     .state = state 
@@ -253,7 +252,7 @@ namespace Kaixo::Gui {
                     if (m_UIPoints[i].hovering) state |= Hovering;
                 }
 
-                settings.curvePoint.draw({
+                m_UIPoints[i].curve.draw({
                     .graphics = g,
                     .bounds = handleRectAt(positionOfCurvePoint(i)),
                     .state = state 
@@ -314,8 +313,16 @@ namespace Kaixo::Gui {
     
     void PointsDisplay::ensureUIPointsSize() {
         auto parts = nofPoints();
-        if (m_UIPoints.size() < parts)
+        if (m_UIPoints.size() < parts) {
+            auto prev = m_UIPoints.size();
             m_UIPoints.resize(parts);
+            for (std::size_t i = prev; i < parts; ++i) {
+                m_UIPoints[i].curve = settings.curvePoint.copy();
+                m_UIPoints[i].main = settings.mainPoint.copy();
+                animation(m_UIPoints[i].curve);
+                animation(m_UIPoints[i].main);
+            }
+        }
     }
 
     // ------------------------------------------------

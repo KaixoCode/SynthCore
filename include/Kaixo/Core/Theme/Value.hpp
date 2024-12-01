@@ -13,57 +13,52 @@ namespace Kaixo::Theme {
     // ------------------------------------------------
 
     /*
-     * [g]
-     * [g, a]
-     * [r, g, b]
-     * [r, g, b, a]
+     * [x, y]
+     * x, y
      */
 
     // ------------------------------------------------
-    
-    class Color : public Animation {
+
+    class Value : Animation {
     public:
 
         // ------------------------------------------------
 
         struct Interface : Animation {
             virtual ~Interface() = default;
-            virtual Kaixo::Color get(View::State state = View::State::Default, const ExpressionParser::ValueMap& values = {}) = 0;
+            virtual float get(View::State state = View::State::Default, const ExpressionParser::ValueMap& values = {}) = 0;
         };
 
         // ------------------------------------------------
 
-        Color() = default;
-        Color(std::unique_ptr<Interface> graphics);
-        Color(Kaixo::Color color);
+        Value() = default;
+        Value(std::unique_ptr<Interface> graphics);
+        Value(float value);
 
         // ------------------------------------------------
 
-        operator juce::Colour() const;
-        operator Kaixo::Color() const;
+        operator float() const;
         operator bool() const;
 
         // ------------------------------------------------
 
-        Kaixo::Color get(View::State state, const ExpressionParser::ValueMap& values = {}) const;
+        float get(View::State state, const ExpressionParser::ValueMap& values = {}) const;
 
         // ------------------------------------------------
-        
+
         bool changing() const override { return m_Graphics ? m_Graphics->changing() : false; }
 
         // ------------------------------------------------
 
-    private:
+    public:
         std::unique_ptr<Interface> m_Graphics{};
-        Kaixo::Color m_DefaultColor{};
+        float m_Default{};
 
         // ------------------------------------------------
 
     };
 
-    // ------------------------------------------------
-
-    class ColorElement : public Element {
+    class ValueElement : Element {
     public:
 
         // ------------------------------------------------
@@ -71,29 +66,24 @@ namespace Kaixo::Theme {
         using Element::Element;
 
         // ------------------------------------------------
-        
+
         std::size_t loadIndex = 0;
-        StateLinked<Animated<ExpressionParser::Function>> r;
-        StateLinked<Animated<ExpressionParser::Function>> g;
-        StateLinked<Animated<ExpressionParser::Function>> b;
-        StateLinked<Animated<ExpressionParser::Function>> a;
+        StateLinked<Animated<ExpressionParser::Function>> val;
 
         // ------------------------------------------------
+        
+        bool hasValue(View::State state = View::State::Default) const;
+
+        // ------------------------------------------------
+        
+        void reset();
 
         void interpret(const basic_json& theme, View::State state);
         void interpret(const basic_json& theme) override;
 
         // ------------------------------------------------
-        
-        bool hasR(View::State state = View::State::Default) const;
-        bool hasG(View::State state = View::State::Default) const;
-        bool hasB(View::State state = View::State::Default) const;
-        bool hasA(View::State state = View::State::Default) const;
-        bool hasValue(View::State state = View::State::Default) const;
 
-        // ------------------------------------------------
-
-        operator Color() const;
+        operator Value();
 
         // ------------------------------------------------
 
@@ -102,8 +92,8 @@ namespace Kaixo::Theme {
     // ------------------------------------------------
     
     template<>
-    inline DynamicElement::operator Color() {
-        if (auto color = dynamic_cast<ColorElement*>(m_Element)) {
+    inline DynamicElement::operator Value() {
+        if (auto color = dynamic_cast<ValueElement*>(m_Element)) {
             return *color;
         }
 

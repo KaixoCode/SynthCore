@@ -11,6 +11,8 @@
 #include "Kaixo/Core/Theme/FontMap.hpp"
 #include "Kaixo/Core/Theme/Color.hpp"
 #include "Kaixo/Core/Theme/ExpressionParser.hpp"
+#include "Kaixo/Core/Theme/Value.hpp"
+#include "Kaixo/Core/Theme/Point.hpp"
 #include "Kaixo/Core/Theme/Rectangle.hpp"
 
 // ------------------------------------------------
@@ -88,12 +90,17 @@ namespace Kaixo::Theme {
         struct Interface {
             virtual void draw(Instruction) = 0;
             virtual bool changing() const = 0;
+            virtual std::unique_ptr<Interface> copy() const = 0;
         };
 
         // ------------------------------------------------
 
         Drawable() = default;
         Drawable(std::unique_ptr<Interface> graphics) : m_Graphics(std::move(graphics)) {}
+
+        // ------------------------------------------------
+        
+        Drawable copy() const { return m_Graphics ? m_Graphics->copy() : Drawable{}; }
 
         // ------------------------------------------------
 
@@ -131,7 +138,10 @@ namespace Kaixo::Theme {
             using Element::Element;
 
             ColorElement fill{ self };
+            ColorElement stroke{ self };
             RectangleElement position{ self }; // Part of drawable
+            ValueElement strokeWeight{ self };
+            StateLinked<Align> align{};
 
             void reset();
             void interpret(const basic_json& theme, View::State state = View::State::Default);
@@ -139,7 +149,9 @@ namespace Kaixo::Theme {
 
         struct RectDrawable : Animation {
             Color fill{};
+            Color stroke{};
             Rectangle position{};
+            Value strokeWeight{};
 
             void link(RectPart& part);
             void draw(const Drawable::Instruction& instr, Theme& self, RectPart& part);
@@ -182,7 +194,7 @@ namespace Kaixo::Theme {
             };
 
             StateLinked<Content> content{};
-            StateLinked<Point<int>> position{};
+            PointElement position{ self };
             StateLinked<std::optional<std::size_t>> frames{};
             StateLinked<Align> align{};
             ColorElement color{ self };
@@ -198,6 +210,7 @@ namespace Kaixo::Theme {
 
             Color color;
             Font font;
+            Point position;
 
             void link(TextPart& part);
             void draw(const Drawable::Instruction& instr, Theme& self, TextPart& part);

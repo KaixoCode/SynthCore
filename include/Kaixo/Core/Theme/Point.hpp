@@ -13,57 +13,55 @@ namespace Kaixo::Theme {
     // ------------------------------------------------
 
     /*
-     * [g]
-     * [g, a]
-     * [r, g, b]
-     * [r, g, b, a]
+     * [x, y]
+     * x, y
      */
 
     // ------------------------------------------------
-    
-    class Color : public Animation {
+
+    class Point : Animation {
     public:
 
         // ------------------------------------------------
 
         struct Interface : Animation {
             virtual ~Interface() = default;
-            virtual Kaixo::Color get(View::State state = View::State::Default, const ExpressionParser::ValueMap& values = {}) = 0;
+            virtual Kaixo::Point<float> get(View::State state = View::State::Default, const ExpressionParser::ValueMap& values = {}) = 0;
         };
 
         // ------------------------------------------------
 
-        Color() = default;
-        Color(std::unique_ptr<Interface> graphics);
-        Color(Kaixo::Color color);
+        Point() = default;
+        Point(std::unique_ptr<Interface> graphics);
+        Point(Kaixo::Point<float> value);
 
         // ------------------------------------------------
 
-        operator juce::Colour() const;
-        operator Kaixo::Color() const;
+        operator juce::Point<float>() const;
+        operator juce::Point<int>() const;
+        operator Kaixo::Point<float>() const;
+        operator Kaixo::Point<int>() const;
         operator bool() const;
 
         // ------------------------------------------------
 
-        Kaixo::Color get(View::State state, const ExpressionParser::ValueMap& values = {}) const;
+        Kaixo::Point<float> get(View::State state, const ExpressionParser::ValueMap& values = {}) const;
 
         // ------------------------------------------------
-        
+
         bool changing() const override { return m_Graphics ? m_Graphics->changing() : false; }
 
         // ------------------------------------------------
 
-    private:
+    public:
         std::unique_ptr<Interface> m_Graphics{};
-        Kaixo::Color m_DefaultColor{};
+        Kaixo::Point<float> m_Default{};
 
         // ------------------------------------------------
 
     };
 
-    // ------------------------------------------------
-
-    class ColorElement : public Element {
+    class PointElement : Element {
     public:
 
         // ------------------------------------------------
@@ -71,29 +69,28 @@ namespace Kaixo::Theme {
         using Element::Element;
 
         // ------------------------------------------------
-        
+
         std::size_t loadIndex = 0;
-        StateLinked<Animated<ExpressionParser::Function>> r;
-        StateLinked<Animated<ExpressionParser::Function>> g;
-        StateLinked<Animated<ExpressionParser::Function>> b;
-        StateLinked<Animated<ExpressionParser::Function>> a;
+        StateLinked<Animated<ExpressionParser::Function>> x;
+        StateLinked<Animated<ExpressionParser::Function>> y;
 
         // ------------------------------------------------
+        
+        bool hasX(View::State state = View::State::Default) const;
+        bool hasY(View::State state = View::State::Default) const;
 
+        // ------------------------------------------------
+        
+        void reset();
+
+        void interpretX(const basic_json& theme, View::State state);
+        void interpretY(const basic_json& theme, View::State state);
         void interpret(const basic_json& theme, View::State state);
         void interpret(const basic_json& theme) override;
 
         // ------------------------------------------------
-        
-        bool hasR(View::State state = View::State::Default) const;
-        bool hasG(View::State state = View::State::Default) const;
-        bool hasB(View::State state = View::State::Default) const;
-        bool hasA(View::State state = View::State::Default) const;
-        bool hasValue(View::State state = View::State::Default) const;
 
-        // ------------------------------------------------
-
-        operator Color() const;
+        operator Point();
 
         // ------------------------------------------------
 
@@ -102,8 +99,8 @@ namespace Kaixo::Theme {
     // ------------------------------------------------
     
     template<>
-    inline DynamicElement::operator Color() {
-        if (auto color = dynamic_cast<ColorElement*>(m_Element)) {
+    inline DynamicElement::operator Point() {
+        if (auto color = dynamic_cast<PointElement*>(m_Element)) {
             return *color;
         }
 

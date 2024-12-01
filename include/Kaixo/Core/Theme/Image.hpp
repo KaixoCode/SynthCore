@@ -137,7 +137,7 @@ namespace Kaixo::Theme {
         return Align::Center;
     }
 
-    inline Point<float> pointFromAlign(Align align, Rect<float> rect) {
+    inline Kaixo::Point<float> pointFromAlign(Align align, Rect<float> rect) {
         if (align == Align::TopLeft) return rect.topLeft();
         else if (align == Align::TopCenter) return rect.topCenter();
         else if (align == Align::TopRight) return rect.topRight();

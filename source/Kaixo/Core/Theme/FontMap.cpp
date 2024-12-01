@@ -27,7 +27,7 @@ namespace Kaixo::Theme {
 
     // ------------------------------------------------
 
-    void Font::draw(juce::Graphics& g, const Point<float>& pos, std::string_view str, Align align, bool fillAlphaWithColor) const {
+    void Font::draw(juce::Graphics& g, const Kaixo::Point<float>& pos, std::string_view str, Align align, bool fillAlphaWithColor) const {
         if (m_Graphics) m_Graphics->draw(g, pos, str, align, fillAlphaWithColor);
     }
 
@@ -176,7 +176,7 @@ namespace Kaixo::Theme {
 
     // ------------------------------------------------
 
-    void FontElement::draw(juce::Graphics& g, const Point<float>& pos, std::string_view str, Align align, bool fillAlphaWithColor) const {
+    void FontElement::draw(juce::Graphics& g, const Kaixo::Point<float>& pos, std::string_view str, Align align, bool fillAlphaWithColor) const {
         float height = maxHeight;
         float width = stringWidth(str);
         float x = pos.x();
@@ -284,7 +284,7 @@ namespace Kaixo::Theme {
 
             const FontElement* self;
 
-            void draw(juce::Graphics& g, const Point<float>& pos, std::string_view str, Align align = Align::TopLeft, bool fillAlphaWithColor = false) const override {
+            void draw(juce::Graphics& g, const Kaixo::Point<float>& pos, std::string_view str, Align align = Align::TopLeft, bool fillAlphaWithColor = false) const override {
                 self->draw(g, pos, str, align, fillAlphaWithColor);
             }
 

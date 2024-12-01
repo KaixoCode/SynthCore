@@ -41,6 +41,9 @@ namespace Kaixo::Gui {
 
             float x = 0;
             float y = 0;
+
+            Theme::Drawable curve{};
+            Theme::Drawable main{};
         };
 
         // ------------------------------------------------

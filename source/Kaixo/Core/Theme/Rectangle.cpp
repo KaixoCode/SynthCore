@@ -164,7 +164,7 @@ namespace Kaixo::Theme {
                     reassign();
                 }
 
-                changingCache = x.changing() || y.changing() || w.changing() || h.changing();\
+                changingCache = x.changing() || y.changing() || w.changing() || h.changing();
 
                 return { x.get(), y.get(), w.get(), h.get() };
             }
