@@ -128,8 +128,10 @@ namespace Kaixo::Theme {
             if (json.contains("frames", basic_json::Number)) {
                 std::size_t frames = json["frames"].as<std::size_t>();
                 std::size_t fprow = 1;
+                std::size_t repeat = 1;
                 json.try_get("frames-per-row", fprow);
-                multiframe = MultiFrameDescription{ frames, fprow };
+                json.try_get("frames-repeat", repeat);
+                multiframe = MultiFrameDescription{ frames, fprow, repeat };
                 return true;
             }
 
@@ -240,7 +242,7 @@ namespace Kaixo::Theme {
 
                 auto _index = 0ull;
                 if (instr.index != npos) _index = instr.index;
-                else if (instr.value != -1) _index = normalToIndex(instr.value, multiframe->numFrames);
+                else if (instr.value != -1) _index = normalToIndex(instr.value, multiframe->numFrames * multiframe->repeat) % multiframe->numFrames;
 
                 // ------------------------------------------------
 

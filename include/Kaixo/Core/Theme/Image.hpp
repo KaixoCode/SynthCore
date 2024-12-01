@@ -53,6 +53,7 @@ namespace Kaixo::Theme {
     struct MultiFrameDescription {
         std::size_t numFrames = 1;
         std::size_t framesPerRow = 1;
+        std::size_t repeat = 1; // Loop the frames
     };
 
     struct FrameInstruction {

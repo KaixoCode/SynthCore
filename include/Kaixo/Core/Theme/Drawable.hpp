@@ -50,11 +50,11 @@ namespace Kaixo::Theme {
      *   }
      * 
      *   rect: {
-     *     position: [0, 0, 0, 0]   // position [x, y, w, h]
-     *     align: top-left          // relative position in drawable
-     *     fill: [0, 0, 0]          // fill color
-     *     stroke: [0, 0, 0]        // stroke color
-     *     stroke-weight: 1         // stroke weight
+     *     dimensions: [0, 0, 0, 0]  // dimensions [x, y, w, h]
+     *     align: top-left           // relative position in drawable
+     *     fill: [0, 0, 0]           // fill color
+     *     stroke: [0, 0, 0]         // stroke color
+     *     stroke-weight: 1          // stroke weight
      *   }
      * 
      *   background-color: [0, 0, 0] // Background color
