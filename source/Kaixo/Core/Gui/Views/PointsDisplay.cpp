@@ -64,7 +64,7 @@ namespace Kaixo::Gui {
                 setMouseCursor(juce::MouseCursor::NoCursor);
             }
 
-            m_UIPoints[part].dragging = true;
+            m_UIPoints[part]->dragging = true;
         }
 
         m_PreviousMousePosition = event.mouseDownPosition;
@@ -73,7 +73,7 @@ namespace Kaixo::Gui {
     void PointsDisplay::mouseExit(const juce::MouseEvent& event) {
         View::mouseExit(event);
 
-        for (auto& p : m_UIPoints) p.hovering = false;
+        for (auto& p : m_UIPoints) p->hovering = false;
     }
 
     void PointsDisplay::mouseMove(const juce::MouseEvent& event) {
@@ -95,7 +95,7 @@ namespace Kaixo::Gui {
 
         ensureUIPointsSize();
         for (std::size_t part = 0; part < parts; ++part) {
-            if (m_UIPoints[part].dragging) {
+            if (m_UIPoints[part]->dragging) {
                 m_DidDrag = true;
                 auto padded = paddedDimensions();
                 Kaixo::Point mult = { 1.f / padded.width(), -1.f / padded.height() };
@@ -139,8 +139,8 @@ namespace Kaixo::Gui {
         std::size_t selected = npos;
         ensureUIPointsSize();
         for (std::size_t part = 0; part < parts; ++part) {
-            if (m_UIPoints[part].dragging) selected = part;
-            m_UIPoints[part].dragging = false;
+            if (m_UIPoints[part]->dragging) selected = part;
+            m_UIPoints[part]->dragging = false;
         }
 
         if (selected != npos && !Storage::flag(Setting::TouchMode)) {
@@ -233,10 +233,10 @@ namespace Kaixo::Gui {
             {
                 State state = Default;
                 if (!m_IsCurve) {
-                    if (m_UIPoints[i].dragging) state |= Pressed;
-                    if (m_UIPoints[i].hovering) state |= Hovering;
+                    if (m_UIPoints[i]->dragging) state |= Pressed;
+                    if (m_UIPoints[i]->hovering) state |= Hovering;
                 }
-                m_UIPoints[i].main.draw({
+                m_UIPoints[i]->main.draw({
                     .graphics = g,
                     .bounds = handleRectAt(positionOfPoint(i)),
                     .state = state 
@@ -248,11 +248,11 @@ namespace Kaixo::Gui {
             {
                 State state = Default;
                 if (m_IsCurve) {
-                    if (m_UIPoints[i].dragging) state |= Pressed;
-                    if (m_UIPoints[i].hovering) state |= Hovering;
+                    if (m_UIPoints[i]->dragging) state |= Pressed;
+                    if (m_UIPoints[i]->hovering) state |= Hovering;
                 }
 
-                m_UIPoints[i].curve.draw({
+                m_UIPoints[i]->curve.draw({
                     .graphics = g,
                     .bounds = handleRectAt(positionOfCurvePoint(i)),
                     .state = state 
@@ -280,11 +280,11 @@ namespace Kaixo::Gui {
         ensureUIPointsSize();
 
         for (auto& point : m_UIPoints)
-            point.selected = false;
+            point->selected = false;
 
         if (i == npos) return;
 
-        m_UIPoints[i].selected = true;
+        m_UIPoints[i]->selected = true;
 
         for (auto& listener : m_Listeners)
             listener->select(i);
@@ -317,10 +317,11 @@ namespace Kaixo::Gui {
             auto prev = m_UIPoints.size();
             m_UIPoints.resize(parts);
             for (std::size_t i = prev; i < parts; ++i) {
-                m_UIPoints[i].curve = settings.curvePoint.copy();
-                m_UIPoints[i].main = settings.mainPoint.copy();
-                animation(m_UIPoints[i].curve);
-                animation(m_UIPoints[i].main);
+                m_UIPoints[i] = std::make_unique<UIPoint>();
+                m_UIPoints[i]->curve = settings.curvePoint.copy();
+                m_UIPoints[i]->main = settings.mainPoint.copy();
+                animation(m_UIPoints[i]->curve);
+                animation(m_UIPoints[i]->main);
             }
         }
     }
@@ -363,7 +364,7 @@ namespace Kaixo::Gui {
     void PointsDisplay::addAmountToPoint(std::size_t i, Kaixo::Point<float> amount, bool snap) {
         std::size_t parts = nofPoints();
         Point point = getPoint(i);
-        UIPoint& uipoint = m_UIPoints[i];
+        UIPoint& uipoint = *m_UIPoints[i];
 
         if (m_IsCurve) {
             float a = 8 * amount.y();
@@ -447,8 +448,8 @@ namespace Kaixo::Gui {
 
         for (std::size_t i = 0; i < parts; ++i) {
             auto point = getPoint(i);
-            m_UIPoints[i].x = point.x;
-            m_UIPoints[i].y = point.y;
+            m_UIPoints[i]->x = point.x;
+            m_UIPoints[i]->y = point.y;
         }
     }
 
@@ -499,13 +500,13 @@ namespace Kaixo::Gui {
             }
         }
 
-        if (m_Closest != npos && m_Closest != closestNext && m_UIPoints[m_Closest].hovering) {
-            m_UIPoints[m_Closest].hovering = false;
+        if (m_Closest != npos && m_Closest != closestNext && m_UIPoints[m_Closest]->hovering) {
+            m_UIPoints[m_Closest]->hovering = false;
         }
 
         std::size_t previous = m_Closest;
         if (closestNext != npos) {
-            m_UIPoints[closestNext].hovering = true;
+            m_UIPoints[closestNext]->hovering = true;
             m_Closest = closestNext;
             m_IsCurve = isClosestCurve;
         } else {

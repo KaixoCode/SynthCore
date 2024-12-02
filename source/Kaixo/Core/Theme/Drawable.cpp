@@ -594,7 +594,7 @@ namespace Kaixo::Theme {
     // ------------------------------------------------
 
     void DrawableElement::BackgroundColorDrawable::draw(const Drawable::Instruction& instr, Theme& self, BackgroundColorPart& part) {
-        instr.graphics.setColour(color.get(instr.state));
+        instr.graphics.setColour(color.get(instr.state, instr.values));
         instr.graphics.fillRect(instr.bounds);
     }
 

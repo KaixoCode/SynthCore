@@ -144,7 +144,7 @@ namespace Kaixo::Gui {
     protected:
         std::vector<std::function<void(std::size_t)>> m_Callbacks;
         std::vector<Listener*> m_Listeners{};
-        std::vector<UIPoint> m_UIPoints{};
+        std::vector<std::unique_ptr<UIPoint>> m_UIPoints{};
         std::size_t m_Closest = npos;
         Kaixo::Point<> m_PreviousMousePosition{ 0, 0 };
         float m_CurrentPhase = 0;
