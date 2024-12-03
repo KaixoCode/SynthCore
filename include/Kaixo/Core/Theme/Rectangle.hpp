@@ -85,6 +85,7 @@ namespace Kaixo::Theme {
         bool hasHeight(View::State state = View::State::Default) const;
         bool hasPosition(View::State state = View::State::Default) const;
         bool hasSize(View::State state = View::State::Default) const;
+        bool hasValue(View::State state = View::State::Default) const;
 
         // ------------------------------------------------
         

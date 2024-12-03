@@ -27,93 +27,38 @@ namespace Kaixo::Theme {
 
     // ------------------------------------------------
 
+    inline static auto parseExpressionOrNumber(ExpressionParser::Function& val, const basic_json& theme, View::State = {}) {
+        if (theme.is(basic_json::Number)) return val = [v = theme.as<float>()](auto&) { return v; }, true;
+        if (theme.is(basic_json::String)) return val = ExpressionParser::parse(theme.as<std::string_view>()), true;
+        return false;
+    }
+
+    // ------------------------------------------------
+
     void ColorElement::interpret(const basic_json& theme, View::State state) {
         
         // ------------------------------------------------
         
-        auto parseRed = [&](ExpressionParser::Function& red, const basic_json& theme, View::State) -> bool {
-            if (!theme.is(basic_json::Array)) return false;
+        constexpr auto isValidColor = [](const basic_json& clr) -> bool {
+            return clr.is(basic_json::Array) && !clr.empty() && clr.size() <= 4;
+        };
 
-            auto& arr = theme.as<basic_json::array>();
-            if (arr.empty() || arr.size() > 4) return false;
-
-            if (arr[0].is(basic_json::Number)) {
-                red = [v = arr[0].as<float>()](auto&) { return v; };
-            } else if (arr[0].is(basic_json::String)) {
-                red = ExpressionParser::parse(arr[0].as<std::string>());
-            } else {
-                return false;
-            }
-
-            return true;
+        constexpr auto parseRed = [](ExpressionParser::Function& red, const basic_json& theme, View::State) -> bool {
+            return isValidColor(theme) && parseExpressionOrNumber(red, theme[0]);
         };
         
-        auto parseGreen = [&](ExpressionParser::Function& green, const basic_json& theme, View::State) -> bool {
-            if (!theme.is(basic_json::Array)) return false;
-
-            auto& arr = theme.as<basic_json::array>();
-            if (arr.empty() || arr.size() > 4) return false;
-
-            std::size_t index = 0;
-            if (arr.size() == 3) index = 1;
-            else if (arr.size() == 4) index = 1;
-
-            if (arr[index].is(basic_json::Number)) {
-                green = [v = arr[index].as<float>()](auto&) { return v; };
-            } else if (arr[index].is(basic_json::String)) {
-                green = ExpressionParser::parse(arr[index].as<std::string>());
-            } else {
-                return false;
-            }
-
-            return true;
+        constexpr auto parseGreen = [](ExpressionParser::Function& green, const basic_json& theme, View::State) -> bool {
+            return isValidColor(theme) && parseExpressionOrNumber(green, theme[theme.size() >= 3 ? 1 : 0]);
         };
         
-        auto parseBlue = [&](ExpressionParser::Function& blue, const basic_json& theme, View::State) -> bool {
-            if (!theme.is(basic_json::Array)) return false;
-
-            auto& arr = theme.as<basic_json::array>();
-            if (arr.empty() || arr.size() > 4) return false;
-
-            std::size_t index = 0;
-            if (arr.size() == 3) index = 2;
-            else if (arr.size() == 4) index = 2;
-
-            if (arr[index].is(basic_json::Number)) {
-                blue = [v = arr[index].as<float>()](auto&) { return v; };
-            } else if (arr[index].is(basic_json::String)) {
-                blue = ExpressionParser::parse(arr[index].as<std::string>());
-            } else {
-                return false;
-            }
-
-            return true;
+        constexpr auto parseBlue = [](ExpressionParser::Function& blue, const basic_json& theme, View::State) -> bool {
+            return isValidColor(theme) && parseExpressionOrNumber(blue, theme[theme.size() >= 3 ? 2 : 0]);
         };
         
-        auto parseAlpha = [&](ExpressionParser::Function& alpha, const basic_json& theme, View::State) -> bool {
-            if (!theme.is(basic_json::Array)) return false;
-
-            auto& arr = theme.as<basic_json::array>();
-            if (arr.empty() || arr.size() > 4) return false;
-
-            if (arr.size() == 1 || arr.size() == 3) {
-                alpha = [](auto&) { return 255; };
-                return true;
-            }
-
-            std::size_t index = 0;
-            if (arr.size() == 2) index = 1;
-            else if (arr.size() == 4) index = 3;
-
-            if (arr[index].is(basic_json::Number)) {
-                alpha = [v = arr[index].as<float>()](auto&) { return v; };
-            } else if (arr[index].is(basic_json::String)) {
-                alpha = ExpressionParser::parse(arr[index].as<std::string>());
-            } else {
-                return false;
-            }
-
-            return true;
+        constexpr auto parseAlpha = [](ExpressionParser::Function& alpha, const basic_json& theme, View::State) -> bool {
+            if (!isValidColor(theme)) return false;
+            if (theme.size() == 1 || theme.size() == 3) return alpha = [](auto&) { return 255; }, true;
+            return parseExpressionOrNumber(alpha, theme[theme.size() == 2 ? 1 : 3]);
         };
 
         // ------------------------------------------------
@@ -122,6 +67,19 @@ namespace Kaixo::Theme {
         g.interpret(theme, parseGreen, state);
         b.interpret(theme, parseBlue, state);
         a.interpret(theme, parseAlpha, state);
+
+        // ------------------------------------------------
+        
+        if (theme.contains("rgb")) {
+            r.interpret(theme["rgb"], parseRed, state);
+            g.interpret(theme["rgb"], parseGreen, state);
+            b.interpret(theme["rgb"], parseBlue, state);
+        }
+        
+        if (theme.contains("r")) r.interpret(theme["r"], parseExpressionOrNumber, state);
+        if (theme.contains("g")) g.interpret(theme["g"], parseExpressionOrNumber, state);
+        if (theme.contains("b")) b.interpret(theme["b"], parseExpressionOrNumber, state);
+        if (theme.contains("a")) a.interpret(theme["a"], parseExpressionOrNumber, state);
 
         // ------------------------------------------------
         

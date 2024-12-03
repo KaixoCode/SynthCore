@@ -38,6 +38,7 @@ namespace Kaixo::Theme {
     bool RectangleElement::hasHeight(View::State state) const { return h[state].value.operator bool(); }
     bool RectangleElement::hasPosition(View::State state) const { return hasX(state) && hasY(state); }
     bool RectangleElement::hasSize(View::State state) const { return hasWidth(state) && hasHeight(state); }
+    bool RectangleElement::hasValue(View::State state) const { return hasPosition(state) && hasSize(state); }
 
     // ------------------------------------------------
 

@@ -542,6 +542,8 @@ namespace Kaixo {
 
         // ------------------------------------------------
 
+        bool empty() const { return size() == 0; }
+
         std::size_t size() const {
             return is(Array) ? as<array>().size() 
                 : is(Object) ? as<object>().size() 
