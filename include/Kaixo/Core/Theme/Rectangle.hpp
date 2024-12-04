@@ -72,10 +72,10 @@ namespace Kaixo::Theme {
         // ------------------------------------------------
 
         std::size_t loadIndex = 0;
-        StateLinked<Animated<ExpressionParser::Function>> x;
-        StateLinked<Animated<ExpressionParser::Function>> y;
-        StateLinked<Animated<ExpressionParser::Function>> w;
-        StateLinked<Animated<ExpressionParser::Function>> h;
+        StateLinked<Animated<ExpressionParser::Expression>> x;
+        StateLinked<Animated<ExpressionParser::Expression>> y;
+        StateLinked<Animated<ExpressionParser::Expression>> w;
+        StateLinked<Animated<ExpressionParser::Expression>> h;
 
         // ------------------------------------------------
         

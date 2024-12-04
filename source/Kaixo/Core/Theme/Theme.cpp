@@ -245,6 +245,16 @@ namespace Kaixo::Theme {
             }
         }
 
+        if (json.contains("functions", basic_json::Object)) {
+            auto& obj = json["functions"].as<basic_json::object>();
+            for (auto& [key, val] : obj) {
+                if (val.is(basic_json::String)) {
+                    auto fun = ExpressionParser::parseFunction(val.as<std::string_view>());
+                    if (fun.f) functions[key] = fun;
+                }
+            }
+        }
+
         if (json.contains("images", basic_json::Object)) {
             auto& obj = json["images"].as<basic_json::object>();
             for (auto& [key, val] : obj) {
@@ -323,6 +333,7 @@ namespace Kaixo::Theme {
     
     void Theme::clearCache() {
         m_Variables.clear();
+        functions.clear();
         m_LoadedFonts.clear();
         m_LoadedFontsByKey.clear();
         m_LoadedImages.clear();

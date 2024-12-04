@@ -36,15 +36,17 @@ namespace Kaixo::Theme {
     void ValueElement::reset() {
         val.reset();
     }
-
-    inline static auto parseExpressionOrNumber(ExpressionParser::Function& val, const basic_json& theme, View::State) {
-        if (theme.is(basic_json::Number)) return val = [v = theme.as<float>()](auto&) { return v; }, true;
-        if (theme.is(basic_json::String)) return val = ExpressionParser::parse(theme.as<std::string_view>()), true;
-        return false;
+    
+    inline static auto parseExpressionOrNumber(const ExpressionParser::FunctionMap& funs) {
+        return [&](ExpressionParser::Expression& val, const basic_json& theme, View::State) {
+            if (theme.is(basic_json::Number)) return val = [v = theme.as<float>()](auto&) { return v; }, true;
+            if (theme.is(basic_json::String)) return val = ExpressionParser::parse(theme.as<std::string_view>(), funs), true;
+            return false;
+        };
     }
     
     void ValueElement::interpret(const basic_json& theme, View::State state) {
-        val.interpret(theme, parseExpressionOrNumber, state);
+        val.interpret(theme, parseExpressionOrNumber(self->functions), state);
     }
 
     void ValueElement::interpret(const basic_json& theme) {

@@ -70,6 +70,10 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
+        ExpressionParser::FunctionMap functions{};
+
+        // ------------------------------------------------
+
     private:
         mutable std::recursive_mutex m_Mutex{};
         basic_json m_DefaultTheme{};

@@ -27,35 +27,33 @@ namespace Kaixo::Theme {
 
     // ------------------------------------------------
 
-    inline static auto parseExpressionOrNumber(ExpressionParser::Function& val, const basic_json& theme, View::State = {}) {
-        if (theme.is(basic_json::Number)) return val = [v = theme.as<float>()](auto&) { return v; }, true;
-        if (theme.is(basic_json::String)) return val = ExpressionParser::parse(theme.as<std::string_view>()), true;
-        return false;
-    }
-
-    // ------------------------------------------------
-
     void ColorElement::interpret(const basic_json& theme, View::State state) {
         
         // ------------------------------------------------
-        
-        constexpr auto isValidColor = [](const basic_json& clr) -> bool {
+
+        const auto parseExpressionOrNumber = [&](ExpressionParser::Expression& val, const basic_json& theme, View::State = {}) {
+            if (theme.is(basic_json::Number)) return val = [v = theme.as<float>()](auto&) { return v; }, true;
+            if (theme.is(basic_json::String)) return val = ExpressionParser::parse(theme.as<std::string_view>(), self->functions), true;
+            return false;
+        };
+
+        const auto isValidColor = [](const basic_json& clr) -> bool {
             return clr.is(basic_json::Array) && !clr.empty() && clr.size() <= 4;
         };
 
-        constexpr auto parseRed = [](ExpressionParser::Function& red, const basic_json& theme, View::State) -> bool {
+        const auto parseRed = [&](ExpressionParser::Expression& red, const basic_json& theme, View::State) -> bool {
             return isValidColor(theme) && parseExpressionOrNumber(red, theme[0]);
         };
         
-        constexpr auto parseGreen = [](ExpressionParser::Function& green, const basic_json& theme, View::State) -> bool {
+        const auto parseGreen = [&](ExpressionParser::Expression& green, const basic_json& theme, View::State) -> bool {
             return isValidColor(theme) && parseExpressionOrNumber(green, theme[theme.size() >= 3 ? 1 : 0]);
         };
         
-        constexpr auto parseBlue = [](ExpressionParser::Function& blue, const basic_json& theme, View::State) -> bool {
+        const auto parseBlue = [&](ExpressionParser::Expression& blue, const basic_json& theme, View::State) -> bool {
             return isValidColor(theme) && parseExpressionOrNumber(blue, theme[theme.size() >= 3 ? 2 : 0]);
         };
         
-        constexpr auto parseAlpha = [](ExpressionParser::Function& alpha, const basic_json& theme, View::State) -> bool {
+        const auto parseAlpha = [&](ExpressionParser::Expression& alpha, const basic_json& theme, View::State) -> bool {
             if (!isValidColor(theme)) return false;
             if (theme.size() == 1 || theme.size() == 3) return alpha = [](auto&) { return 255; }, true;
             return parseExpressionOrNumber(alpha, theme[theme.size() == 2 ? 1 : 3]);

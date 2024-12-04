@@ -49,16 +49,18 @@ namespace Kaixo::Theme {
         h.reset();
     }
 
-    inline static auto parseExpressionOrNumber(ExpressionParser::Function& val, const basic_json& theme, View::State) {
-        if (theme.is(basic_json::Number)) return val = [v = theme.as<float>()](auto&) { return v; }, true;
-        if (theme.is(basic_json::String)) return val = ExpressionParser::parse(theme.as<std::string_view>()), true;
-        return false;
+    inline static auto parseExpressionOrNumber(const ExpressionParser::FunctionMap& funs) {
+        return [&](ExpressionParser::Expression& val, const basic_json& theme, View::State) {
+            if (theme.is(basic_json::Number)) return val = [v = theme.as<float>()](auto&) { return v; }, true;
+            if (theme.is(basic_json::String)) return val = ExpressionParser::parse(theme.as<std::string_view>(), funs), true;
+            return false;
+        };
     }
     
-    inline static auto parseIdx(std::size_t index) {
-        return [index](ExpressionParser::Function& val, const basic_json& theme, View::State state) {
+    inline static auto parseIdx(const ExpressionParser::FunctionMap& funs, std::size_t index) {
+        return [&, index](ExpressionParser::Expression& val, const basic_json& theme, View::State state) {
             if (theme.is(basic_json::Array) && index < theme.size()) {
-                return parseExpressionOrNumber(val, theme[index], state);
+                return parseExpressionOrNumber(funs)(val, theme[index], state);
             }
 
             return false;
@@ -66,32 +68,32 @@ namespace Kaixo::Theme {
     }
 
     void RectangleElement::interpretX(const basic_json& theme, View::State state) {
-        x.interpret(theme, parseExpressionOrNumber, state);
+        x.interpret(theme, parseExpressionOrNumber(self->functions), state);
     }
 
     void RectangleElement::interpretY(const basic_json& theme, View::State state) {
-        y.interpret(theme, parseExpressionOrNumber, state);
+        y.interpret(theme, parseExpressionOrNumber(self->functions), state);
     }
 
     void RectangleElement::interpretWidth(const basic_json& theme, View::State state) {
-        w.interpret(theme, parseExpressionOrNumber, state);
+        w.interpret(theme, parseExpressionOrNumber(self->functions), state);
     }
 
     void RectangleElement::interpretHeight(const basic_json& theme, View::State state) {
-        h.interpret(theme, parseExpressionOrNumber, state);
+        h.interpret(theme, parseExpressionOrNumber(self->functions), state);
     }
 
     void RectangleElement::interpretPosition(const basic_json& theme, View::State state) {
-        x.interpret(theme, parseIdx(0), state);
-        y.interpret(theme, parseIdx(1), state);
+        x.interpret(theme, parseIdx(self->functions, 0), state);
+        y.interpret(theme, parseIdx(self->functions, 1), state);
 
         if (theme.contains("x")) interpretX(theme["x"], state);
         if (theme.contains("y")) interpretY(theme["y"], state);
     }
 
     void RectangleElement::interpretSize(const basic_json& theme, View::State state) {
-        w.interpret(theme, parseIdx(0), state);
-        h.interpret(theme, parseIdx(1), state);
+        w.interpret(theme, parseIdx(self->functions, 0), state);
+        h.interpret(theme, parseIdx(self->functions, 1), state);
 
         if (theme.contains("width")) interpretWidth(theme["width"], state);
         if (theme.contains("height")) interpretHeight(theme["height"], state);
@@ -102,10 +104,10 @@ namespace Kaixo::Theme {
         // position: [x, y], size: [w, h]
         // x: x, y: y, width: w, height: h
 
-        x.interpret(theme, parseIdx(0), state);
-        y.interpret(theme, parseIdx(1), state);
-        w.interpret(theme, parseIdx(2), state);
-        h.interpret(theme, parseIdx(3), state);
+        x.interpret(theme, parseIdx(self->functions, 0), state);
+        y.interpret(theme, parseIdx(self->functions, 1), state);
+        w.interpret(theme, parseIdx(self->functions, 2), state);
+        h.interpret(theme, parseIdx(self->functions, 3), state);
 
         if (theme.contains("position")) interpretPosition(theme["position"], state);
         if (theme.contains("size")) interpretSize(theme["size"], state);
