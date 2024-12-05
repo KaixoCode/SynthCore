@@ -325,12 +325,14 @@ namespace Kaixo::Theme {
                 arguments.emplace_back(std::move(expressionStack.top()));
                 expressionStack.pop();
             }
-
-            return [args = std::move(arguments), fun = function.f](const ValueMap& values) -> float {
-                std::vector<float> evaluatedArgs{};
-                evaluatedArgs.reserve(args.size());
+            
+            std::vector<float> evaluatedArguments(arguments.size());
+            return [args = std::move(arguments), 
+                    fun = function.f, 
+                    evaluatedArgs = std::move(evaluatedArguments)](const ValueMap& values) mutable -> float
+            {
                 for (std::size_t i = 0; i < args.size(); ++i) {
-                    evaluatedArgs.emplace_back(args[i](values));
+                    evaluatedArgs[i] = args[i](values);
                 }
 
                 return fun(evaluatedArgs);
@@ -455,11 +457,13 @@ namespace Kaixo::Theme {
                 expressionStack.pop();
             }
 
-            return [args = std::move(arguments), fun = function.f](const ArgumentMap& argMap) -> float {
-                std::vector<float> evaluatedArgs{};
-                evaluatedArgs.reserve(args.size());
+            std::vector<float> evaluatedArguments(arguments.size());
+            return [args = std::move(arguments), 
+                    fun = function.f, 
+                    evaluatedArgs = std::move(evaluatedArguments)](const ArgumentMap& argMap) mutable -> float 
+            {
                 for (std::size_t i = 0; i < args.size();  ++i) {
-                    evaluatedArgs.emplace_back(args[i](argMap));
+                    evaluatedArgs[i] = args[i](argMap);
                 }
 
                 return fun(evaluatedArgs);

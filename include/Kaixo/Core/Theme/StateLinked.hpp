@@ -6,6 +6,7 @@
 #include "Kaixo/Core/Gui/View.hpp"
 #include "Kaixo/Core/Theme/Animated.hpp"
 #include "Kaixo/Core/Theme/Element.hpp"
+#include "Kaixo/Core/Theme/ExpressionParser.hpp"
 
 // ------------------------------------------------
 
@@ -93,6 +94,7 @@ namespace Kaixo::Theme {
             View::State state;
             Ty value;
             std::optional<double> transition;
+            std::optional<std::function<double(double)>> curve;
         };
 
         // ------------------------------------------------
@@ -100,34 +102,90 @@ namespace Kaixo::Theme {
         Ty base;
         std::vector<State> states{};
         double transition = 0;
+        std::function<double(double)> curve{};
 
         // ------------------------------------------------
         
         Animated<Ty>::Assign operator[](View::State state) const {
             double trns = transition;
+            auto crv = curve;
             const Ty* match = &base;
             for (const State& s : states) {
                 if ((s.state & state) == s.state) {
                     if (s.transition.has_value()) trns = s.transition.value();
+                    if (s.curve.has_value()) crv = s.curve.value();
                     match = &s.value;
                 }
             }
 
-            return { *match, trns };
+            return { *match, trns, crv };
         }
 
         // ------------------------------------------------
         
-        void reset() { states.clear(); }
+        void reset() { 
+            transition = 0;
+            curve = {};
+            states.clear();
+        }
 
         // ------------------------------------------------
 
-        void interpret(const basic_json& theme, auto interpret, View::State state = View::State::Default) {
+        void interpret(const basic_json& theme, auto interpret, View::State state = View::State::Default, const ExpressionParser::FunctionMap& funs = {}) {
+            const auto parseCurve = [&](auto& curve, std::string_view expression) {
+
+                if (expression == "Curve::EaseIn") curve = [](double x) { return Easing::easeInCubic(x); };
+                else if (expression == "Curve::EaseOut") curve = [](double x) { return Easing::easeOutCubic(x); };
+                else if (expression == "Curve::EaseInOut") curve = [](double x) { return Easing::easeInOutCubic(x); };
+                else if (expression == "Curve::Ease") curve = [](double x) { return Easing::easeInOutCubic(x); };
+                else if (expression == "Curve::EaseInSine") curve = [](double x) { return Easing::easeInSine(x); };
+                else if (expression == "Curve::EaseOutSine") curve = [](double x) { return Easing::easeOutSine(x); };
+                else if (expression == "Curve::EaseInOutSine") curve = [](double x) { return Easing::easeInOutSine(x); };
+                else if (expression == "Curve::EaseInQuad") curve = [](double x) { return Easing::easeInQuad(x); };
+                else if (expression == "Curve::EaseOutQuad") curve = [](double x) { return Easing::easeOutQuad(x); };
+                else if (expression == "Curve::EaseInOutQuad") curve = [](double x) { return Easing::easeInOutQuad(x); };
+                else if (expression == "Curve::EaseInCubic") curve = [](double x) { return Easing::easeInCubic(x); };
+                else if (expression == "Curve::EaseOutCubic") curve = [](double x) { return Easing::easeOutCubic(x); };
+                else if (expression == "Curve::EaseInOutCubic") curve = [](double x) { return Easing::easeInOutCubic(x); };
+                else if (expression == "Curve::EaseInQuart") curve = [](double x) { return Easing::easeInQuart(x); };
+                else if (expression == "Curve::EaseOutQuart") curve = [](double x) { return Easing::easeOutQuart(x); };
+                else if (expression == "Curve::EaseInOutQuart") curve = [](double x) { return Easing::easeInOutQuart(x); };
+                else if (expression == "Curve::EaseInQuint") curve = [](double x) { return Easing::easeInQuint(x); };
+                else if (expression == "Curve::EaseOutQuint") curve = [](double x) { return Easing::easeOutQuint(x); };
+                else if (expression == "Curve::EaseInOutQuint") curve = [](double x) { return Easing::easeInOutQuint(x); };
+                else if (expression == "Curve::EaseInExpo") curve = [](double x) { return Easing::easeInExpo(x); };
+                else if (expression == "Curve::EaseOutExpo") curve = [](double x) { return Easing::easeOutExpo(x); };
+                else if (expression == "Curve::EaseInOutExpo") curve = [](double x) { return Easing::easeInOutExpo(x); };
+                else if (expression == "Curve::EaseInCirc") curve = [](double x) { return Easing::easeInCirc(x); };
+                else if (expression == "Curve::EaseOutCirc") curve = [](double x) { return Easing::easeOutCirc(x); };
+                else if (expression == "Curve::EaseInOutCirc") curve = [](double x) { return Easing::easeInOutCirc(x); };
+                else if (expression == "Curve::EaseInBack") curve = [](double x) { return Easing::easeInBack(x); };
+                else if (expression == "Curve::EaseOutBack") curve = [](double x) { return Easing::easeOutBack(x); };
+                else if (expression == "Curve::EaseInOutBack") curve = [](double x) { return Easing::easeInOutBack(x); };
+                else if (expression == "Curve::EaseInElastic") curve = [](double x) { return Easing::easeInElastic(x); };
+                else if (expression == "Curve::EaseOutElastic") curve = [](double x) { return Easing::easeOutElastic(x); };
+                else if (expression == "Curve::EaseInOutElastic") curve = [](double x) { return Easing::easeInOutElastic(x); };
+                else {
+                    auto fun = ExpressionParser::parseFunction(expression, funs);
+                    if (fun.nofArgs != 1) return; // Invalid expression
+
+                    curve = [fun = std::move(fun)](double v) -> double {
+                        std::vector<float> vals{ static_cast<float>(v) };
+                        return static_cast<double>(fun.f(vals));
+                    };
+                }
+            };
+            
             if (state == View::State::Default) {
                 if (theme.contains("transition", basic_json::Number)) {
                     transition = theme["transition"].as<double>();
+
                     if (theme.contains("value")) 
                         interpret(base, theme["value"], state);
+
+                    if (theme.contains("curve", basic_json::String)) {
+                        parseCurve(curve, theme["curve"].as<std::string_view>());
+                    }
                 } else if (theme.contains("value")) {
                     interpret(base, theme["value"], state);
                 } else {
@@ -148,6 +206,15 @@ namespace Kaixo::Theme {
                             if (theme.contains("value")) interpret(result, theme["value"], state);
                             State& s = states.emplace_back(state, std::move(result));
                             s.transition = theme["transition"].as<double>();
+                            if (theme.contains("curve", basic_json::String)) {
+                                parseCurve(s.curve, theme["curve"].as<std::string_view>());
+                            }
+                        } else if (theme.contains("value")) {
+                            interpret(result, theme["value"], state);
+                            State& s = states.emplace_back(state, std::move(result));
+                            if (theme.contains("curve", basic_json::String)) {
+                                parseCurve(s.curve, theme["curve"].as<std::string_view>());
+                            }
                         } else if (interpret(result, theme, state)) {
                             State& s = states.emplace_back(state, std::move(result));
                         }
@@ -159,6 +226,15 @@ namespace Kaixo::Theme {
                     if (theme.contains("value")) interpret(result, theme["value"], state);
                     State& s = states.emplace_back(state, std::move(result));
                     s.transition = theme["transition"].as<double>();
+                    if (theme.contains("curve", basic_json::String)) {
+                        parseCurve(s.curve, theme["curve"].as<std::string_view>());
+                    }
+                } else if (theme.contains("value")) {
+                    interpret(result, theme["value"], state);
+                    State& s = states.emplace_back(state, std::move(result));
+                    if (theme.contains("curve", basic_json::String)) {
+                        parseCurve(s.curve, theme["curve"].as<std::string_view>());
+                    }
                 } else if (interpret(result, theme, state)) {
                     State& s = states.emplace_back(state, std::move(result));
                 }

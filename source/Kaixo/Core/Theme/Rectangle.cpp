@@ -68,32 +68,32 @@ namespace Kaixo::Theme {
     }
 
     void RectangleElement::interpretX(const basic_json& theme, View::State state) {
-        x.interpret(theme, parseExpressionOrNumber(self->functions), state);
+        x.interpret(theme, parseExpressionOrNumber(self->functions), state, self->functions);
     }
 
     void RectangleElement::interpretY(const basic_json& theme, View::State state) {
-        y.interpret(theme, parseExpressionOrNumber(self->functions), state);
+        y.interpret(theme, parseExpressionOrNumber(self->functions), state, self->functions);
     }
 
     void RectangleElement::interpretWidth(const basic_json& theme, View::State state) {
-        w.interpret(theme, parseExpressionOrNumber(self->functions), state);
+        w.interpret(theme, parseExpressionOrNumber(self->functions), state, self->functions);
     }
 
     void RectangleElement::interpretHeight(const basic_json& theme, View::State state) {
-        h.interpret(theme, parseExpressionOrNumber(self->functions), state);
+        h.interpret(theme, parseExpressionOrNumber(self->functions), state, self->functions);
     }
 
     void RectangleElement::interpretPosition(const basic_json& theme, View::State state) {
-        x.interpret(theme, parseIdx(self->functions, 0), state);
-        y.interpret(theme, parseIdx(self->functions, 1), state);
+        x.interpret(theme, parseIdx(self->functions, 0), state, self->functions);
+        y.interpret(theme, parseIdx(self->functions, 1), state, self->functions);
 
         if (theme.contains("x")) interpretX(theme["x"], state);
         if (theme.contains("y")) interpretY(theme["y"], state);
     }
 
     void RectangleElement::interpretSize(const basic_json& theme, View::State state) {
-        w.interpret(theme, parseIdx(self->functions, 0), state);
-        h.interpret(theme, parseIdx(self->functions, 1), state);
+        w.interpret(theme, parseIdx(self->functions, 0), state, self->functions);
+        h.interpret(theme, parseIdx(self->functions, 1), state, self->functions);
 
         if (theme.contains("width")) interpretWidth(theme["width"], state);
         if (theme.contains("height")) interpretHeight(theme["height"], state);
@@ -104,10 +104,10 @@ namespace Kaixo::Theme {
         // position: [x, y], size: [w, h]
         // x: x, y: y, width: w, height: h
 
-        x.interpret(theme, parseIdx(self->functions, 0), state);
-        y.interpret(theme, parseIdx(self->functions, 1), state);
-        w.interpret(theme, parseIdx(self->functions, 2), state);
-        h.interpret(theme, parseIdx(self->functions, 3), state);
+        x.interpret(theme, parseIdx(self->functions, 0), state, self->functions);
+        y.interpret(theme, parseIdx(self->functions, 1), state, self->functions);
+        w.interpret(theme, parseIdx(self->functions, 2), state, self->functions);
+        h.interpret(theme, parseIdx(self->functions, 3), state, self->functions);
 
         if (theme.contains("position")) interpretPosition(theme["position"], state);
         if (theme.contains("size")) interpretSize(theme["size"], state);
@@ -146,10 +146,10 @@ namespace Kaixo::Theme {
                     auto we = self->w[s];
                     auto he = self->h[s];
 
-                    if (xe.value) x = { xe.value(values), xe.transition };
-                    if (ye.value) y = { ye.value(values), ye.transition };
-                    if (we.value) w = { we.value(values), we.transition };
-                    if (he.value) h = { he.value(values), he.transition };
+                    if (xe.value) x = { xe.value(values), xe.transition, std::move(xe.curve) };
+                    if (ye.value) y = { ye.value(values), ye.transition, std::move(ye.curve) };
+                    if (we.value) w = { we.value(values), we.transition, std::move(we.curve) };
+                    if (he.value) h = { he.value(values), he.transition, std::move(he.curve) };
                 };
 
                 if (loadIndex != self->loadIndex) {

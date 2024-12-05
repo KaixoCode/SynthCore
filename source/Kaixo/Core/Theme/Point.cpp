@@ -61,16 +61,16 @@ namespace Kaixo::Theme {
     }
 
     void PointElement::interpretX(const basic_json& theme, View::State state) {
-        x.interpret(theme, parseExpressionOrNumber(self->functions), state);
+        x.interpret(theme, parseExpressionOrNumber(self->functions), state, self->functions);
     }
 
     void PointElement::interpretY(const basic_json& theme, View::State state) {
-        y.interpret(theme, parseExpressionOrNumber(self->functions), state);
+        y.interpret(theme, parseExpressionOrNumber(self->functions), state, self->functions);
     }
 
     void PointElement::interpret(const basic_json& theme, View::State state) {
-        x.interpret(theme, parseIdx(self->functions, 0), state);
-        y.interpret(theme, parseIdx(self->functions, 1), state);
+        x.interpret(theme, parseIdx(self->functions, 0), state, self->functions);
+        y.interpret(theme, parseIdx(self->functions, 1), state, self->functions);
 
         if (theme.contains("x")) interpretX(theme["x"], state);
         if (theme.contains("y")) interpretY(theme["y"], state);
@@ -100,8 +100,8 @@ namespace Kaixo::Theme {
                     auto xe = self->x[s];
                     auto ye = self->y[s];
 
-                    if (xe.value) x = { xe.value(values), xe.transition };
-                    if (ye.value) y = { ye.value(values), ye.transition };
+                    if (xe.value) x = { xe.value(values), xe.transition, std::move(xe.curve) };
+                    if (ye.value) y = { ye.value(values), ye.transition, std::move(ye.curve) };
                 };
 
                 if (loadIndex != self->loadIndex) {

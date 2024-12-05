@@ -46,7 +46,7 @@ namespace Kaixo::Theme {
     }
     
     void ValueElement::interpret(const basic_json& theme, View::State state) {
-        val.interpret(theme, parseExpressionOrNumber(self->functions), state);
+        val.interpret(theme, parseExpressionOrNumber(self->functions), state, self->functions);
     }
 
     void ValueElement::interpret(const basic_json& theme) {
@@ -70,7 +70,7 @@ namespace Kaixo::Theme {
             float get(View::State s = View::State::Default, const ExpressionParser::ValueMap& values = {}) override {
                 const auto reassign = [&] {
                     auto ve = self->val[s];
-                    if (ve.value) val = { ve.value(values), ve.transition };
+                    if (ve.value) val = { ve.value(values), ve.transition, std::move(ve.curve) };
                 };
 
                 if (loadIndex != self->loadIndex) {

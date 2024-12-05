@@ -20,6 +20,7 @@ namespace Kaixo::Theme {
         struct Assign {
             const Ty& value;
             double transition;
+            std::function<double(double)> curve;
         };
 
         // ------------------------------------------------
@@ -29,6 +30,7 @@ namespace Kaixo::Theme {
             m_Current = get();
             m_Goal = a.value;
             m_TransitionTime = a.transition;
+            m_TransitionCurve = std::move(a.curve);
             if (m_IsInitialized) {
                 m_PointOfChange = std::chrono::steady_clock::now();
             }
@@ -41,7 +43,8 @@ namespace Kaixo::Theme {
         Ty get() const {
             auto _percent = percent();
             if (_percent == 1) return m_Goal;
-            return m_Current + (m_Goal - m_Current) * _percent;
+            auto _transformed = m_TransitionCurve ? m_TransitionCurve(_percent) : _percent;
+            return m_Current + (m_Goal - m_Current) * _transformed;
         }
 
         // ------------------------------------------------
@@ -68,6 +71,7 @@ namespace Kaixo::Theme {
         double m_TransitionTime{}; // Millis
         std::chrono::steady_clock::time_point m_PointOfChange{}; // Time point when change happened
         bool m_IsInitialized = false;
+        std::function<double(double)> m_TransitionCurve{};
 
         // ------------------------------------------------
 

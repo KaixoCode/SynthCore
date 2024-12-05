@@ -61,23 +61,23 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
         
-        r.interpret(theme, parseRed, state);
-        g.interpret(theme, parseGreen, state);
-        b.interpret(theme, parseBlue, state);
-        a.interpret(theme, parseAlpha, state);
+        r.interpret(theme, parseRed, state, self->functions);
+        g.interpret(theme, parseGreen, state, self->functions);
+        b.interpret(theme, parseBlue, state, self->functions);
+        a.interpret(theme, parseAlpha, state, self->functions);
 
         // ------------------------------------------------
         
         if (theme.contains("rgb")) {
-            r.interpret(theme["rgb"], parseRed, state);
-            g.interpret(theme["rgb"], parseGreen, state);
-            b.interpret(theme["rgb"], parseBlue, state);
+            r.interpret(theme["rgb"], parseRed, state, self->functions);
+            g.interpret(theme["rgb"], parseGreen, state, self->functions);
+            b.interpret(theme["rgb"], parseBlue, state, self->functions);
         }
         
-        if (theme.contains("r")) r.interpret(theme["r"], parseExpressionOrNumber, state);
-        if (theme.contains("g")) g.interpret(theme["g"], parseExpressionOrNumber, state);
-        if (theme.contains("b")) b.interpret(theme["b"], parseExpressionOrNumber, state);
-        if (theme.contains("a")) a.interpret(theme["a"], parseExpressionOrNumber, state);
+        if (theme.contains("r")) r.interpret(theme["r"], parseExpressionOrNumber, state, self->functions);
+        if (theme.contains("g")) g.interpret(theme["g"], parseExpressionOrNumber, state, self->functions);
+        if (theme.contains("b")) b.interpret(theme["b"], parseExpressionOrNumber, state, self->functions);
+        if (theme.contains("a")) a.interpret(theme["a"], parseExpressionOrNumber, state, self->functions);
 
         // ------------------------------------------------
         
@@ -127,13 +127,13 @@ namespace Kaixo::Theme {
                     auto be = self->b[s];
                     auto ae = self->a[s];
 
-                    if (re.value) r = { re.value(values), re.transition };
+                    if (re.value) r = { re.value(values), re.transition, std::move(re.curve) };
                     else r = { 0, 0 };
-                    if (ge.value) g = { ge.value(values), ge.transition };
+                    if (ge.value) g = { ge.value(values), ge.transition, std::move(ge.curve) };
                     else g = { 0, 0 };
-                    if (be.value) b = { be.value(values), be.transition };
+                    if (be.value) b = { be.value(values), be.transition, std::move(be.curve) };
                     else b = { 0, 0 };
-                    if (ae.value) a = { ae.value(values), ae.transition };
+                    if (ae.value) a = { ae.value(values), ae.transition, std::move(ae.curve) };
                     else a = { 0, 0 };
                 };
 

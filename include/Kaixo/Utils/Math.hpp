@@ -38,6 +38,13 @@ namespace Kaixo {
 
         // ------------------------------------------------
         
+        constexpr static double PI = std::numbers::pi;
+        constexpr static double TWO_PI = std::numbers::pi * 2;
+        constexpr static float PI_F = PI;
+        constexpr static float TWO_PI_F = TWO_PI;
+
+        // ------------------------------------------------
+        
         KAIXO_MONO saw(is_mono auto x, is_mono auto nf /*norm freq [0-1]*/) noexcept {
             constexpr auto f = [](auto x) {
                 constexpr auto g = [](auto x) {
@@ -498,7 +505,7 @@ namespace Kaixo {
                 struct int2 { int x[2]; };
                 int2 h = std::bit_cast<int2>(static_cast<double>(a));
                 h.x[1] = (int)(b * (h.x[1] - 1072632447) + 1072632447), h.x[0] = 0;
-                return (float)std::bit_cast<double>(h);
+                return static_cast<decltype(a)>(std::bit_cast<double>(h));
             }
 
             KAIXO_POLY pow(is_poly auto a, is_poly auto b) noexcept { return exp2(log2(a) * b); }
@@ -706,6 +713,38 @@ namespace Kaixo {
 
         // ------------------------------------------------
 
+    };
+
+    // ------------------------------------------------
+    
+    struct Easing {
+        KAIXO_MONO easeInSine(is_mono auto x) { return 1 - Math::Fast::ncos(0.25 * x); }
+        KAIXO_MONO easeOutSine(is_mono auto x) { return Math::Fast::nsin(0.25 * x); }
+        KAIXO_MONO easeInOutSine(is_mono auto x) { return 0.5 + 0.5 * Math::Fast::nsin(0.5 * x - 0.25); }
+        KAIXO_MONO easeInQuad(is_mono auto x) { return Math::powN<2>(x); }
+        KAIXO_MONO easeOutQuad(is_mono auto x) { return Math::invPowN<2>(x); }
+        KAIXO_MONO easeInOutQuad(is_mono auto x) { return x < 0.5 ? 0.5 * Math::powN<2>(2 * x) : (0.5 * Math::invPowN<2>(2 * x - 1) + 0.5); }
+        KAIXO_MONO easeInCubic(is_mono auto x) { return Math::powN<3>(x); }
+        KAIXO_MONO easeOutCubic(is_mono auto x) { return Math::invPowN<3>(x); }
+        KAIXO_MONO easeInOutCubic(is_mono auto x) { return x < 0.5 ? 0.5 * Math::powN<3>(2 * x) : (0.5 * Math::invPowN<3>(2 * x - 1) + 0.5); }
+        KAIXO_MONO easeInQuart(is_mono auto x) { return Math::powN<4>(x); }
+        KAIXO_MONO easeOutQuart(is_mono auto x) { return Math::invPowN<4>(x); }
+        KAIXO_MONO easeInOutQuart(is_mono auto x) { return x < 0.5 ? 0.5 * Math::powN<4>(2 * x) : (0.5 * Math::invPowN<4>(2 * x - 1) + 0.5); }
+        KAIXO_MONO easeInQuint(is_mono auto x) { return Math::powN<5>(x); }
+        KAIXO_MONO easeOutQuint(is_mono auto x) { return Math::invPowN<5>(x); }
+        KAIXO_MONO easeInOutQuint(is_mono auto x) { return x < 0.5 ? 0.5 * Math::powN<5>(2 * x) : (0.5 * Math::invPowN<5>(2 * x - 1) + 0.5); }
+        KAIXO_MONO easeInExpo(is_mono auto x) { return Math::pow(2, 10 * x - 10); }
+        KAIXO_MONO easeOutExpo(is_mono auto x) { return 1 - Math::pow(2, -10 * x); }
+        KAIXO_MONO easeInOutExpo(is_mono auto x) { return x < 0.5 ? 0.5 * Math::pow(2, 20 * x - 10) : (1 - 0.5 * Math::pow(2, -20 * x + 10)); }
+        KAIXO_MONO easeInCirc(is_mono auto x) { return 1 - Math::sqrt(1 - x * x); }
+        KAIXO_MONO easeOutCirc(is_mono auto x) { return Math::sqrt(1 - (1 - x) * (1 - x)); }
+        KAIXO_MONO easeInOutCirc(is_mono auto x) { return x < 0.5 ? 0.5 - 0.5 * Math::sqrt(1 - 4 * x * x) : (0.5 + 0.5 * Math::sqrt(1 - 4 * (x - 1) * (x - 1))); }
+        KAIXO_MONO easeInBack(is_mono auto x) { return 2.70158 * x * x * x - 1.70158 * x * x; }
+        KAIXO_MONO easeOutBack(is_mono auto x) { return 1 + 2.70158 * (x - 1) * (x - 1) * (x - 1) + 1.70158 * (x - 1) * (x - 1); }
+        KAIXO_MONO easeInOutBack(is_mono auto x) { return x < 0.5 ? 2 * x * x * (7.189819 * x - 2.5949095) : (2 * (x - 1) * (x - 1) * (7.189819 * (x - 1) + 2.5949095) + 1); }
+        KAIXO_MONO easeInElastic(is_mono auto x) { return -Math::pow(2, 10 * x - 10) * Math::sin(x * 20.9439510239 - 22.5147473507); }
+        KAIXO_MONO easeOutElastic(is_mono auto x) { return Math::pow(2, -10 * x) * Math::sin(x * 20.9439510239 - 1.57079632679) + 1; }
+        KAIXO_MONO easeInOutElastic(is_mono auto x) { return x < 0.5 ? -0.5 * Math::pow(2, 20 * x - 10) * Math::sin(27.9252680319 * x - 15.5334303427) : 0.5 * Math::pow(2, -20 * x + 10) * Math::sin(27.9252680319 * x - 15.5334303427) + 1; }
     };
 
     // ------------------------------------------------
