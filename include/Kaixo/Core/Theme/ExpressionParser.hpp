@@ -96,9 +96,13 @@ namespace Kaixo::Theme {
             };
 
             // ------------------------------------------------
+            
+            struct Comma {};
 
-            enum Type { Op = 0, Num, Var, Paren, Ident };
-            std::variant<Operator, Number, Variable, Parenthesis, Identifier> value;
+            // ------------------------------------------------
+
+            enum Type { Op = 0, Num, Var, Paren, Ident, Cmm };
+            std::variant<Operator, Number, Variable, Parenthesis, Identifier, Comma> value;
 
             // ------------------------------------------------
 
@@ -122,7 +126,7 @@ namespace Kaixo::Theme {
         std::optional<Token::Parenthesis> parseParenthesis();
         std::optional<Token::Variable> parseVariable();
         std::optional<Token::Identifier> parseIdentifier();
-        bool parseComma();
+        std::optional<Token::Comma> parseComma();
 
         // ------------------------------------------------
         

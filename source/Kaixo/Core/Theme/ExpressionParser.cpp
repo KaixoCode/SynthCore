@@ -98,17 +98,17 @@ namespace Kaixo::Theme {
         if (consume("-")) return { { 6, [](float a, float b) { return a - b; }, true, true } };
         if (consume("*")) return { { 5, [](float a, float b) { return a * b; }, true, true } };
         if (consume("/")) return { { 5, [](float a, float b) { return a / b; }, true, true } };
-        if (consume("<")) return { { 9, [](float a, float b) { return a < b; }, true, true } };
-        if (consume(">")) return { { 9, [](float a, float b) { return a > b; }, true, true } };
         if (consume("<=")) return { { 9, [](float a, float b) { return a <= b; }, true, true } };
         if (consume(">=")) return { { 9, [](float a, float b) { return a >= b; }, true, true } };
+        if (consume("<")) return { { 9, [](float a, float b) { return a < b; }, true, true } };
+        if (consume(">")) return { { 9, [](float a, float b) { return a > b; }, true, true } };
         if (consume("==")) return { { 10, [](float a, float b) { return a == b; }, true, true } };
         if (consume("!=")) return { { 10, [](float a, float b) { return a != b; }, true, true } };
         if (consume("&&")) return { { 14, [](float a, float b) { return a && b; }, true, true } };
         if (consume("||")) return { { 15, [](float a, float b) { return a || b; }, true, true } };
 
-        if (consume("!")) return { { 3, [](float a, float) { return !a; }, false, false } };
-        if (consume("-")) return { { 3, [](float a, float) { return -a; }, false, false } };
+        if (consume("!")) return { { 3, [](float, float a) { return !a; }, false, false } };
+        if (consume("-")) return { { 3, [](float, float a) { return -a; }, false, false } };
 
         return {};
     };
@@ -161,10 +161,11 @@ namespace Kaixo::Theme {
         return { { std::string(identifier) } };
     }
 
-    bool ExpressionParser::parseComma() {
+    std::optional<ExpressionParser::Token::Comma> ExpressionParser::parseComma() {
         skipWhitespace();
-        if (empty()) return false;
-        return consume(",");
+        if (empty()) return {};
+        if (consume(",")) return Token::Comma{};
+        return {};
     }
 
     // ------------------------------------------------
@@ -179,7 +180,7 @@ namespace Kaixo::Theme {
             else if (auto var = parseVariable()) m_Tokens.emplace_back(std::move(var.value()));
             else if (auto op = parseOperator()) m_Tokens.emplace_back(std::move(op.value()));
             else if (auto ident = parseIdentifier()) m_Tokens.emplace_back(std::move(ident.value()));
-            else if (parseComma());
+            else if (auto comma = parseComma()) m_Tokens.emplace_back(std::move(comma.value()));
             else return false; // Invalid
         }
 
@@ -211,6 +212,19 @@ namespace Kaixo::Theme {
             auto index = token.value.index();
 
             switch (index) {
+            case Token::Cmm: {
+                m_Tokens.pop_front();
+                while (!stack.empty()) {
+                    if (topOfStackIs(Token::Paren)) {
+                        auto& o1 = std::get<Token::Paren>(stack.top().value);
+                        if (o1.open) break;
+                    }
+
+                    infix.push_back(std::move(stack.top()));
+                    stack.pop();
+                }
+                break;
+            }
             case Token::Ident: {
                 stack.push(std::move(m_Tokens.front()));
                 m_Tokens.pop_front();
@@ -271,6 +285,7 @@ namespace Kaixo::Theme {
 
                 if (topOfStackIs(Token::Paren)) {
                     stack.pop(); // Discard '('
+                    if (stack.empty()) break;
                     if (topOfStackIs(Token::Ident)) {
                         infix.push_back(std::move(stack.top()));
                         stack.pop();
