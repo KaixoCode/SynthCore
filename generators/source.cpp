@@ -408,14 +408,14 @@ namespace Kaixo::Generator {
                     add("// ------------------------------------------------", indent);
                     add();
                 } else {
-                    std::string className = "BasicElement";
-                    if (el.type == "stateful") className = "StatefulElement";
-                    if (el.type == "basic") className = "BasicElement";
+                    std::string className = "DrawableElement";
                     if (el.type == "color") className = "ColorElement";
                     if (el.type == "font") className = "FontElement";
-                    if (el.type == "multi-frame") className = "MultiFrameElement";
                     if (el.type == "drawable") className = "DrawableElement";
                     if (el.type == "text-area") className = "TextAreaElement";
+                    if (el.type == "rectange") className = "RectangleElement";
+                    if (el.type == "point") className = "PointElement";
+                    if (el.type == "value") className = "ValueElement";
                     add(className + " " + nameToVar(el.name) + "{ add(\"" + el.name + "\") };", indent);
                 }
             };

@@ -124,6 +124,7 @@ namespace Kaixo::Theme {
         // ------------------------------------------------
         
         void reset() { 
+            base = {};
             transition = 0;
             curve = {};
             states.clear();
@@ -134,37 +135,37 @@ namespace Kaixo::Theme {
         void interpret(const basic_json& theme, auto interpret, View::State state = View::State::Default, const ExpressionParser::FunctionMap& funs = {}) {
             const auto parseCurve = [&](auto& curve, std::string_view expression) {
 
-                if (expression == "Curve::EaseIn") curve = [](double x) { return Easing::easeInCubic(x); };
-                else if (expression == "Curve::EaseOut") curve = [](double x) { return Easing::easeOutCubic(x); };
-                else if (expression == "Curve::EaseInOut") curve = [](double x) { return Easing::easeInOutCubic(x); };
-                else if (expression == "Curve::Ease") curve = [](double x) { return Easing::easeInOutCubic(x); };
-                else if (expression == "Curve::EaseInSine") curve = [](double x) { return Easing::easeInSine(x); };
-                else if (expression == "Curve::EaseOutSine") curve = [](double x) { return Easing::easeOutSine(x); };
-                else if (expression == "Curve::EaseInOutSine") curve = [](double x) { return Easing::easeInOutSine(x); };
-                else if (expression == "Curve::EaseInQuad") curve = [](double x) { return Easing::easeInQuad(x); };
-                else if (expression == "Curve::EaseOutQuad") curve = [](double x) { return Easing::easeOutQuad(x); };
-                else if (expression == "Curve::EaseInOutQuad") curve = [](double x) { return Easing::easeInOutQuad(x); };
-                else if (expression == "Curve::EaseInCubic") curve = [](double x) { return Easing::easeInCubic(x); };
-                else if (expression == "Curve::EaseOutCubic") curve = [](double x) { return Easing::easeOutCubic(x); };
-                else if (expression == "Curve::EaseInOutCubic") curve = [](double x) { return Easing::easeInOutCubic(x); };
-                else if (expression == "Curve::EaseInQuart") curve = [](double x) { return Easing::easeInQuart(x); };
-                else if (expression == "Curve::EaseOutQuart") curve = [](double x) { return Easing::easeOutQuart(x); };
-                else if (expression == "Curve::EaseInOutQuart") curve = [](double x) { return Easing::easeInOutQuart(x); };
-                else if (expression == "Curve::EaseInQuint") curve = [](double x) { return Easing::easeInQuint(x); };
-                else if (expression == "Curve::EaseOutQuint") curve = [](double x) { return Easing::easeOutQuint(x); };
-                else if (expression == "Curve::EaseInOutQuint") curve = [](double x) { return Easing::easeInOutQuint(x); };
-                else if (expression == "Curve::EaseInExpo") curve = [](double x) { return Easing::easeInExpo(x); };
-                else if (expression == "Curve::EaseOutExpo") curve = [](double x) { return Easing::easeOutExpo(x); };
-                else if (expression == "Curve::EaseInOutExpo") curve = [](double x) { return Easing::easeInOutExpo(x); };
-                else if (expression == "Curve::EaseInCirc") curve = [](double x) { return Easing::easeInCirc(x); };
-                else if (expression == "Curve::EaseOutCirc") curve = [](double x) { return Easing::easeOutCirc(x); };
-                else if (expression == "Curve::EaseInOutCirc") curve = [](double x) { return Easing::easeInOutCirc(x); };
-                else if (expression == "Curve::EaseInBack") curve = [](double x) { return Easing::easeInBack(x); };
-                else if (expression == "Curve::EaseOutBack") curve = [](double x) { return Easing::easeOutBack(x); };
-                else if (expression == "Curve::EaseInOutBack") curve = [](double x) { return Easing::easeInOutBack(x); };
-                else if (expression == "Curve::EaseInElastic") curve = [](double x) { return Easing::easeInElastic(x); };
-                else if (expression == "Curve::EaseOutElastic") curve = [](double x) { return Easing::easeOutElastic(x); };
-                else if (expression == "Curve::EaseInOutElastic") curve = [](double x) { return Easing::easeInOutElastic(x); };
+                if (expression == "ease-in") curve = [](double x) { return Easing::easeInCubic(x); };
+                else if (expression == "ease-out") curve = [](double x) { return Easing::easeOutCubic(x); };
+                else if (expression == "ease-in-out") curve = [](double x) { return Easing::easeInOutCubic(x); };
+                else if (expression == "ease") curve = [](double x) { return Easing::easeInOutCubic(x); };
+                else if (expression == "ease-in-sine") curve = [](double x) { return Easing::easeInSine(x); };
+                else if (expression == "ease-out-sine") curve = [](double x) { return Easing::easeOutSine(x); };
+                else if (expression == "ease-in-out-sine") curve = [](double x) { return Easing::easeInOutSine(x); };
+                else if (expression == "ease-in-quad") curve = [](double x) { return Easing::easeInQuad(x); };
+                else if (expression == "ease-out-quad") curve = [](double x) { return Easing::easeOutQuad(x); };
+                else if (expression == "ease-in-out-quad") curve = [](double x) { return Easing::easeInOutQuad(x); };
+                else if (expression == "ease-in-cubic") curve = [](double x) { return Easing::easeInCubic(x); };
+                else if (expression == "ease-out-cubic") curve = [](double x) { return Easing::easeOutCubic(x); };
+                else if (expression == "ease-in-out-cubic") curve = [](double x) { return Easing::easeInOutCubic(x); };
+                else if (expression == "ease-in-quart") curve = [](double x) { return Easing::easeInQuart(x); };
+                else if (expression == "ease-out-quart") curve = [](double x) { return Easing::easeOutQuart(x); };
+                else if (expression == "ease-in-out-quart") curve = [](double x) { return Easing::easeInOutQuart(x); };
+                else if (expression == "ease-in-quint") curve = [](double x) { return Easing::easeInQuint(x); };
+                else if (expression == "ease-out-quint") curve = [](double x) { return Easing::easeOutQuint(x); };
+                else if (expression == "ease-in-out-quint") curve = [](double x) { return Easing::easeInOutQuint(x); };
+                else if (expression == "ease-in-expo") curve = [](double x) { return Easing::easeInExpo(x); };
+                else if (expression == "ease-out-expo") curve = [](double x) { return Easing::easeOutExpo(x); };
+                else if (expression == "ease-in-out-expo") curve = [](double x) { return Easing::easeInOutExpo(x); };
+                else if (expression == "ease-in-circ") curve = [](double x) { return Easing::easeInCirc(x); };
+                else if (expression == "ease-out-circ") curve = [](double x) { return Easing::easeOutCirc(x); };
+                else if (expression == "ease-in-out-circ") curve = [](double x) { return Easing::easeInOutCirc(x); };
+                else if (expression == "ease-in-back") curve = [](double x) { return Easing::easeInBack(x); };
+                else if (expression == "ease-out-back") curve = [](double x) { return Easing::easeOutBack(x); };
+                else if (expression == "ease-in-out-back") curve = [](double x) { return Easing::easeInOutBack(x); };
+                else if (expression == "ease-in-elastic") curve = [](double x) { return Easing::easeInElastic(x); };
+                else if (expression == "ease-out-elastic") curve = [](double x) { return Easing::easeOutElastic(x); };
+                else if (expression == "ease-in-out-elastic") curve = [](double x) { return Easing::easeInOutElastic(x); };
                 else {
                     auto fun = ExpressionParser::parseFunction(expression, funs);
                     if (fun.nofArgs != 1) return; // Invalid expression

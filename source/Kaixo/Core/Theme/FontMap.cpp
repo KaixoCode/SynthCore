@@ -85,6 +85,7 @@ namespace Kaixo::Theme {
 
     void FontElement::interpret(const basic_json& theme) {
         maxHeight = 0;
+        size = 0;
         id = NoImage;
         font = NoFont;
         charMap.clear();
@@ -93,8 +94,8 @@ namespace Kaixo::Theme {
             font = self->registerFont(theme["font"].as<basic_json::string>());
         }
         
-        if (theme.contains("font-size", basic_json::Number)) { // Font file
-            size = theme["font-size"].as<float>();
+        if (theme.contains("size", basic_json::Number)) { // Font file
+            size = theme["size"].as<float>();
             maxHeight = size;
         }
 

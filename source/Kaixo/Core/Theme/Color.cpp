@@ -37,23 +37,74 @@ namespace Kaixo::Theme {
             return false;
         };
 
+        const auto extractHex = [](ExpressionParser::Expression& val, const basic_json& clr, std::size_t index) -> bool {
+            if (index >= 4) return false;
+            auto str = clr.as<std::string_view>();
+            str = str.substr(1);
+            for (char c : str) {
+                auto ch = std::tolower(c);
+                if (!oneOf(ch, "0123456789abcdef")) return false; // Invalid
+            }
+
+            bool nullPad = false;
+            switch (str.size()) {
+            case 3: if (index == 3) return val = [](auto&) { return 255; }, true;
+                [[fallthrough]];
+            case 4: nullPad = true, str = str.substr(index, 1); break;
+            case 6: if (index == 3) return val = [](auto&) { return 255; }, true;
+                [[fallthrough]];
+            case 8: str = str.substr(index * 2, 2); break;
+            }
+
+            std::size_t result = 0;
+            for (char c : str) {
+                auto ch = std::tolower(c);
+
+                std::size_t value =
+                      ch == '0' ?  0 : ch == '1' ?  1 : ch == '2' ?  2 : ch == '3' ?  3
+                    : ch == '4' ?  4 : ch == '5' ?  5 : ch == '6' ?  6 : ch == '7' ?  7
+                    : ch == '8' ?  8 : ch == '9' ?  9 : ch == 'a' ? 10 : ch == 'b' ? 11
+                    : ch == 'c' ? 12 : ch == 'd' ? 13 : ch == 'e' ? 14 : ch == 'f' ? 15 : 0;
+
+                result <<= 4;
+                result += value;
+            }
+
+            if (nullPad) result <<= 4;
+            val = [val = result](auto&) { return val; };
+            return true;
+        };
+        
+        const auto isHexColor = [](const basic_json& clr) -> bool {
+            return clr.is(basic_json::String)
+                && clr.as<std::string_view>().starts_with("#")
+                && (clr.as<std::string_view>().size() == 4   // #rgb
+                 || clr.as<std::string_view>().size() == 5   // #rgba
+                 || clr.as<std::string_view>().size() == 7   // #rrggbb
+                 || clr.as<std::string_view>().size() == 9); // #rrggbbaa
+        };
+
         const auto isValidColor = [](const basic_json& clr) -> bool {
             return clr.is(basic_json::Array) && !clr.empty() && clr.size() <= 4;
         };
 
         const auto parseRed = [&](ExpressionParser::Expression& red, const basic_json& theme, View::State) -> bool {
-            return isValidColor(theme) && parseExpressionOrNumber(red, theme[0]);
+            return isHexColor(theme) && extractHex(red, theme, 0) 
+                || isValidColor(theme) && parseExpressionOrNumber(red, theme[0]);
         };
         
         const auto parseGreen = [&](ExpressionParser::Expression& green, const basic_json& theme, View::State) -> bool {
-            return isValidColor(theme) && parseExpressionOrNumber(green, theme[theme.size() >= 3 ? 1 : 0]);
+            return isHexColor(theme) && extractHex(green, theme, 1)
+                || isValidColor(theme) && parseExpressionOrNumber(green, theme[theme.size() >= 3 ? 1 : 0]);
         };
         
         const auto parseBlue = [&](ExpressionParser::Expression& blue, const basic_json& theme, View::State) -> bool {
-            return isValidColor(theme) && parseExpressionOrNumber(blue, theme[theme.size() >= 3 ? 2 : 0]);
+            return isHexColor(theme) && extractHex(blue, theme, 2)
+                || isValidColor(theme) && parseExpressionOrNumber(blue, theme[theme.size() >= 3 ? 2 : 0]);
         };
         
         const auto parseAlpha = [&](ExpressionParser::Expression& alpha, const basic_json& theme, View::State) -> bool {
+            if (isHexColor(theme) && extractHex(alpha, theme, 3)) return true;
             if (!isValidColor(theme)) return false;
             if (theme.size() == 1 || theme.size() == 3) return alpha = [](auto&) { return 255; }, true;
             return parseExpressionOrNumber(alpha, theme[theme.size() == 2 ? 1 : 3]);
