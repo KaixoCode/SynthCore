@@ -104,6 +104,57 @@ target_precompile_headers(${NAME} PRIVATE "${CORE_SOURCE_DIRECTORY}/include/Kaix
 
 # ==============================================
 
+include(FetchContent)
+FetchContent_Declare(
+    googletest
+    GIT_REPOSITORY https://github.com/google/googletest.git
+    GIT_TAG        v1.15.2
+)
+FetchContent_MakeAvailable(googletest)
+add_library(GTest::GTest INTERFACE IMPORTED)
+target_link_libraries(GTest::GTest INTERFACE gtest_main)
+
+enable_testing()
+
+file(GLOB_RECURSE TESTS_SOURCE
+    "${CORE_SOURCE_DIRECTORY}/tests/source/*.cpp"
+    "${CORE_SOURCE_DIRECTORY}/tests/include/*.hpp"
+    "${PROJECT_SOURCE_DIRECTORY}/tests/source/*.cpp"
+    "${PROJECT_SOURCE_DIRECTORY}/tests/include/*.hpp"
+)
+
+source_group(TREE ${CORE_SOURCE_DIRECTORY} FILES ${TESTS_SOURCE})
+
+add_executable(UnitTests
+    ${TESTS_SOURCE})
+
+add_dependencies(UnitTests gtest)
+
+get_target_property(${NAME}_INCLUDES ${NAME} INCLUDE_DIRECTORIES)
+get_target_property(${NAME}_LIBRARIES ${NAME} LINK_LIBRARIES)
+get_target_property(${NAME}_DEFINITIONS ${NAME} COMPILE_DEFINITIONS)
+
+target_include_directories(UnitTests
+    PRIVATE
+        ${CORE_SOURCE_DIRECTORY}/tests/include
+        ${PROJECT_SOURCE_DIRECTORY}/tests/include
+        "${${NAME}_INCLUDES}")
+
+target_compile_definitions(UnitTests
+    PRIVATE
+        "${${NAME}_DEFINITIONS}")
+    
+target_link_libraries(UnitTests 
+    "${NAME}"
+    "${${NAME}_LIBRARIES}"
+    GTest::GTest)
+
+target_precompile_headers(UnitTests PRIVATE "${CORE_SOURCE_DIRECTORY}/tests/include/Kaixo/Test/pch.hpp")
+
+add_test(UnitTests_gtests UnitTests)
+
+# ==============================================
+
 file(GLOB_RECURSE GENERATOR_SOURCE
     "${CORE_SOURCE_DIRECTORY}/generators/*.cpp"
     "${CORE_SOURCE_DIRECTORY}/generators/*.hpp"
