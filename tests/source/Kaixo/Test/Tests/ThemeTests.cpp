@@ -13,50 +13,162 @@ namespace Kaixo::Test {
 
     // ------------------------------------------------
     
-    TEST(ThemeTests, Expressions) {
-        using namespace Theme;
+    class InvalidExpressionTests 
+        : public ::testing::TestWithParam<std::string> {};
 
-        auto fun1 = [](float _0) { return _0; };
-        auto fun2 = [](float _0, float _1) { return _0 + _1; };
-        auto fun3 = [](float _0, float _1, float _2) { return _0 * _1 - _2; };
-        auto fun4 = [](float _0, float _1) { return _0 / _1; };
+    TEST_P(InvalidExpressionTests, InvalidExpression) {
+        auto& expressionString = GetParam();
 
-        float a = 1;
-        float b = 2;
-        float c = 3;
-        float d = 4;
-
-        ExpressionParser::FunctionMap functions{  
-            { "$fun1", ExpressionParser::parseFunction("$0") },
-            { "$fun2", ExpressionParser::parseFunction("$0 + $1") },
-            { "$fun3", ExpressionParser::parseFunction("$0 * $1 - $2") },
-            { "$fun4", ExpressionParser::parseFunction("$0 / $1") },
+        const Theme::ExpressionParser::ValueMap values{ { "$a", 1 }  };
+        const Theme::ExpressionParser::FunctionMap functions{
+            { "$f", { 1, [](auto& args) { return args[0]; }} },           // $f = $0
+            { "$g", { 2, [](auto& args) { return args[0] + args[1]; }} }, // $g = $0 + $1
         };
-
-        ExpressionParser::ValueMap values{
-            { "$a", a },
-            { "$b", b },
-            { "$c", c },
-            { "$d", d },
-        };
-
-        ASSERT_EQ(ExpressionParser::parse("$a + $b * 2.5 - $c", functions)(values), a + b * 2.5 - c);
-        ASSERT_EQ(ExpressionParser::parse("$a * $b * 2.5 - $c", functions)(values), a * b * 2.5 - c);
-        ASSERT_EQ(ExpressionParser::parse("$a - $b * 2.5 - $c", functions)(values), a - b * 2.5 - c);
-        ASSERT_EQ(ExpressionParser::parse("$a / $b * 2.5 - $c", functions)(values), a / b * 2.5 - c);
-        ASSERT_EQ(ExpressionParser::parse("($a + $b) * $c - 2.5", functions)(values), (a + b) * c - 2.5);
-        ASSERT_EQ(ExpressionParser::parse("$a > $b", functions)(values), a > b);
-        ASSERT_EQ(ExpressionParser::parse("$a > 2", functions)(values), a > 2);
-        ASSERT_EQ(ExpressionParser::parse("$a < $b", functions)(values), a < b);
-        ASSERT_EQ(ExpressionParser::parse("$a < 2", functions)(values), a < 2);
-        ASSERT_EQ(ExpressionParser::parse("$a >= $b", functions)(values), a >= b);
-        ASSERT_EQ(ExpressionParser::parse("$a >= 2", functions)(values), a >= 2);
-        ASSERT_EQ(ExpressionParser::parse("$a == 1 && $b != 1", functions)(values), a == 1 && b != 1);
-        ASSERT_EQ(ExpressionParser::parse("$a >= 1 || $b <= 1", functions)(values), a >= 1 || b <= 1);
-        ASSERT_EQ(ExpressionParser::parse("!($a == 1)", functions)(values), !(a == 1));
-        ASSERT_EQ(ExpressionParser::parse("$fun1($a)", functions)(values), fun1(a));
-        ASSERT_EQ(ExpressionParser::parse("$fun2($a, $b)", functions)(values), fun2(a, b));
+        auto expression = Theme::ExpressionParser::parse(expressionString, functions);
+        
+        bool expressionParsedSuccessfully = (bool)expression;
+        ASSERT_FALSE(expressionParsedSuccessfully);
     }
+    
+    INSTANTIATE_TEST_CASE_P(ParenthesisMissmatch, InvalidExpressionTests,
+        ::testing::Values(
+            "(0",
+            "0)",
+            "1 * (1 + 1",
+            "$f(1",
+            "$(f(1)",
+            "$g(1, 2))",
+            "$f(f(f($a("
+            "$f(f(f($a()))"
+        ));
+
+    // ------------------------------------------------
+
+    class ExpressionTests 
+        : public ::testing::TestWithParam<std::tuple<
+            std::string, // Expression
+            float        // Expected result
+        >> {};
+
+    TEST_P(ExpressionTests, EvaluateExpression) {
+        auto& [expressionString, expectedResult] = GetParam();
+
+        const Theme::ExpressionParser::ValueMap values{ { "$a", 1 }  };
+        const Theme::ExpressionParser::FunctionMap functions{
+            { "$f", { 1, [](auto& args) { return args[0]; }} },           // $f = $0
+            { "$g", { 2, [](auto& args) { return args[0] + args[1]; }} }, // $g = $0 + $1
+        };
+        auto expression = Theme::ExpressionParser::parse(expressionString, functions);
+        
+        bool expressionParsedSuccessfully = (bool)expression;
+        ASSERT_TRUE(expressionParsedSuccessfully);
+
+        auto result = expression(values);
+        ASSERT_EQ(result, expectedResult);
+    }
+
+    INSTANTIATE_TEST_CASE_P(SingleOperator, ExpressionTests,
+        ::testing::Values(
+            std::make_tuple("1    + 2  ", 3.0f),
+            std::make_tuple("1.0  + 2.0", 3.0f),
+            std::make_tuple("3    - 1  ", 2.0f),
+            std::make_tuple("3.0  - 1.0", 2.0f),
+            std::make_tuple("1    * 3  ", 3.0f),
+            std::make_tuple("1.0  * 3.0", 3.0f),
+            std::make_tuple("1    / 2  ", 0.5f),
+            std::make_tuple("1.0  / 2.0", 0.5f),
+            std::make_tuple("1.0 == 1.1", false),
+            std::make_tuple("1.0 != 1.1", true),
+            std::make_tuple("1   == 1  ", true),
+            std::make_tuple("1   != 1  ", false),
+            std::make_tuple("1    < 1  ", false),
+            std::make_tuple("1    < 1.01", true),
+            std::make_tuple("1    > 1  ", false),
+            std::make_tuple("1.1 >  1  ", true),
+            std::make_tuple("1   <= 1  ", true),
+            std::make_tuple("1.1 <= 1  ", false),
+            std::make_tuple("1   >= 1  ", true),
+            std::make_tuple("1   >= 1.1", false),
+            std::make_tuple("1   && 1  ", true),
+            std::make_tuple("1   && 0.1", true),
+            std::make_tuple("1   && 0  ", false),
+            std::make_tuple("1   && 0.0", false),
+            std::make_tuple("1   || 1  ", true),
+            std::make_tuple("1   || 0  ", true),
+            std::make_tuple("0   || 0.1", true),
+            std::make_tuple("0   || 0  ", false),
+            std::make_tuple("0   || 0.0", false),
+            std::make_tuple("!1.0", false),
+            std::make_tuple("!0.1", false),
+            std::make_tuple("!0.0", true)
+        ));
+    
+    INSTANTIATE_TEST_CASE_P(SingleOperatorTestsWithVariable, ExpressionTests,
+        ::testing::Values(
+            std::make_tuple("$a", 1),
+            std::make_tuple("$a   + 2  ", 3.0f),
+            std::make_tuple("$a   + 2.0", 3.0f),
+            std::make_tuple("3    - $a ", 2.0f),
+            std::make_tuple("3.0  - $a ", 2.0f),
+            std::make_tuple("$a   * 3  ", 3.0f),
+            std::make_tuple("$a   * 3.0", 3.0f),
+            std::make_tuple("$a   / 2  ", 0.5f),
+            std::make_tuple("$a   / 2.0", 0.5f),
+            std::make_tuple("$a  == 1.1", false),
+            std::make_tuple("$a  != 1.1", true),
+            std::make_tuple("$a  == 1  ", true),
+            std::make_tuple("$a  != 1  ", false),
+            std::make_tuple("$a   < 1  ", false),
+            std::make_tuple("$a   < 1.01", true),
+            std::make_tuple("$a   > 1  ", false),
+            std::make_tuple("1.1 >  $a ", true),
+            std::make_tuple("$a  <= 1  ", true),
+            std::make_tuple("1.1 <= $a ", false),
+            std::make_tuple("$a  >= 1  ", true),
+            std::make_tuple("$a  >= 1.1", false),
+            std::make_tuple("$a  && 1  ", true),
+            std::make_tuple("$a  && 0.1", true),
+            std::make_tuple("$a  && 0  ", false),
+            std::make_tuple("$a  && 0.0", false),
+            std::make_tuple("$a  || 1  ", true),
+            std::make_tuple("$a  || 0  ", true),
+            std::make_tuple("!$a", false)
+        ));
+    
+    INSTANTIATE_TEST_CASE_P(WithFunctionCall, ExpressionTests,
+        ::testing::Values(
+            std::make_tuple("  sin(0)                ", 0.0f),
+            std::make_tuple("floor(1.1)              ", 1.0f),
+            std::make_tuple("floor($a + 0.1)         ", 1.0f),
+            std::make_tuple("trunc(1.1)              ", 1.0f),
+            std::make_tuple("trunc($a + 0.1)         ", 1.0f),
+            std::make_tuple(" ceil(1.1)              ", 2.0f),
+            std::make_tuple(" ceil($a + 0.1)         ", 2.0f),
+            std::make_tuple("clamp(1.1, 0, 1)        ", 1.0f),
+            std::make_tuple("clamp(1.1, 0, $a)       ", 1.0f),
+            std::make_tuple("clamp($a + 0.1, 0, 1)   ", 1.0f),
+            std::make_tuple("clamp($a + 0.1, 0, $a)  ", 1.0f),
+            std::make_tuple("   $f(1)                ", 1.0f),
+            std::make_tuple("   $f($a)               ", 1.0f),
+            std::make_tuple("   $f(1 + 2)            ", 3.0f),
+            std::make_tuple("   $f($a + 2)           ", 3.0f),
+            std::make_tuple("   $f($f($f(1)))        ", 1.0f),
+            std::make_tuple("   $f($f($f($a)))       ", 1.0f),
+            std::make_tuple("   $g(1, 2)             ", 3.0f),
+            std::make_tuple("   $g($a, 2)            ", 3.0f),
+            std::make_tuple("   $g(1 + 2, 2)         ", 5.0f),
+            std::make_tuple("   $g($a + 2, 2)        ", 5.0f),
+            std::make_tuple("   $g((1 + 2), 2)       ", 5.0f),
+            std::make_tuple("   $g(($a + 2), 2)      ", 5.0f),
+            std::make_tuple("   $g(1 * (1 + 2), 2)   ", 5.0f),
+            std::make_tuple("   $g($a * (1 + 2), 2)  ", 5.0f),
+            std::make_tuple("   $g($f(1), 2.0)       ", 3.0f),
+            std::make_tuple("   $g($f($a), 2.0)      ", 3.0f),
+            std::make_tuple("   $g($f(1), $f(2))     ", 3.0f),
+            std::make_tuple("   $g($f($a), $f(2))    ", 3.0f),
+            std::make_tuple("   $g($f($f(1)), $f(2)) ", 3.0f),
+            std::make_tuple("   $g($f($f($a)), $f(2))", 3.0f)
+        ));
 
     // ------------------------------------------------
 

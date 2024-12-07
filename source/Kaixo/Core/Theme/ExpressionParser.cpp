@@ -17,7 +17,7 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
-        if (!parser.tokenize()) return {};
+        if (!parser.tokenize(funcs)) return {};
         if (!parser.convertToInfix(funcs)) return {};
 
         // ------------------------------------------------
@@ -38,7 +38,7 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
-        if (!parser.tokenize()) return {};
+        if (!parser.tokenize(funcs)) return {};
         if (!parser.convertToInfix(funcs)) return {};
 
         // ------------------------------------------------
@@ -74,7 +74,7 @@ namespace Kaixo::Theme {
         return false;
     };
 
-    std::optional<ExpressionParser::Token::Number> ExpressionParser::parseNumber() {
+    std::optional<ExpressionParser::Token> ExpressionParser::parseNumber() {
         skipWhitespace();
         if (empty()) return {};
 
@@ -84,104 +84,90 @@ namespace Kaixo::Theme {
         if (ec == std::errc()) { // No Error
             std::size_t nofParsed = std::distance(m_Value.data(), ptr);
             m_Value = m_Value.substr(nofParsed);
-            return { { number } };
+            return { { NumberToken{ number } } };
         }
 
         return {};
     };
 
-    std::optional<ExpressionParser::Token::Operator> ExpressionParser::parseOperator() {
+    std::optional<ExpressionParser::Token> ExpressionParser::parseSymbol() {
         skipWhitespace();
         if (empty()) return {};
 
-        if (consume("+")) return { { 6, [](float a, float b) { return a + b; }, true, true } };
-        if (consume("-")) return { { 6, [](float a, float b) { return a - b; }, true, true } };
-        if (consume("*")) return { { 5, [](float a, float b) { return a * b; }, true, true } };
-        if (consume("/")) return { { 5, [](float a, float b) { return a / b; }, true, true } };
-        if (consume("<=")) return { { 9, [](float a, float b) { return a <= b; }, true, true } };
-        if (consume(">=")) return { { 9, [](float a, float b) { return a >= b; }, true, true } };
-        if (consume("<")) return { { 9, [](float a, float b) { return a < b; }, true, true } };
-        if (consume(">")) return { { 9, [](float a, float b) { return a > b; }, true, true } };
-        if (consume("==")) return { { 10, [](float a, float b) { return a == b; }, true, true } };
-        if (consume("!=")) return { { 10, [](float a, float b) { return a != b; }, true, true } };
-        if (consume("&&")) return { { 14, [](float a, float b) { return a && b; }, true, true } };
-        if (consume("||")) return { { 15, [](float a, float b) { return a || b; }, true, true } };
+        if (consume(",")) return { { CommaToken{} } };
 
-        if (consume("!")) return { { 3, [](float, float a) { return !a; }, false, false } };
-        if (consume("-")) return { { 3, [](float, float a) { return -a; }, false, false } };
+        if (consume("(")) return { { LeftParenthesisToken{} } };
+        if (consume(")")) return { { RightParenthesisToken{} } };
+
+        if (consume("+")) return { { OperatorToken{ 6, [](float a, float b) { return a + b; }, true, true } } };
+        if (consume("-")) return { { OperatorToken{ 6, [](float a, float b) { return a - b; }, true, true } } };
+        if (consume("*")) return { { OperatorToken{ 5, [](float a, float b) { return a * b; }, true, true } } };
+        if (consume("/")) return { { OperatorToken{ 5, [](float a, float b) { return a / b; }, true, true } } };
+        if (consume("<=")) return { { OperatorToken{ 9, [](float a, float b) { return a <= b; }, true, true } } };
+        if (consume(">=")) return { { OperatorToken{ 9, [](float a, float b) { return a >= b; }, true, true } } };
+        if (consume("<")) return { { OperatorToken{ 9, [](float a, float b) { return a < b; }, true, true } } };
+        if (consume(">")) return { { OperatorToken{ 9, [](float a, float b) { return a > b; }, true, true } } };
+        if (consume("==")) return { { OperatorToken{ 10, [](float a, float b) { return a == b; }, true, true } } };
+        if (consume("!=")) return { { OperatorToken{ 10, [](float a, float b) { return a != b; }, true, true } } };
+        if (consume("&&")) return { { OperatorToken{ 14, [](float a, float b) { return a && b; }, true, true } } };
+        if (consume("||")) return { { OperatorToken{ 15, [](float a, float b) { return a || b; }, true, true } } };
+
+        if (consume("!")) return { { OperatorToken{ 3, [](float, float a) { return !a; }, false, false } } };
+        if (consume("-")) return { { OperatorToken{ 3, [](float, float a) { return -a; }, false, false } } };
 
         return {};
     };
 
-    std::optional<ExpressionParser::Token::Parenthesis> ExpressionParser::parseParenthesis() {
+    std::optional<ExpressionParser::Token> ExpressionParser::parseIdentifier(const FunctionMap& funcs) {
         skipWhitespace();
         if (empty()) return {};
 
-        if (consume("(")) return { { true } };
-        if (consume(")")) return { { false } };
-
-        return {};
-    };
-
-    std::optional<ExpressionParser::Token::Variable> ExpressionParser::parseVariable() {
-        skipWhitespace();
-        if (empty()) return {};
-        if (m_Value[0] != '$') return {}; // Variable must start with '$'
+        // Must start with a letter, underscore, or dollar sign
+        if (!oneOf(m_Value[0], "$_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")) return {};
 
         std::size_t size = 1;
-        while (m_Value.size() != size && oneOf(m_Value[size], "-_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")) {
+        while (m_Value.size() != size && oneOf(m_Value[size], "_-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")) {
             ++size;
         }
 
-        if (size == 1) return {}; // Can't only be '$'
-
-        std::string_view variable = m_Value.substr(0, size);
-        m_Value = m_Value.substr(size);
-
-        return { { std::string(variable) } };
-    };
-
-    std::optional<ExpressionParser::Token::Identifier> ExpressionParser::parseIdentifier() {
-        skipWhitespace();
-        if (empty()) return {};
-
-        // Must start with a letter or underscore
-        if (!oneOf(m_Value[0], "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")) return {};
-
-        std::size_t size = 1;
-        while (m_Value.size() != size && oneOf(m_Value[size], "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")) {
-            ++size;
-        }
-
-        if (size == 0) return {}; // Can't only be empty
+        if (size == 0 || m_Value[0] == '$' && size == 1) return {}; // Can't be empty, or just a '$'
 
         std::string_view identifier = m_Value.substr(0, size);
         m_Value = m_Value.substr(size);
 
-        return { { std::string(identifier) } };
-    }
+        auto it = GlobalFunctions.find(identifier);
+        if (it != GlobalFunctions.end()) {
+            return { { FunctionToken{ it->second } } };
+        }
+                
+        auto it2 = GlobalConstants.find(identifier);
+        if (it2 != GlobalConstants.end()) {
+            return { { NumberToken{ it2->second } } };
+        }
 
-    std::optional<ExpressionParser::Token::Comma> ExpressionParser::parseComma() {
-        skipWhitespace();
-        if (empty()) return {};
-        if (consume(",")) return Token::Comma{};
-        return {};
+        // At this point if it isn't a user-defined variable, it is an invalid identifier
+        if (identifier[0] != '$') return {}; 
+
+        auto it3 = funcs.find(identifier);
+        if (it3 != funcs.end()) {
+            return { { FunctionToken{ it3->second } } };
+        }
+
+        return { { VariableToken{ identifier } } };
     }
 
     // ------------------------------------------------
         
-    bool ExpressionParser::tokenize() {
+    bool ExpressionParser::tokenize(const FunctionMap& funcs) {
 
         // ------------------------------------------------
 
         while (!empty()) {
-            if (auto paren = parseParenthesis()) m_Tokens.emplace_back(std::move(paren.value()));
+            if (auto symbol = parseSymbol()) m_Tokens.emplace_back(std::move(symbol.value()));
             else if (auto number = parseNumber()) m_Tokens.emplace_back(std::move(number.value()));
-            else if (auto var = parseVariable()) m_Tokens.emplace_back(std::move(var.value()));
-            else if (auto op = parseOperator()) m_Tokens.emplace_back(std::move(op.value()));
-            else if (auto ident = parseIdentifier()) m_Tokens.emplace_back(std::move(ident.value()));
-            else if (auto comma = parseComma()) m_Tokens.emplace_back(std::move(comma.value()));
+            else if (auto identifier = parseIdentifier(funcs)) m_Tokens.emplace_back(std::move(identifier.value()));
             else return false; // Invalid
+            skipWhitespace();
         }
 
         // ------------------------------------------------
@@ -192,132 +178,278 @@ namespace Kaixo::Theme {
 
     }
 
+    // https://en.wikipedia.org/wiki/Shunting_yard_algorithm
     bool ExpressionParser::convertToInfix(const FunctionMap& funcs) {
 
         // ------------------------------------------------
 
-        std::stack<Token> stack;
-        std::list<Token> infix;
+        std::stack<Token> operatorStack{};
+        std::list<Token> outputQueue{};
 
         // ------------------------------------------------
 
-        auto topOfStackIs = [&](Token::Type type) {
-            return stack.top().value.index() == type;
+        auto topOfStack = [&] {
+            if (operatorStack.empty()) return Token::Type::None;
+            return operatorStack.top().type();
         };
 
         // ------------------------------------------------
 
         while (!m_Tokens.empty()) {
-            auto& token = m_Tokens.front();
-            auto index = token.value.index();
+            Token token = std::move(m_Tokens.front());
+            m_Tokens.pop_front();
 
-            switch (index) {
-            case Token::Cmm: {
-                m_Tokens.pop_front();
-                while (!stack.empty()) {
-                    if (topOfStackIs(Token::Paren)) {
-                        auto& o1 = std::get<Token::Paren>(stack.top().value);
-                        if (o1.open) break;
+            // ------------------------------------------------
+
+            switch (token.type()) {
+                
+            // ------------------------------------------------
+
+            case Token::Type::Variable:
+            case Token::Type::Number: {
+                outputQueue.push_back(std::move(token));
+                break;
+            }
+
+            // ------------------------------------------------
+
+            case Token::Type::LeftParenthesis: // '('
+            case Token::Type::Function: {
+                operatorStack.push(std::move(token));
+                break;
+            }
+
+            // ------------------------------------------------
+
+            case Token::Type::Operator: {
+                while (topOfStack() == Token::Type::Operator) {
+                    auto& o1 = std::get<OperatorToken>(token);
+                    auto& o2 = std::get<OperatorToken>(operatorStack.top());
+
+                    if (o1.precedence  > o2.precedence || 
+                        o1.precedence == o2.precedence && o1.left) 
+                    {
+                        outputQueue.push_back(std::move(operatorStack.top()));
+                        operatorStack.pop();
                     }
+                    else break;
+                }
 
-                    infix.push_back(std::move(stack.top()));
-                    stack.pop();
+                operatorStack.push(std::move(token));
+                break;
+            }
+
+            // ------------------------------------------------
+
+            case Token::Type::Comma: {
+                while (!operatorStack.empty()) {
+                    if (topOfStack() == Token::Type::LeftParenthesis) break;
+                    outputQueue.push_back(std::move(operatorStack.top()));
+                    operatorStack.pop();
                 }
                 break;
             }
-            case Token::Ident: {
-                stack.push(std::move(m_Tokens.front()));
-                m_Tokens.pop_front();
-                break;
-            }
-            case Token::Num: {
-                infix.push_back(std::move(m_Tokens.front()));
-                m_Tokens.pop_front();
-                break;
-            }
-            case Token::Var: {
-                Token::Variable& var = std::get<Token::Variable>(m_Tokens.front().value);
-                auto it = funcs.find(var.name);
-                if (it != funcs.end()) { // It's a function
-                    stack.push(std::move(m_Tokens.front()));
-                    m_Tokens.pop_front();
-                } else {
-                    infix.push_back(std::move(m_Tokens.front()));
-                    m_Tokens.pop_front();
-                }
-                break;
-            }
-            case Token::Op: {
-                auto& o1 = std::get<Token::Operator>(token.value);
-                while (!stack.empty() && topOfStackIs(Token::Op)) {
-                    auto& o2 = std::get<Token::Operator>(stack.top().value);
-                    if (o2.precedence < o1.precedence || (o1.precedence == o2.precedence && o1.left)) {
-                        infix.push_back(std::move(stack.top()));
-                        stack.pop();
-                        continue;
-                    }
 
-                    break;
+            // ------------------------------------------------
+
+            case Token::Type::RightParenthesis: { // ')'
+                while (topOfStack() != Token::Type::LeftParenthesis) {
+                    if (operatorStack.empty()) return false; // Parenthesis missmatch
+                    outputQueue.push_back(std::move(operatorStack.top()));
+                    operatorStack.pop();
                 }
 
-                stack.push(std::move(m_Tokens.front()));
-                m_Tokens.pop_front();
-                break;
-            }
-            case Token::Paren: {
-                auto& o1 = std::get<Token::Paren>(token.value);
-                if (o1.open) { // '('
-                    stack.push(std::move(m_Tokens.front()));
-                    m_Tokens.pop_front();
-                    break;
-                }
+                operatorStack.pop(); // Discard '('
 
-                m_Tokens.pop_front(); // Discard ')'
-
-                if (stack.empty()) return false; // Invalid
-
-                while (!topOfStackIs(Token::Paren)) {
-                    infix.push_back(std::move(stack.top()));
-                    stack.pop();
-
-                    if (stack.empty()) return false; // Invalid
-                }
-
-                if (topOfStackIs(Token::Paren)) {
-                    stack.pop(); // Discard '('
-                    if (stack.empty()) break;
-                    if (topOfStackIs(Token::Ident)) {
-                        infix.push_back(std::move(stack.top()));
-                        stack.pop();
-                    } else if (topOfStackIs(Token::Var)) {
-                        Token::Variable& var = std::get<Token::Variable>(stack.top().value);
-                        auto it = funcs.find(var.name);
-                        if (it != funcs.end()) { // It's a function
-                            infix.push_back(std::move(stack.top()));
-                            stack.pop();
-                        }
-                    }
+                if (topOfStack() == Token::Type::Function) {
+                    outputQueue.push_back(std::move(operatorStack.top()));
+                    operatorStack.pop();
                 }
 
                 break;
             }
+
+            // ------------------------------------------------
+
             }
         }
 
         // ------------------------------------------------
 
-        while (!stack.empty()) {
-            infix.push_back(std::move(stack.top()));
-            stack.pop();
+        while (!operatorStack.empty()) {
+            if (topOfStack() == Token::Type::LeftParenthesis ||
+                topOfStack() == Token::Type::RightParenthesis) return {}; // Parenthesis missmatch
+
+            outputQueue.push_back(std::move(operatorStack.top()));
+            operatorStack.pop();
         }
 
         // ------------------------------------------------
             
-        m_Tokens = std::move(infix);
+        m_Tokens = std::move(outputQueue);
 
         // ------------------------------------------------
 
         return true;
+
+        // ------------------------------------------------
+
+    }
+
+    template<bool IsFunction>
+    std::conditional_t<IsFunction, ExpressionParser::Function, ExpressionParser::Expression>
+        ExpressionParser::generateImpl(std::list<Token>& tokens, const FunctionMap & funcs)
+    {
+        
+        // ------------------------------------------------
+        
+        using StackType = std::conditional_t<IsFunction, FunctionType, Expression>;
+
+        // ------------------------------------------------
+
+        std::stack<StackType> expressionStack{};
+
+        // ------------------------------------------------
+
+        const auto popStack = [&] {
+            StackType value = std::move(expressionStack.top());
+            expressionStack.pop();
+            return value;
+        };
+        
+        const auto pushStack = [&](StackType&& value) {
+            expressionStack.push(std::move(value));
+        };
+
+        // ------------------------------------------------
+
+        std::size_t nofArgs = 0;
+
+        // ------------------------------------------------
+
+        while (!tokens.empty()) {
+            Token token = std::move(tokens.front());
+            tokens.pop_front();
+
+            // ------------------------------------------------
+
+            switch (token.type()) {
+
+            // ------------------------------------------------
+
+            case Token::Type::Function: {
+                auto& function = std::get<FunctionToken>(token).function;
+                if (expressionStack.size() < function.nofArgs) return {}; // Not enough arguments
+            
+                std::vector<StackType> arguments(function.nofArgs);
+                for (std::size_t i = 0; i < function.nofArgs; ++i) {
+                    // Expression stack is in reverse, so add in reverse
+                    arguments[function.nofArgs - i - 1] = popStack();
+                }
+            
+                std::vector<float> evaluatedArguments(arguments.size());
+                pushStack([args = std::move(arguments), 
+                        fun = function, 
+                        evaluatedArgs = std::move(evaluatedArguments)](auto& values) mutable
+                {
+                    for (std::size_t i = 0; i < fun.nofArgs; ++i) {
+                        evaluatedArgs[i] = args[i](values);
+                    }
+
+                    return fun.f(evaluatedArgs);
+                });
+
+                break;
+            }
+
+            // ------------------------------------------------
+
+            case Token::Type::Variable: {
+                std::string_view name = std::get<VariableToken>(token).name;
+                
+                // When generating a function, variables may only be numbers (the function arguments)
+                if constexpr (IsFunction) {
+                    name = name.substr(1); // Remove the dollar sign
+                    std::size_t argumentIndex = 0;
+                    auto [endPtr, errc] = std::from_chars(name.data(), name.data() + name.size(), argumentIndex);
+                    // It must parse the entirety of the variable name to be valid (name can only be a number)
+                    if (errc != std::errc() || endPtr != name.data() + name.size()) return {};
+
+                    pushStack([argumentIndex](auto& args) { return args[argumentIndex]; });
+                    nofArgs = Math::max(argumentIndex, nofArgs); // Find nof arguments by taking the highest argument number
+                } else {
+                    pushStack([name = std::string(name)](auto& values) {
+                        auto it = values.find(name);
+                        if (it == values.end()) return 0.f;
+                        return it->second;
+                    });
+                }
+
+                break;
+            }
+
+            // ------------------------------------------------
+
+            case Token::Type::Number: {
+                pushStack([number = std::get<NumberToken>(token).number](auto&) { return number; });
+                break;
+            }
+
+            // ------------------------------------------------
+
+            case Token::Type::Operator: {
+                auto& op = std::get<OperatorToken>(token);
+                if (op.binary) {
+                    if (expressionStack.size() < 2) return {}; // Not enough arguments on stack
+
+                    StackType a = popStack();
+                    StackType b = popStack();
+
+                    pushStack([
+                            a = std::move(a), 
+                            b = std::move(b),
+                            operation = std::move(op.operation)](auto& values)
+                    {
+                        return operation(b(values), a(values));
+                    });
+                } else {
+                    if (expressionStack.size() < 1) return {}; // Not enough arguments on stack
+
+                    StackType a = popStack();
+
+                    pushStack([
+                            a = std::move(a), 
+                            operation = std::move(op.operation)](auto& values)
+                    {
+                        return operation(0, a(values));
+                    });
+                }
+                break;
+            }
+
+            // ------------------------------------------------
+
+            default: return {}; // Invalid token
+
+            // ------------------------------------------------
+
+            }
+        }
+
+        // ------------------------------------------------
+
+        if (expressionStack.size() != 1) return {}; // Invalid expression
+
+        // ------------------------------------------------
+
+        if constexpr (IsFunction) {
+            return {
+                .nofArgs = nofArgs + 1,
+                .f = popStack(),
+            };
+        } else {
+            return popStack();
+        }
 
         // ------------------------------------------------
 
@@ -326,123 +458,8 @@ namespace Kaixo::Theme {
     ExpressionParser::Expression ExpressionParser::generate(const FunctionMap& funcs) {
 
         // ------------------------------------------------
-
-        std::stack<Expression> expressionStack{};
         
-        // ------------------------------------------------
-        
-        const auto createFun = [&](const Function& function) -> Expression {
-            if (expressionStack.size() < function.nofArgs) return {}; // Not enough arguments
-            
-            std::vector<Expression> arguments{};
-            arguments.reserve(function.nofArgs);
-            for (std::size_t i = 0; i < function.nofArgs; ++i) {
-                arguments.emplace_back(std::move(expressionStack.top()));
-                expressionStack.pop();
-            }
-            
-            std::vector<float> evaluatedArguments(arguments.size());
-            return [args = std::move(arguments), 
-                    fun = function.f, 
-                    evaluatedArgs = std::move(evaluatedArguments)](const ValueMap& values) mutable -> float
-            {
-                for (std::size_t i = 0; i < args.size(); ++i) {
-                    evaluatedArgs[i] = args[i](values);
-                }
-
-                return fun(evaluatedArgs);
-            };
-        };
-
-        // ------------------------------------------------
-
-        while (!m_Tokens.empty()) {
-            auto& token = m_Tokens.front();
-            auto index = token.value.index();
-
-            switch (index) {
-            case Token::Ident: {
-                Token::Identifier& ident = std::get<Token::Identifier>(token.value);
-
-                const auto addFun = [&](const Function& fun) {
-                    m_Tokens.pop_front();
-                    expressionStack.push(std::move(createFun(fun)));
-                };
-
-                auto it = GlobalFunctions.find(ident.name);
-                if (it != GlobalFunctions.end()) addFun(it->second);
-                else return {}; // Invalid identifier;
-                continue;
-            }
-            case Token::Var: {
-                Token::Variable& var = std::get<Token::Variable>(token.value);
-                auto it = funcs.find(var.name);
-                if (it != funcs.end()) { // It's a function
-                    auto fun = createFun(it->second);
-                    m_Tokens.pop_front();
-                    expressionStack.push(std::move(fun));
-                    continue;
-                } else {
-                    auto fun = [name = std::move(var.name)](const ValueMap& values) -> float {
-                        auto it = values.find(name);
-                        if (it == values.end()) return 0;
-                        return it->second;
-                    };
-                    m_Tokens.pop_front();
-                    expressionStack.push(std::move(fun));
-                    continue;
-                }
-            }
-            case Token::Num: {
-                Token::Number& var = std::get<Token::Number>(token.value);
-                auto fun = [number = std::move(var.number)](const ValueMap& values) -> float {
-                    return number;
-                };
-                m_Tokens.pop_front();
-                expressionStack.push(std::move(fun));
-                continue;
-            }
-            case Token::Op: {
-                Token::Operator& op = std::get<Token::Operator>(token.value);
-                if (op.binary) {
-                    if (expressionStack.size() < 2) return {}; // Invalid
-
-                    Expression a = std::move(expressionStack.top());
-                    expressionStack.pop();
-                    Expression b = std::move(expressionStack.top());
-                    expressionStack.pop();
-
-                    auto fun = [a = std::move(a), b = std::move(b), operation = std::move(op.operation)] (const ValueMap& values) -> float {
-                        return operation(b(values), a(values));
-                    };
-
-                    m_Tokens.pop_front();
-                    expressionStack.push(std::move(fun));
-                    continue;
-                } else {
-                    if (expressionStack.size() < 1) return {}; // Invalid
-
-                    Expression a = std::move(expressionStack.top());
-                    expressionStack.pop();
-
-                    auto fun = [a = std::move(a), operation = std::move(op.operation)] (const ValueMap& values) -> float {
-                        return operation(0, a(values));
-                    };
-
-                    m_Tokens.pop_front();
-                    expressionStack.push(std::move(fun));
-                    continue;
-                }
-            }
-            }
-
-            return {}; // Invalid
-        }
-
-        // ------------------------------------------------
-
-        if (expressionStack.size() != 1) return {}; // Invalid
-        return expressionStack.top();
+        return generateImpl<false>(m_Tokens, funcs);
 
         // ------------------------------------------------
 
@@ -454,132 +471,7 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
-        std::stack<FunctionType> expressionStack{};
-
-        // ------------------------------------------------
-
-        std::size_t nofArgs = 0;
-
-        // ------------------------------------------------
-        
-        const auto createFun = [&](const Function& function) -> FunctionType {
-            if (expressionStack.size() < function.nofArgs) return {}; // Not enough arguments
-                        
-            std::vector<FunctionType> arguments{};
-            arguments.reserve(function.nofArgs);
-            for (std::size_t i = 0; i < function.nofArgs; ++i) {
-                arguments.emplace_back(std::move(expressionStack.top()));
-                expressionStack.pop();
-            }
-
-            std::vector<float> evaluatedArguments(arguments.size());
-            return [args = std::move(arguments), 
-                    fun = function.f, 
-                    evaluatedArgs = std::move(evaluatedArguments)](const ArgumentMap& argMap) mutable -> float 
-            {
-                for (std::size_t i = 0; i < args.size();  ++i) {
-                    evaluatedArgs[i] = args[i](argMap);
-                }
-
-                return fun(evaluatedArgs);
-            };
-        };
-
-        // ------------------------------------------------
-        
-        while (!m_Tokens.empty()) {
-            auto& token = m_Tokens.front();
-            auto index = token.value.index();
-            switch (index) {
-            case Token::Ident: {
-                Token::Identifier& ident = std::get<Token::Identifier>(token.value);
-
-                const auto addFun = [&](const Function& fun) {
-                    m_Tokens.pop_front();
-                    expressionStack.push(std::move(createFun(fun)));
-                };
-
-                auto it = GlobalFunctions.find(ident.name);
-                if (it != GlobalFunctions.end()) addFun(it->second);
-                else return {}; // Invalid identifier;
-                continue;
-            }
-            case Token::Var: {
-                Token::Variable& var = std::get<Token::Variable>(token.value);
-                auto it = funcs.find(var.name);
-                if (it != funcs.end()) { // It's a function
-                    auto fun = createFun(it->second);
-                    m_Tokens.pop_front();
-                    expressionStack.push(std::move(fun));
-                    continue;
-                } else {
-                    // Parse argument number
-                    std::string_view name = var.name;
-                    name = name.substr(1);
-                    int arg = 0;
-                    auto [ptr, ec] = std::from_chars(name.data(), name.data() + name.size(), arg);
-                    if (ec != std::errc()) return {}; // Invalid name
-                    if (ptr != name.data() + name.size()) return {}; // Invalid name
-
-                    nofArgs = Math::max(arg, nofArgs);
-                    auto fun = [arg](const ArgumentMap& args) -> float { return args[arg]; };
-                    m_Tokens.pop_front();
-                    expressionStack.push(std::move(fun));
-                    continue;
-                }
-            }
-            case Token::Num: {
-                Token::Number& var = std::get<Token::Number>(token.value);
-                auto fun = [number = std::move(var.number)](const ArgumentMap&) -> float { return number; };
-                m_Tokens.pop_front();
-                expressionStack.push(std::move(fun));
-                continue;
-            }
-            case Token::Op: {
-                Token::Operator& op = std::get<Token::Operator>(token.value);
-                if (op.binary) {
-                    if (expressionStack.size() < 2) return {}; // Invalid
-
-                    FunctionType a = std::move(expressionStack.top());
-                    expressionStack.pop();
-                    FunctionType b = std::move(expressionStack.top());
-                    expressionStack.pop();
-
-                    auto fun = [a = std::move(a), b = std::move(b), operation = std::move(op.operation)] (const ArgumentMap& args) -> float {
-                        return operation(b(args), a(args));
-                    };
-
-                    m_Tokens.pop_front();
-                    expressionStack.push(std::move(fun));
-                    continue;
-                } else {
-                    if (expressionStack.size() < 1) return {}; // Invalid
-
-                    FunctionType a = std::move(expressionStack.top());
-                    expressionStack.pop();
-
-                    auto fun = [a = std::move(a), operation = std::move(op.operation)] (const ArgumentMap& args) -> float {
-                        return operation(0, a(args));
-                    };
-
-                    m_Tokens.pop_front();
-                    expressionStack.push(std::move(fun));
-                    continue;
-                }
-            }
-            }
-
-            return {}; // Invalid
-        }
-
-        // ------------------------------------------------
-
-        if (expressionStack.size() != 1) return {}; // Invalid
-
-        return {
-            .nofArgs = nofArgs + 1,
-            .f = expressionStack.top(),
-        };
+        return generateImpl<true>(m_Tokens, funcs);
 
         // ------------------------------------------------
 

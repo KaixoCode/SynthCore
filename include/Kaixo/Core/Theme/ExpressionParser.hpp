@@ -15,14 +15,14 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
         
-        using ValueMap = std::map<std::string_view, float>;
+        using ValueMap = std::unordered_map<std::string_view, float>;
         using ArgumentMap = std::vector<float>;
         using FunctionType = std::function<float(const ArgumentMap&)>;
         struct Function {
             std::size_t nofArgs;
             FunctionType f;
         };
-        using FunctionMap = std::map<std::string, Function>;
+        using FunctionMap = std::map<std::string, Function, std::less<>>;
         using Expression = std::function<float(const ValueMap&)>;
 
         // ------------------------------------------------
@@ -44,6 +44,22 @@ namespace Kaixo::Theme {
             { "pow" , { 2, [](const ArgumentMap& args) { return Math::pow(args[0], args[1]); }} },
             { "clamp" , { 3, [](const ArgumentMap& args) { return Math::clamp(args[0], args[1], args[2]); }} },
         };
+        
+        static const inline std::map<std::string_view, float> GlobalConstants{
+            { "e", std::numbers::e_v<float> },
+            { "log2e", std::numbers::log2e_v<float> },
+            { "log10e", std::numbers::log10e_v<float> },
+            { "pi", std::numbers::pi_v<float> },
+            { "inv_pi", std::numbers::inv_pi_v<float> },
+            { "inv_sqrtpi", std::numbers::inv_sqrtpi_v<float> },
+            { "ln2", std::numbers::ln2_v<float> },
+            { "ln10", std::numbers::ln10_v<float> },
+            { "sqrt2", std::numbers::sqrt2_v<float> },
+            { "sqrt3", std::numbers::sqrt3_v<float> },
+            { "inv_sqrt3", std::numbers::inv_sqrt3_v<float> },
+            { "egamma", std::numbers::egamma_v<float> },
+            { "phi", std::numbers::phi_v<float> },
+        };
 
         // ------------------------------------------------
 
@@ -57,52 +73,53 @@ namespace Kaixo::Theme {
         // ------------------------------------------------
 
         ExpressionParser(std::string_view expression);
+        
+        // ------------------------------------------------
+
+        struct VariableToken {
+            std::string_view name;
+        };
+
+        // ------------------------------------------------
+        
+        struct FunctionToken {
+            Function function;
+        };
 
         // ------------------------------------------------
 
-        struct Token {
+        struct OperatorToken {
+            std::size_t precedence = 0;
+            std::function<float(float, float)> operation;
+            bool binary = true;
+            bool left = true;
+        };
+
+        // ------------------------------------------------
+
+        struct NumberToken {
+            float number;
+        };
+
+        // ------------------------------------------------
+
+        struct LeftParenthesisToken {};
+        struct RightParenthesisToken {};
+        struct CommaToken {};
+
+        // ------------------------------------------------
+
+        struct Token : std::variant<NumberToken, FunctionToken, VariableToken, OperatorToken,
+                                    LeftParenthesisToken, RightParenthesisToken, CommaToken> 
+        {
 
             // ------------------------------------------------
 
-            struct Variable {
-                std::string name;
-            };
-
+            enum class Type { None = -1, Number = 0, Function, Variable, Operator, LeftParenthesis, RightParenthesis, Comma, };
+            
             // ------------------------------------------------
             
-            struct Identifier {
-                std::string name;
-            };
-
-            // ------------------------------------------------
-
-            struct Operator {
-                std::size_t precedence = 0;
-                std::function<float(float, float)> operation;
-                bool binary = true;
-                bool left = true;
-            };
-
-            // ------------------------------------------------
-
-            struct Number {
-                float number;
-            };
-
-            // ------------------------------------------------
-
-            struct Parenthesis {
-                bool open = false;
-            };
-
-            // ------------------------------------------------
-            
-            struct Comma {};
-
-            // ------------------------------------------------
-
-            enum Type { Op = 0, Num, Var, Paren, Ident, Cmm };
-            std::variant<Operator, Number, Variable, Parenthesis, Identifier, Comma> value;
+            Type type() const { return static_cast<Type>(index()); }
 
             // ------------------------------------------------
 
@@ -121,19 +138,20 @@ namespace Kaixo::Theme {
 
         void skipWhitespace();
         bool consume(std::string_view str);
-        std::optional<Token::Number> parseNumber();
-        std::optional<Token::Operator> parseOperator();
-        std::optional<Token::Parenthesis> parseParenthesis();
-        std::optional<Token::Variable> parseVariable();
-        std::optional<Token::Identifier> parseIdentifier();
-        std::optional<Token::Comma> parseComma();
+        std::optional<Token> parseNumber();
+        std::optional<Token> parseSymbol();
+        std::optional<Token> parseIdentifier(const FunctionMap& funcs);
 
         // ------------------------------------------------
         
-        bool tokenize();
+        bool tokenize(const FunctionMap& funcs);
         bool convertToInfix(const FunctionMap& funcs);
         Expression generate(const FunctionMap& funcs);
         Function generateFunction(const FunctionMap& funcs);
+
+        template<bool IsFunction>
+        std::conditional_t<IsFunction, Function, Expression> 
+            generateImpl(std::list<Token>& tokens, const FunctionMap& funcs);
 
         // ------------------------------------------------
 

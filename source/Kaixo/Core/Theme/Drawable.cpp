@@ -612,7 +612,7 @@ namespace Kaixo::Theme {
 
         conditional = {};
         if (theme.contains("if", basic_json::String)) {
-            conditional = ExpressionParser::parse(theme["if"].as<std::string_view>());
+            conditional = ExpressionParser::parse(theme["if"].as<std::string_view>(), self->functions);
         }
 
         linked = {};
