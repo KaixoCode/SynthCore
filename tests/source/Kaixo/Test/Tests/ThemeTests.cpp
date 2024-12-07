@@ -13,17 +13,27 @@ namespace Kaixo::Test {
 
     // ------------------------------------------------
     
-    class InvalidExpressionTests 
-        : public ::testing::TestWithParam<std::string> {};
+    class ExpressionTestBase {
+    public:
+        const Theme::ExpressionParser::ValueMap values{ 
+            { "$a", 1 } 
+        };
 
-    TEST_P(InvalidExpressionTests, InvalidExpression) {
-        auto& expressionString = GetParam();
-
-        const Theme::ExpressionParser::ValueMap values{ { "$a", 1 }  };
         const Theme::ExpressionParser::FunctionMap functions{
             { "$f", { 1, [](auto& args) { return args[0]; }} },           // $f = $0
             { "$g", { 2, [](auto& args) { return args[0] + args[1]; }} }, // $g = $0 + $1
         };
+    };
+
+    // ------------------------------------------------
+    
+    class InvalidExpressionTests 
+        : public ExpressionTestBase, 
+          public ::testing::TestWithParam<std::string> {};
+
+    TEST_P(InvalidExpressionTests, InvalidExpression) {
+        auto& expressionString = GetParam();
+
         auto expression = Theme::ExpressionParser::parse(expressionString, functions);
         
         bool expressionParsedSuccessfully = (bool)expression;
@@ -41,23 +51,43 @@ namespace Kaixo::Test {
             "$f(f(f($a("
             "$f(f(f($a()))"
         ));
+    
+    INSTANTIATE_TEST_CASE_P(InvalidIdentifier, InvalidExpressionTests,
+        ::testing::Values(
+            "invalid(1)",
+            "pi + invalid",
+            "1 + invalid"
+        ));
+    
+    INSTANTIATE_TEST_CASE_P(InvalidExpression, InvalidExpressionTests,
+        ::testing::Values(
+            "",
+            "1 2",
+            "1 _ 2",
+            "0a"
+        ));
+    
+    INSTANTIATE_TEST_CASE_P(WrongNumberOfFunctionArguments, InvalidExpressionTests,
+        ::testing::Values(
+            "sin(1, 2)",
+            "clamp(1)",
+            "$f(1, 2)",
+            "$g(1)",
+            "sin()",
+            "$f()"
+        ));
 
     // ------------------------------------------------
 
     class ExpressionTests 
-        : public ::testing::TestWithParam<std::tuple<
+        : public ExpressionTestBase,
+          public ::testing::TestWithParam<std::tuple<
             std::string, // Expression
             float        // Expected result
         >> {};
 
     TEST_P(ExpressionTests, EvaluateExpression) {
         auto& [expressionString, expectedResult] = GetParam();
-
-        const Theme::ExpressionParser::ValueMap values{ { "$a", 1 }  };
-        const Theme::ExpressionParser::FunctionMap functions{
-            { "$f", { 1, [](auto& args) { return args[0]; }} },           // $f = $0
-            { "$g", { 2, [](auto& args) { return args[0] + args[1]; }} }, // $g = $0 + $1
-        };
         auto expression = Theme::ExpressionParser::parse(expressionString, functions);
         
         bool expressionParsedSuccessfully = (bool)expression;
@@ -134,7 +164,19 @@ namespace Kaixo::Test {
             std::make_tuple("$a  || 0  ", true),
             std::make_tuple("!$a", false)
         ));
-    
+
+    INSTANTIATE_TEST_CASE_P(WithIdentifier, ExpressionTests,
+        ::testing::Values(
+            std::make_tuple("pi", std::numbers::pi_v<float>),
+            std::make_tuple("e * 2", std::numbers::e_v<float> * 2),
+            std::make_tuple("pi + 0", std::numbers::pi_v<float>),
+            std::make_tuple("floor(pi)", 3),
+            std::make_tuple("clamp(pi, e, 3)", 3),
+            std::make_tuple("clamp(pi, 0, e)", std::numbers::e_v<float>),
+            std::make_tuple("clamp(e, pi, 4)", std::numbers::pi_v<float>),
+            std::make_tuple("$f(pi)", std::numbers::pi_v<float>)
+        ));
+
     INSTANTIATE_TEST_CASE_P(WithFunctionCall, ExpressionTests,
         ::testing::Values(
             std::make_tuple("  sin(0)                ", 0.0f),
