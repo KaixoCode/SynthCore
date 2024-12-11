@@ -44,15 +44,15 @@ namespace Kaixo::Theme {
     
     inline static auto parseExpressionOrNumber(const ExpressionParser::FunctionMap& funs) {
         return [&](ExpressionParser::Expression& val, const basic_json& theme, View::State) {
-            if (theme.is(basic_json::Number)) return val = [v = theme.as<float>()](auto&) { return v; }, true;
-            if (theme.is(basic_json::String)) return val = ExpressionParser::parse(theme.as<std::string_view>(), funs), true;
+            if (theme.is<basic_json::number_t>()) return val = [v = theme.as<float>()](auto&) { return v; }, true;
+            if (theme.is<basic_json::string_t>()) return val = ExpressionParser::parse(theme.as<std::string_view>(), funs), true;
             return false;
         };
     }
     
     inline static auto parseIdx(const ExpressionParser::FunctionMap& funs, std::size_t index) {
         return [&, index](ExpressionParser::Expression& val, const basic_json& theme, View::State state) {
-            if (theme.is(basic_json::Array) && index < theme.size()) {
+            if (theme.is<basic_json::array_t>() && index < theme.size()) {
                 return parseExpressionOrNumber(funs)(val, theme[index], state);
             }
 

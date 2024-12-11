@@ -54,10 +54,10 @@ namespace Kaixo::Processing {
         void init() override { this->clear(); } 
 
         basic_json serialize() override {
-            basic_json data = basic_json::array();
+            basic_json data = basic_json::array_t();
 
             for (auto& point : *this) {
-                basic_json p = basic_json::array();
+                basic_json p = basic_json::array_t();
                 p.push_back(point.x);
                 p.push_back(point.y);
                 p.push_back(point.c);
@@ -70,7 +70,7 @@ namespace Kaixo::Processing {
         void deserialize(basic_json& data) override {
             this->clear();
             data.foreach([&](basic_json& point) {
-                if (point.is(basic_json::Array) && point.size() == 3) {
+                if (point.is<basic_json::array_t>() && point.size() == 3) {
                     this->push_back({
                         .x = point[0].as<float>(),
                         .y = point[1].as<float>(),

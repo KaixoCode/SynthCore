@@ -11,6 +11,7 @@ add_subdirectory(libs)
 # ==============================================
 
 set(LIBRARY_INCLUDE_DIRS
+    "${CMAKE_CURRENT_SOURCE_DIR}/libs/basic_json/include"
     "${CMAKE_CURRENT_SOURCE_DIR}/libs/basic_simd/include")
 
 # ==============================================
@@ -168,7 +169,8 @@ add_executable(Generator
 target_include_directories(Generator
     PRIVATE
         ${CORE_SOURCE_DIRECTORY}/include/
-        ${CORE_SOURCE_DIRECTORY}/generators/)
+        ${CORE_SOURCE_DIRECTORY}/generators/
+        ${LIBRARY_INCLUDE_DIRS})
 
 # ==============================================
 

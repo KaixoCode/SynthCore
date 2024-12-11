@@ -90,38 +90,38 @@ namespace Kaixo::Theme {
         font = NoFont;
         charMap.clear();
 
-        if (theme.contains("font", basic_json::String)) { // Font file
-            font = self->registerFont(theme["font"].as<basic_json::string>());
+        if (theme.contains<basic_json::string_t>("font")) { // Font file
+            font = self->registerFont(theme["font"].as<basic_json::string_t>());
         }
         
-        if (theme.contains("size", basic_json::Number)) { // Font file
+        if (theme.contains<basic_json::number_t>("size")) { // Font file
             size = theme["size"].as<float>();
             maxHeight = size;
         }
 
-        if (theme.contains("map", basic_json::String)) { // Load font-map
-            id = self->registerImage(theme["map"].as<basic_json::string>());
+        if (theme.contains<basic_json::string_t>("map")) { // Load font-map
+            id = self->registerImage(theme["map"].as<basic_json::string_t>());
         }
 
         basic_json json;
         std::string description;
-        if (theme.contains("description", basic_json::String)) { // Load description from file
-            description = theme["description"].as<basic_json::string>();
+        if (theme.contains<basic_json::string_t>("description")) { // Load description from file
+            description = theme["description"].as<basic_json::string_t>();
             auto optional_json = getFontDescription(self, description);
             if (!optional_json) return;
             json = optional_json.value();
-        } else if (theme.contains("description", basic_json::Object)) { // Load description from json
+        } else if (theme.contains<basic_json::object_t>("description")) { // Load description from json
             json = theme["description"];
         }
 
-        if (json.is(basic_json::Object)) {
-            if (json.contains("default-spacing", basic_json::Number)) {
+        if (json.is<basic_json::object_t>()) {
+            if (json.contains<basic_json::number_t>("default-spacing")) {
                 defaultSpacing = json["default-spacing"].as<std::int64_t>();
             } else {
                 defaultSpacing = 2;
             }
 
-            for (auto& [key, val] : json.as<basic_json::object>()) {
+            for (auto& [key, val] : json.as<basic_json::object_t>()) {
                 if (key.size() != 1) continue;
 
                 Rect<int> clip{ 0, 0, 0, 0 };
@@ -139,33 +139,33 @@ namespace Kaixo::Theme {
                 val.try_get("pre-spacing", mapped.preSpacing);
                 val.try_get_or_default("post-spacing", mapped.postSpacing, defaultSpacing);
 
-                if (val.contains("exceptions", basic_json::Array)) {
-                    auto& arr = val["exceptions"].as<basic_json::array>();
+                if (val.contains<basic_json::array_t>("exceptions")) {
+                    auto& arr = val["exceptions"].as<basic_json::array_t>();
 
                     for (auto& e : arr) {
-                        if (!e.is(basic_json::Object)) continue;
+                        if (!e.is<basic_json::object_t>()) continue;
 
                         auto& exception = mapped.exceptions.emplace_back();
 
                         e.try_get("pre-spacing", exception.preSpacing);
                         e.try_get("post-spacing", exception.postSpacing);
 
-                        if (e.contains("after", basic_json::Array)) {
-                            auto& arr = e["after"].as<basic_json::array>();
+                        if (e.contains<basic_json::array_t>("after")) {
+                            auto& arr = e["after"].as<basic_json::array_t>();
 
                             for (auto& c : arr) {
-                                if (c.is(basic_json::String) && c.size() == 1) {
-                                    exception.after.emplace(c.as<basic_json::string>()[0]);
+                                if (c.is<basic_json::string_t>() && c.size() == 1) {
+                                    exception.after.emplace(c.as<basic_json::string_t>()[0]);
                                 }
                             }
                         }
 
-                        if (e.contains("before", basic_json::Array)) {
-                            auto& arr = e["before"].as<basic_json::array>();
+                        if (e.contains<basic_json::array_t>("before")) {
+                            auto& arr = e["before"].as<basic_json::array_t>();
 
                             for (auto& c : arr) {
-                                if (c.is(basic_json::String) && c.size() == 1) {
-                                    exception.before.emplace(c.as<basic_json::string>()[0]);
+                                if (c.is<basic_json::string_t>() && c.size() == 1) {
+                                    exception.before.emplace(c.as<basic_json::string_t>()[0]);
                                 }
                             }
                         }

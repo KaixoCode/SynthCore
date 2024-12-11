@@ -32,8 +32,8 @@ namespace Kaixo::Theme {
         // ------------------------------------------------
 
         const auto parseExpressionOrNumber = [&](ExpressionParser::Expression& val, const basic_json& theme, View::State = {}) {
-            if (theme.is(basic_json::Number)) return val = [v = theme.as<float>()](auto&) { return v; }, true;
-            if (theme.is(basic_json::String)) return val = ExpressionParser::parse(theme.as<std::string_view>(), self->functions), true;
+            if (theme.is<basic_json::number_t>()) return val = [v = theme.as<float>()](auto&) { return v; }, true;
+            if (theme.is<basic_json::string_t>()) return val = ExpressionParser::parse(theme.as<std::string_view>(), self->functions), true;
             return false;
         };
 
@@ -76,7 +76,7 @@ namespace Kaixo::Theme {
         };
         
         const auto isHexColor = [](const basic_json& clr) -> bool {
-            return clr.is(basic_json::String)
+            return clr.is<basic_json::string_t>()
                 && clr.as<std::string_view>().starts_with("#")
                 && (clr.as<std::string_view>().size() == 4   // #rgb
                  || clr.as<std::string_view>().size() == 5   // #rgba
@@ -85,7 +85,7 @@ namespace Kaixo::Theme {
         };
 
         const auto isValidColor = [](const basic_json& clr) -> bool {
-            return clr.is(basic_json::Array) && !clr.empty() && clr.size() <= 4;
+            return clr.is<basic_json::array_t>() && !clr.empty() && clr.size() <= 4;
         };
 
         const auto parseRed = [&](ExpressionParser::Expression& red, const basic_json& theme, View::State) -> bool {

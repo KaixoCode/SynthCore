@@ -14,38 +14,39 @@
 
 // ------------------------------------------------
 
-#include <any>
-#include <bitset>
-#include <numbers>
 #include <algorithm>
-#include <cmath>
-#include <format>
-#include <vector>
+#include <any>
+#include <array>
+#include <bitset>
+#include <cassert>
 #include <charconv>
+#include <cmath>
+#include <codecvt>
+#include <complex>
+#include <condition_variable>
+#include <cstdlib>
+#include <expected>
+#include <filesystem>
+#include <format>
+#include <fstream>
+#include <future>
+#include <iostream>
+#include <locale>
+#include <map>
+#include <memory>
+#include <mutex>
+#include <numbers>
+#include <numeric>
+#include <random>
+#include <ranges>
+#include <set>
+#include <stack>
 #include <string>
 #include <string_view>
-#include <iostream>
-#include <array>
-#include <mutex>
-#include <filesystem>
-#include <fstream>
-#include <condition_variable>
-#include <future>
-#include <complex>
-#include <cassert>
-#include <valarray>
-#include <random>
-#include <set>
-#include <map>
 #include <unordered_map>
-#include <ranges>
-#include <numeric>
 #include <unordered_set>
-#include <locale>
-#include <codecvt>
-#include <cstdlib>
-#include <memory>
-#include <expected>
+#include <valarray>
+#include <vector>
 
 // ------------------------------------------------
 
@@ -104,8 +105,8 @@ namespace Kaixo {
 // ------------------------------------------------
 
 #include "basic_simd.hpp"
+#include "basic_json.hpp"
 
-#include "Kaixo/Utils/json.hpp"
 #include "Kaixo/Utils/utils.hpp"
 #include "Kaixo/Utils/string_literal.hpp"
 #include "Kaixo/Utils/thread_pool.hpp"

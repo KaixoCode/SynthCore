@@ -29,8 +29,8 @@ namespace Kaixo::Theme {
     // ------------------------------------------------
     
     const basic_json& Theme::variableOrValue(const basic_json& value) {
-        if (value.is(basic_json::String)) {
-            const std::string& _value = value.as<basic_json::string>();
+        if (value.is<basic_json::string_t>()) {
+            const std::string& _value = value.as<basic_json::string_t>();
             if (self->hasVariable(_value)) {
                 return self->variable(_value);
             }
@@ -238,37 +238,37 @@ namespace Kaixo::Theme {
     // ------------------------------------------------
 
     void Theme::findVariables(basic_json& json) {
-        if (json.contains("variables", basic_json::Object)) {
-            auto& obj = json["variables"].as<basic_json::object>();
+        if (json.contains<basic_json::object_t>("variables")) {
+            auto& obj = json["variables"].as<basic_json::object_t>();
             for (auto& [key, val] : obj) {
                 m_Variables[key] = val;
             }
         }
 
-        if (json.contains("functions", basic_json::Object)) {
-            auto& obj = json["functions"].as<basic_json::object>();
+        if (json.contains<basic_json::object_t>("functions")) {
+            auto& obj = json["functions"].as<basic_json::object_t>();
             for (auto& [key, val] : obj) {
-                if (val.is(basic_json::String)) {
+                if (val.is<basic_json::string_t>()) {
                     auto fun = ExpressionParser::parseFunction(val.as<std::string_view>());
                     if (fun.f) functions[key] = fun;
                 }
             }
         }
 
-        if (json.contains("images", basic_json::Object)) {
-            auto& obj = json["images"].as<basic_json::object>();
+        if (json.contains<basic_json::object_t>("images")) {
+            auto& obj = json["images"].as<basic_json::object_t>();
             for (auto& [key, val] : obj) {
-                if (val.is(basic_json::String)) {
-                    registerImage(key, val.as<basic_json::string>());
+                if (val.is<basic_json::string_t>()) {
+                    registerImage(key, val.as<basic_json::string_t>());
                 }
             }
         }
 
-        if (json.contains("fonts", basic_json::Object)) {
-            auto& obj = json["fonts"].as<basic_json::object>();
+        if (json.contains<basic_json::object_t>("fonts")) {
+            auto& obj = json["fonts"].as<basic_json::object_t>();
             for (auto& [key, val] : obj) {
-                if (val.is(basic_json::String)) {
-                    registerFont(key, val.as<basic_json::string>());
+                if (val.is<basic_json::string_t>()) {
+                    registerFont(key, val.as<basic_json::string_t>());
                 }
             }
         }
@@ -277,8 +277,8 @@ namespace Kaixo::Theme {
     bool Theme::open(basic_json& input, std::string_view name) {
         basic_json json = input;
 
-        if (json.contains("theme-name", basic_json::String)) {
-            m_OpenedThemeName = json["theme-name"].as<basic_json::string>();
+        if (json.contains<basic_json::string_t>("theme-name")) {
+            m_OpenedThemeName = json["theme-name"].as<basic_json::string_t>();
         } else {
             m_OpenedThemeName = name;
         }
@@ -287,8 +287,8 @@ namespace Kaixo::Theme {
         bool success = true;
         std::size_t depth = 0;
         json.forall([&](this auto& self, basic_json& value) -> void {
-            if (value.is(basic_json::String)) {
-                auto& val = value.as<basic_json::string>();
+            if (value.is<basic_json::string_t>()) {
+                auto& val = value.as<basic_json::string_t>();
                 if (hasVariable(val)) {
                     value = variable(val);
                     if (++depth == 30) {
@@ -305,19 +305,19 @@ namespace Kaixo::Theme {
 
         json.foreach([&](this auto& self, const std::string& key, basic_json& value) -> void {
             switch (value.type()) {
-            case basic_json::Object: {
+            case basic_json::object: {
                 // Recurse
                 value.foreach(self);
                 // Merge with extended variables
                 while (value.contains("extends")) {
                     basic_json extends = value["extends"];
-                    auto at = value.as<basic_json::object>().erase("extends"); // Remove after extending
+                    auto at = value.as<basic_json::object_t>().remove("extends"); // Remove after extending
                     at = value.merge(extends, at); // Merge, and insert at iterator where 'extends' was
                     extends.foreach([&](const basic_json& val) { at = value.merge(val, at); });
                 }
                 break;
             }
-            case basic_json::Array: {
+            case basic_json::array: {
                 value.foreach([&](basic_json& val) { self(key, val); });
                 break;
             }

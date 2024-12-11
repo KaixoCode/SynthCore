@@ -1,1 +1,2 @@
 add_subdirectory(basic_simd)
+add_subdirectory(basic_json)

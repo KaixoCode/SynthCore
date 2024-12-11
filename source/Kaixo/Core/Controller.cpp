@@ -348,7 +348,7 @@ namespace Kaixo {
     }
 
     basic_json Controller::serialize() {
-        basic_json result = basic_json::object{};
+        basic_json result = basic_json::object_t{};
 
         auto& _params = result[ParametersName];
 
@@ -387,9 +387,9 @@ namespace Kaixo {
                 basic_json& p = getFromIdentifier(_params, param.fullVarName);
 
                 beginEdit(param);
-                if (p.contains("value", basic_json::Number)) {
+                if (p.contains("value", basic_json::number)) {
                     ParamValue value = p["value"].as<ParamValue>();
-                    if (p.contains("range", basic_json::String)) {
+                    if (p.contains("range", basic_json::string)) {
                         std::string_view range = p["range"].as<std::string>();
                         if (range == "transformed") {
                             performEdit(param, param.transform.normalize(value));
@@ -399,7 +399,7 @@ namespace Kaixo {
                     } else {
                         performEdit(param, value);
                     }
-                } else if (p.contains("value", basic_json::String)) {
+                } else if (p.contains("value", basic_json::string)) {
                     performEdit(param, param.fromString(p["value"].as<std::string>()));
                 } else {
                     performEdit(param, parameter(param).defaultValue());

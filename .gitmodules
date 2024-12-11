@@ -4,3 +4,6 @@
 [submodule "libs/basic_simd"]
 	path = libs/basic_simd
 	url = https://github.com/KaixoCode/basic_simd.git
+[submodule "libs/basic_json"]
+	path = libs/basic_json
+	url = https://github.com/KaixoCode/basic_json

@@ -28,7 +28,7 @@ namespace Kaixo::Theme {
             return false;
         };
 
-        if (theme.contains("rect", basic_json::Object)) {
+        if (theme.contains<basic_json::object_t>("rect")) {
             auto& rect = theme["rect"];
             if (rect.contains("align")) align.interpret(rect["align"], parseAlign, state);
             if (rect.contains("fill")) fill.interpret(rect["fill"], state);
@@ -125,7 +125,7 @@ namespace Kaixo::Theme {
         };
 
         const auto parseMultiFrame = [&](auto& multiframe, const basic_json& json, View::State state) {
-            if (json.contains("frames", basic_json::Number)) {
+            if (json.contains<basic_json::number_t>("frames")) {
                 std::size_t frames = json["frames"].as<std::size_t>();
                 std::size_t fprow = 1;
                 std::size_t repeat = 1;
@@ -146,7 +146,7 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
-        if (json.contains("image", basic_json::Object)) {
+        if (json.contains<basic_json::object_t>("image")) {
             auto& img = json["image"];
             if (img.contains("clip")) clip.interpret(img["clip"], state);
             if (img.contains("offset")) clip.interpretPosition(img["offset"], state);
@@ -320,33 +320,33 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
-        bool containsText = json.contains("text", basic_json::Object);
+        bool containsText = json.contains<basic_json::object_t>("text");
 
         // ------------------------------------------------
         
         bool contentWasArray = false;
         content.interpret(json, [&](auto& content, const basic_json& json, View::State myState) {
-            bool containsText = json.contains("text", basic_json::Object);
+            bool containsText = json.contains<basic_json::object_t>("text");
             auto parseContent = [&](const basic_json& json) {
                 switch (json.type()) {
-                case basic_json::Array:
+                case basic_json::array:
                     contentWasArray = true;
                     content = Content(true);
                     json.foreach([&](const basic_json& text) {
-                        if (text.is(basic_json::String)) {
-                            content.text.push_back(text.as<basic_json::string>());
+                        if (text.is<basic_json::string_t>()) {
+                            content.text.push_back(text.as<basic_json::string_t>());
                         }
                     });
                     break;
-                case basic_json::String:
+                case basic_json::string:
                     content = Content(false);
-                    content.text.push_back(json.as<basic_json::string>());
+                    content.text.push_back(json.as<basic_json::string_t>());
                     break;
                 }
             };
             
-            if (json.contains("text", basic_json::String) || 
-                json.contains("text", basic_json::Array)) 
+            if (json.contains<basic_json::string_t>("text") || 
+                json.contains<basic_json::array_t>("text")) 
             {
                 parseContent(json["text"]);
                 return true;
@@ -388,7 +388,7 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
 
-        if (json.contains("text", basic_json::Object)) {
+        if (json.contains<basic_json::object_t>("text")) {
             auto& text = json["text"];
             if (text.contains("position")) position.interpret(text["position"], state);
         }
@@ -400,7 +400,7 @@ namespace Kaixo::Theme {
         // ------------------------------------------------
         
         align.interpret(json, [&](auto& align, const basic_json& json, View::State state) {
-            bool containsText = json.contains("text", basic_json::Object);
+            bool containsText = json.contains<basic_json::object_t>("text");
             if (json.try_get("text-align", str) ||
                 containsText && json["text"].try_get("align", str))
             {
@@ -415,7 +415,7 @@ namespace Kaixo::Theme {
         // ------------------------------------------------
         
         frames.interpret(json, [&](auto& frames, const basic_json& json, View::State state) {
-            bool containsText = json.contains("text", basic_json::Object);
+            bool containsText = json.contains<basic_json::object_t>("text");
             if (json.try_get("frames", str) ||
                 containsText && json["text"].try_get("frames", num))
             {
@@ -611,12 +611,12 @@ namespace Kaixo::Theme {
         // ------------------------------------------------
 
         conditional = {};
-        if (theme.contains("if", basic_json::String)) {
+        if (theme.contains<basic_json::string_t>("if")) {
             conditional = ExpressionParser::parse(theme["if"].as<std::string_view>(), self->functions);
         }
 
         linked = {};
-        if (theme.contains("link", basic_json::String)) {
+        if (theme.contains<basic_json::string_t>("link")) {
             linked = theme["link"].as<std::string>();
         }
 

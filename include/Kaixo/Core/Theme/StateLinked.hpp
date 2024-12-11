@@ -178,13 +178,13 @@ namespace Kaixo::Theme {
             };
             
             if (state == View::State::Default) {
-                if (theme.contains("transition", basic_json::Number)) {
+                if (theme.contains<basic_json::number_t>("transition")) {
                     transition = theme["transition"].as<double>();
 
                     if (theme.contains("value")) 
                         interpret(base, theme["value"], state);
 
-                    if (theme.contains("curve", basic_json::String)) {
+                    if (theme.contains<basic_json::string_t>("curve")) {
                         parseCurve(curve, theme["curve"].as<std::string_view>());
                     }
                 } else if (theme.contains("value")) {
@@ -203,17 +203,17 @@ namespace Kaixo::Theme {
                     if (key.contains("enabled")) state |= View::State::Enabled;
                     if (state != View::State::Default) {
                         Ty result;
-                        if (theme.contains("transition", basic_json::Number)) {
+                        if (theme.contains<basic_json::number_t>("transition")) {
                             if (theme.contains("value")) interpret(result, theme["value"], state);
                             State& s = states.emplace_back(state, std::move(result));
                             s.transition = theme["transition"].as<double>();
-                            if (theme.contains("curve", basic_json::String)) {
+                            if (theme.contains<basic_json::string_t>("curve")) {
                                 parseCurve(s.curve, theme["curve"].as<std::string_view>());
                             }
                         } else if (theme.contains("value")) {
                             interpret(result, theme["value"], state);
                             State& s = states.emplace_back(state, std::move(result));
-                            if (theme.contains("curve", basic_json::String)) {
+                            if (theme.contains<basic_json::string_t>("curve")) {
                                 parseCurve(s.curve, theme["curve"].as<std::string_view>());
                             }
                         } else if (interpret(result, theme, state)) {
@@ -223,17 +223,17 @@ namespace Kaixo::Theme {
                 });
             } else {
                 Ty result;
-                if (theme.contains("transition", basic_json::Number)) {
+                if (theme.contains<basic_json::number_t>("transition")) {
                     if (theme.contains("value")) interpret(result, theme["value"], state);
                     State& s = states.emplace_back(state, std::move(result));
                     s.transition = theme["transition"].as<double>();
-                    if (theme.contains("curve", basic_json::String)) {
+                    if (theme.contains<basic_json::string_t>("curve")) {
                         parseCurve(s.curve, theme["curve"].as<std::string_view>());
                     }
                 } else if (theme.contains("value")) {
                     interpret(result, theme["value"], state);
                     State& s = states.emplace_back(state, std::move(result));
-                    if (theme.contains("curve", basic_json::String)) {
+                    if (theme.contains<basic_json::string_t>("curve")) {
                         parseCurve(s.curve, theme["curve"].as<std::string_view>());
                     }
                 } else if (interpret(result, theme, state)) {

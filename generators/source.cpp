@@ -9,13 +9,17 @@
 // ------------------------------------------------
 
 #include "Kaixo/Utils/BasicXml.hpp"
-#include "Kaixo/Utils/Json.hpp"
+#include "basic_json.hpp"
 
 #include "parameters.hpp"
 
 // ------------------------------------------------
 
 namespace Kaixo::Generator {
+
+    // ------------------------------------------------
+    
+    using namespace kaixo;
 
     // ------------------------------------------------
 
@@ -77,20 +81,20 @@ namespace Kaixo::Generator {
 
         bool findAndReplaceInJson(basic_json& val, std::string_view value, std::string_view repl) {
             bool occurs = false;
-            if (val.is(basic_json::Object)) {
-                for (auto& [k, v] : val.as<basic_json::object>()) {
+            if (val.is<basic_json::object_t>()) {
+                for (auto& [k, v] : val.as<basic_json::object_t>()) {
                     if (findAndReplaceInJson(v, value, repl)) {
                         occurs = true;
                     }
                 }
-            } else if (val.is(basic_json::Array)) {
-                for (auto& v : val.as<basic_json::array>()) {
+            } else if (val.is<basic_json::array_t>()) {
+                for (auto& v : val.as<basic_json::array_t>()) {
                     if (findAndReplaceInJson(v, value, repl)) {
                         occurs = true;
                     }
                 }
-            } else if (val.is(basic_json::String)) {
-                if (val.as<basic_json::string>() == value) {
+            } else if (val.is<basic_json::string_t>()) {
+                if (val.as<basic_json::string_t>() == value) {
                     val = repl;
                     return true;
                 }
@@ -335,15 +339,15 @@ namespace Kaixo::Generator {
 
         Element generateContainer(basic_json& val) {
             Element result{};
-            if (val.is(basic_json::Object)) {
-                auto& obj = val.as<basic_json::object>();
+            if (val.is<basic_json::object_t>()) {
+                auto& obj = val.as<basic_json::object_t>();
                 for (auto& [key, v] : obj) {
                     Element generated = generateContainer(v);
                     generated.name = key;
                     result.elements.push_back(std::move(generated));
                 }
-            } else if (val.is(basic_json::String)) {
-                result.type = val.as<basic_json::string>();
+            } else if (val.is<basic_json::string_t>()) {
+                result.type = val.as<basic_json::string_t>();
             } else {
                 std::cerr << "Expected either Object or String\n";
             }

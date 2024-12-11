@@ -12,12 +12,12 @@ namespace Kaixo::Processing {
     }
 
     basic_json ModulationDatabase::serialize() {
-        basic_json data = basic_json::object();
+        basic_json data = basic_json::object_t();
         for (ParamID param = 0; param < Parameters; ++param) {
             if (!modulated(param)) continue;
             auto& modulations = m_Modulations[param];
             auto& val = getFromIdentifier(data, parameter(param).fullVarName);
-            val = basic_json::array();
+            val = basic_json::array_t();
             for (Entry& mod : modulations) {
                 basic_json el;
                 ModulationSourceID source = mod.source;
@@ -35,14 +35,14 @@ namespace Kaixo::Processing {
         for (ParamID param = 0; param < Parameters; ++param) {
             auto& modulations = m_Modulations[param];
             auto& val = getFromIdentifier(data, parameter(param).fullVarName);
-            if (val.is(basic_json::Array)) {
-                auto& arr = val.as<basic_json::array>();
+            if (val.is<basic_json::array_t>()) {
+                auto& arr = val.as<basic_json::array_t>();
                 for (auto& el : arr) {
-                    if (el.contains("source", basic_json::String) &&
-                        el.contains("amount", basic_json::Number))
+                    if (el.contains<basic_json::string_t>("source") &&
+                        el.contains<basic_json::number_t>("amount"))
                     {
                         ModulationSourceID source = NoSource;
-                        auto& sourceName = el["source"].as<basic_json::string>();
+                        auto& sourceName = el["source"].as<basic_json::string_t>();
                         for (ModulationSourceID id = 0; id < Sources; ++id) {
                             if (modulationSource(id).fullVarName == sourceName) {
                                 source = id;
