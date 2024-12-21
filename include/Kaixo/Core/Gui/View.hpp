@@ -84,6 +84,9 @@ namespace Kaixo::Gui {
 
         virtual State state() const;
 
+        virtual bool hasState(State state) const;
+        virtual bool containsState(State state) const;
+
         // ------------------------------------------------
 
         virtual Coord   x()          const { return dimensions().x(); }

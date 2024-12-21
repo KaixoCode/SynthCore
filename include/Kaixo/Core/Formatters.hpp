@@ -58,7 +58,18 @@ namespace Kaixo {
         ParamValue parse(std::string_view str) const {
             // TODO: proper implementation
             ParamValue value = 0;
-            std::from_chars(str.data(), str.data() + str.size(), value);
+            auto [end, errc] = std::from_chars(str.data(), str.data() + str.size(), value);
+            if (errc == std::errc()) { // Success
+                std::string_view unit = trim(str.substr(std::distance(str.data(), end)));
+                if (unit.empty()) return value; // No unit specified
+
+                for (auto& range : ranges) {
+                    if (range.divide != 1 && trim(range.unit).starts_with(unit)) { // Different magnitude
+                        return value * range.divide;
+                    }
+                }
+            }
+
             return value;
         }
     };
@@ -274,43 +285,43 @@ namespace Kaixo {
         template<ParamValue Start, ParamValue End>
         constexpr Transform Range{
             [](ParamValue v) -> ParamValue { return v * (End - Start) + Start; },
-            [](ParamValue v) -> ParamValue { return (v - Start) / (End - Start); },
+            [](ParamValue v) -> ParamValue { return (Math::clamp(v, Start, End) - Start) / (End - Start); },
         };
 
         template<ParamValue Start, ParamValue End, auto Pow>
         constexpr Transform Power{
             [](ParamValue v) -> ParamValue { return Math::pow(v, Pow) * (End - Start) + Start; },
-            [](ParamValue v) -> ParamValue { return Math::pow((v - Start) / (End - Start), 1. / Pow); },
+            [](ParamValue v) -> ParamValue { return Math::pow((Math::clamp(v, Start, End) - Start) / (End - Start), 1. / Pow); },
         };
 
         template<ParamValue Start, ParamValue End, auto Pow>
         constexpr Transform InvPower = {
             [](ParamValue v) -> ParamValue { return (1 - Math::pow(1 - v, Pow)) * (End - Start) + Start; },
-            [](ParamValue v) -> ParamValue { return 1 - Math::pow(1 - (v - Start) / (End - Start), 1. / Pow); },
+            [](ParamValue v) -> ParamValue { return 1 - Math::pow(1 - (Math::clamp(v, Start, End) - Start) / (End - Start), 1. / Pow); },
         };
 
         template<ParamValue Start, ParamValue End>
         constexpr Transform Decibel{
             [](ParamValue v) -> ParamValue { return Math::magnitude_to_db(v * (End - Start) + Start); },
-            [](ParamValue v) -> ParamValue { return (Math::db_to_magnitude(v) - Start) / (End - Start); },
+            [](ParamValue v) -> ParamValue { return (Math::db_to_magnitude(Math::clamp(v, Start, End)) - Start) / (End - Start); },
         };
 
         template<std::size_t Elements>
         constexpr Transform Group{
             [](ParamValue v) -> ParamValue { return normalToIndex(v, Elements); },
-            [](ParamValue v) -> ParamValue { return v / (Elements - 1); },
+            [](ParamValue v) -> ParamValue { return Math::clamp(v, 0, Elements - 1) / (Elements - 1); },
         };
 
         template<std::size_t Start, std::size_t Size>
         constexpr Transform Integer{
             [](ParamValue v) -> ParamValue { return normalToIndex(v, Size) + Start; },
-            [](ParamValue v) -> ParamValue { return (v - Start) / (Size - 1); }
+            [](ParamValue v) -> ParamValue { return (Math::clamp(v, Start, Start + Size) - Start) / (Size - 1); }
         };
 
         template<std::int64_t Start, std::int64_t End>
         constexpr Transform Transpose{
             [](ParamValue v) -> ParamValue { return Math::floor(v * (End - Start)) + Start; },
-            [](ParamValue v) -> ParamValue { return (v - Start) / (End - Start); },
+            [](ParamValue v) -> ParamValue { return (Math::clamp(v, Start, End) - Start) / (End - Start); },
         };
 
         template<ParamValue F1, ParamValue F2>

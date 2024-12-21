@@ -185,6 +185,14 @@ namespace Kaixo::Gui {
         endEdit();
     }
 
+    void Knob::value(std::string_view valueStr) {
+        if (!isLinkedToParam() || !useParamInfo()) {
+            value(settings.transform.normalize(settings.format.parse(valueStr)));
+        } else {
+            value(parameter(settings.param).fromString(valueStr));
+        }
+    }
+
     void Knob::reset() {
         if (isLinkedToParam()) {
             value(context.defaultValue(settings.param));

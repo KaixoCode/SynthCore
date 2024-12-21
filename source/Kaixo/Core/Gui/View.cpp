@@ -27,6 +27,21 @@ namespace Kaixo::Gui {
         return _state;
     }
 
+    bool View::hasState(State s) const {
+        return (state() & s) == s;
+    }
+
+    bool View::containsState(State s) const {
+        if (hasState(s)) return true;
+
+        for (auto* child : getChildren()) {
+            auto* view = dynamic_cast<View*>(child);
+            if (view && view->hasState(s)) return true;
+        }
+
+        return false;
+    }
+
     // ------------------------------------------------
 
     void View::mouseMove(const juce::MouseEvent&) {

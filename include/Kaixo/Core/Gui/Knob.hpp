@@ -85,6 +85,7 @@ namespace Kaixo::Gui {
 
         virtual ParamValue value() const;
         void value(ParamValue value);
+        virtual void value(std::string_view value);
 
         ParamValue transformedValue() const;
 
