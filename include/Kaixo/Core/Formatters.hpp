@@ -285,25 +285,25 @@ namespace Kaixo {
         template<ParamValue Start, ParamValue End>
         constexpr Transform Range{
             [](ParamValue v) -> ParamValue { return v * (End - Start) + Start; },
-            [](ParamValue v) -> ParamValue { return (Math::clamp(v, Start, End) - Start) / (End - Start); },
+            [](ParamValue v) -> ParamValue { return (Math::clamp(v, Math::min(Start, End), Math::max(Start, End)) - Start) / (End - Start); },
         };
 
         template<ParamValue Start, ParamValue End, auto Pow>
         constexpr Transform Power{
             [](ParamValue v) -> ParamValue { return Math::pow(v, Pow) * (End - Start) + Start; },
-            [](ParamValue v) -> ParamValue { return Math::pow((Math::clamp(v, Start, End) - Start) / (End - Start), 1. / Pow); },
+            [](ParamValue v) -> ParamValue { return Math::pow((Math::clamp(v, Math::min(Start, End), Math::max(Start, End)) - Start) / (End - Start), 1. / Pow); },
         };
 
         template<ParamValue Start, ParamValue End, auto Pow>
         constexpr Transform InvPower = {
             [](ParamValue v) -> ParamValue { return (1 - Math::pow(1 - v, Pow)) * (End - Start) + Start; },
-            [](ParamValue v) -> ParamValue { return 1 - Math::pow(1 - (Math::clamp(v, Start, End) - Start) / (End - Start), 1. / Pow); },
+            [](ParamValue v) -> ParamValue { return 1 - Math::pow(1 - (Math::clamp(v, Math::min(Start, End), Math::max(Start, End)) - Start) / (End - Start), 1. / Pow); },
         };
 
         template<ParamValue Start, ParamValue End>
         constexpr Transform Decibel{
             [](ParamValue v) -> ParamValue { return Math::magnitude_to_db(v * (End - Start) + Start); },
-            [](ParamValue v) -> ParamValue { return (Math::db_to_magnitude(Math::clamp(v, Start, End)) - Start) / (End - Start); },
+            [](ParamValue v) -> ParamValue { return (Math::clamp(Math::db_to_magnitude(v), Math::min(Start, End), Math::max(Start, End)) - Start) / (End - Start); },
         };
 
         template<std::size_t Elements>
