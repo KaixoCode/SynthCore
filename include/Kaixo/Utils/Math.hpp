@@ -155,8 +155,10 @@ namespace Kaixo {
         
         template<std::size_t N> KAIXO_MONO powN(is_mono auto a) noexcept { return[&]<std::size_t ...Is>(std::index_sequence<Is...>) { return ((Is, a) * ...); }(std::make_index_sequence<N>{}); }
         template<std::size_t N> KAIXO_POLY powN(is_poly auto a) noexcept { return[&]<std::size_t ...Is>(std::index_sequence<Is...>) { return ((Is, a) * ...); }(std::make_index_sequence<N>{}); }
+        template<std::size_t N> KAIXO_STEREO_T(powN, powN<N>)
         template<std::size_t N> KAIXO_MONO invPowN(is_mono auto a) noexcept { return[&]<std::size_t ...Is>(std::index_sequence<Is...>) { return 1 - ((Is, (1 - a)) * ...); }(std::make_index_sequence<N>{}); }
         template<std::size_t N> KAIXO_POLY invPowN(is_poly auto a) noexcept { return[&]<std::size_t ...Is>(std::index_sequence<Is...>) { return 1 - ((Is, (1 - a)) * ...); }(std::make_index_sequence<N>{}); }
+        template<std::size_t N> KAIXO_STEREO_T(invPowN, invPowN<N>)
 
         KAIXO_MONO sqrt(is_mono auto a) noexcept { return std::sqrt(a); }
         KAIXO_POLY sqrt(is_poly auto a) noexcept { return a.sqrt(); }
