@@ -317,6 +317,19 @@ namespace Kaixo {
 
         // ------------------------------------------------
 
+        template<class Arg, class ...Args>
+            requires (std::convertible_to<std::decay_t<Args>, Arg> && ...)
+        static KAIXO_INLINE std::common_type_t<Arg, Args...> lerp(float l, Arg&& arg, Args&& ...args) {
+            constexpr std::size_t count = 1 + sizeof...(Args);
+            const float progress = clamp((count - 1) * l, 0, count - 1);
+            std::common_type_t<Arg, Args...> result = arg * (1 - min(1, progress));
+            std::size_t index = 1;
+            (((result = result + (1 - min(1, abs(progress - index))) * args), ++index), ...);
+            return result;
+        }
+
+        // ------------------------------------------------
+
         struct Fast {
             
             // ------------------------------------------------
@@ -708,6 +721,19 @@ namespace Kaixo {
             }
 
             KAIXO_STEREO(curve)
+
+            // ------------------------------------------------
+
+            template<class Arg, class ...Args>
+                requires (std::convertible_to<std::decay_t<Args>, Arg> && ...)
+            static KAIXO_INLINE std::common_type_t<Arg, Args...> lerp(float l, Arg&& arg, Args&& ...args) {
+                constexpr std::size_t count = 1 + sizeof...(Args);
+                const float progress = clamp((count - 1) * l, 0, count - 1);
+                std::common_type_t<Arg, Args...> result = arg * (1 - min(1, progress));
+                std::size_t index = 1;
+                (((result = result + (1 - min(1, abs(progress - index))) * args), ++index), ...);
+                return result;
+            }
 
             // ------------------------------------------------
 
