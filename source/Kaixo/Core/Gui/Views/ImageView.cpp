@@ -11,6 +11,7 @@ namespace Kaixo::Gui {
     {
         if (!settings.enableMouse) {
             setInterceptsMouseClicks(false, false);
+            setBufferedToImage(true);
         }
     }
 
