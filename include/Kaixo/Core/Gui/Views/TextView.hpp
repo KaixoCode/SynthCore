@@ -34,6 +34,8 @@ namespace Kaixo::Gui {
 
             std::string placeholder = "";
             std::string text = "";
+
+            std::string_view allowedCharacters;
         } settings;
 
         // ------------------------------------------------
@@ -48,6 +50,7 @@ namespace Kaixo::Gui {
         // ------------------------------------------------
 
         void mouseDown(const juce::MouseEvent& event) override;
+        void mouseDoubleClick(const juce::MouseEvent& event) override;
         void mouseDrag(const juce::MouseEvent& event) override;
         bool keyPressed(const juce::KeyPress& key) override;
 
@@ -77,11 +80,17 @@ namespace Kaixo::Gui {
         std::string_view selection() const;
 
         // ------------------------------------------------
+        
+        bool hasFilter() const;
+        bool allowed(char c) const;
+        std::string filter(std::string_view text) const;
+
+        // ------------------------------------------------
 
         void changed();
         void setText(std::string_view string, bool withNotify = false);
-        void insert(char c, bool withDelete = true);
-        void insert(std::string_view c, bool withDelete = true);
+        bool insert(char c, bool withDelete = true);
+        bool insert(std::string_view c, bool withDelete = true);
         void deleteIndex(std::int64_t index);
         void deleteRange(std::int64_t begin, std::int64_t end);
 

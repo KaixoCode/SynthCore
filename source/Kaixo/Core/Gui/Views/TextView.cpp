@@ -20,6 +20,16 @@ namespace Kaixo::Gui {
         View::mouseDown(event);
         setCaret(positionToIndex({ event.x, event.y }));
     }
+    
+    void TextView::mouseDoubleClick(const juce::MouseEvent& event) {
+        View::mouseDoubleClick(event);
+        std::size_t index = positionToIndex({ event.x, event.y });
+        std::size_t start = findEndOfWordLeftFrom(index);
+        std::size_t end = findEndOfWordRightFrom(start);
+        m_Caret = start;
+        m_CaretEnd = end;
+        repaint();
+    }
 
     void TextView::mouseDrag(const juce::MouseEvent& event) {
         View::mouseDrag(event);
@@ -64,8 +74,7 @@ namespace Kaixo::Gui {
         auto character = key.getTextCharacter();
 
         if (juce::CharacterFunctions::isPrintable(character) && character < 0xFF) {
-            insert((char)(character & 0xFF));
-            return true;
+            return insert((char)(character & 0xFF));
         }
 
         return false;
@@ -203,6 +212,26 @@ namespace Kaixo::Gui {
 
     // ------------------------------------------------
 
+
+    bool TextView::hasFilter() const {
+        return !settings.allowedCharacters.empty();
+    }
+
+    bool TextView::allowed(char c) const {
+        return !hasFilter() || oneOf(c, settings.allowedCharacters);
+    }
+
+    std::string TextView::filter(std::string_view text) const {
+        if (!hasFilter()) return std::string{ text };
+        std::stringstream out;
+        for (char c : text) {
+            if (allowed(c)) out << c;
+        }
+        return out.str();
+    }
+
+    // ------------------------------------------------
+
     void TextView::changed() {
         repaint();
         for (auto& callback : m_Callbacks)
@@ -216,9 +245,10 @@ namespace Kaixo::Gui {
         if (withNotify) changed();
     }
 
-    void TextView::insert(char c, bool withDelete) {
+    bool TextView::insert(char c, bool withDelete) {
         if (withDelete) deleteSelection();
-        if (settings.text.size() >= settings.maxSize) return;
+        if (settings.text.size() >= settings.maxSize) return false;
+        if (!allowed(c)) return false;
         settings.text.insert(settings.text.begin() + m_Caret, c);
         if (lines().size() > settings.maxLines) {
             deleteIndex(m_Caret);
@@ -226,10 +256,20 @@ namespace Kaixo::Gui {
             setCaret(m_Caret + 1);
             changed();
         }
+
+        return true;
     }
 
-    void TextView::insert(std::string_view c, bool withDelete) {
+    bool TextView::insert(std::string_view c, bool withDelete) {
         if (withDelete) deleteSelection();
+        std::string filtered;
+        if (hasFilter()) {
+            filtered = filter(c);
+            c = filtered;
+
+            if (c.empty()) return false;
+        }
+
         auto insertN = std::min(settings.maxSize - settings.text.size(), c.size());
         settings.text.insert(settings.text.begin() + m_Caret, c.begin(), c.begin() + insertN);
         if (lines().size() > settings.maxLines) {
@@ -238,6 +278,8 @@ namespace Kaixo::Gui {
             setCaret(m_Caret + insertN);
             changed();
         }
+
+        return true;
     }
 
     void TextView::deleteIndex(std::int64_t index) {

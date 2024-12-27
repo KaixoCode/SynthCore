@@ -183,7 +183,9 @@ namespace Kaixo::Gui {
         
         template<class Type, class Interface, std::invocable<Type> Callback>
             requires std::same_as<std::invoke_result_t<Interface>, Type>
-        void watch(Interface interface, Callback callback);
+        void watch(Interface interface, Callback callback, std::size_t update = 0);
+        // ^^ Update parameter sets the speed at which this value is watched
+        //    Setting this to something other than 0 only checks the value every Nth frame.
 
         // ------------------------------------------------
 
@@ -277,7 +279,7 @@ namespace Kaixo::Gui {
 
     template<class Type, class Interface, std::invocable<Type> Callback>
         requires std::same_as<std::invoke_result_t<Interface>, Type>
-    void View::watch(Interface interface, Callback callback) {
+    void View::watch(Interface interface, Callback callback, std::size_t update) {
 
         // ------------------------------------------------
 
@@ -292,20 +294,26 @@ namespace Kaixo::Gui {
             Interface interface;
             Callback callback;
             std::optional<Type> currentValue{};
+            std::size_t updateFrequency{};
+            std::size_t updateCounter = 0;
 
             // ------------------------------------------------
 
-            Watcher(Interface interface, Callback callback)
-                : interface(std::move(interface)), callback(std::move(callback)) 
+            Watcher(Interface interface, Callback callback, std::size_t update)
+                : interface(std::move(interface)), callback(std::move(callback)), updateFrequency(update)
             {}
 
             // ------------------------------------------------
 
             void update() override {
-                Type value = interface();
-                if (value != currentValue) {
-                    currentValue = value;
-                    callback(value);
+                if (updateCounter++ == updateFrequency) {
+                    updateCounter = 0;
+
+                    Type value = interface();
+                    if (value != currentValue) {
+                        currentValue = value;
+                        callback(value);
+                    }
                 }
             }
 
@@ -315,7 +323,7 @@ namespace Kaixo::Gui {
 
         // ------------------------------------------------
 
-        m_ValueWatchers.push_back(std::make_unique<Watcher>(std::move(interface), std::move(callback)));
+        m_ValueWatchers.push_back(std::make_unique<Watcher>(std::move(interface), std::move(callback), update));
 
         // ------------------------------------------------
 
