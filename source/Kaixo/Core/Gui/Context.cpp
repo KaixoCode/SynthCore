@@ -38,6 +38,10 @@ namespace Kaixo::Gui {
 
     // ------------------------------------------------
 
+    void Context::openParameterContextMenu(ParamID id) const { getWindow().openParameterContextMenu(id); }
+
+    // ------------------------------------------------
+
     void Context::cursorPos(Point<int> pos) const {
         juce::Desktop::getInstance().getMainMouseSource().setScreenPosition(pos.toFloat());
     }

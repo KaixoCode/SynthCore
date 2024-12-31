@@ -4,6 +4,8 @@
 #include "Kaixo/Core/Gui/Context.hpp"
 #include "Kaixo/Core/Gui/Tooltip.hpp"
 #include "Kaixo/Core/Gui/TabControl.hpp"
+#include "Kaixo/Core/Gui/Knob.hpp"
+#include "Kaixo/Core/Gui/Button.hpp"
 
 // ------------------------------------------------
 
@@ -65,6 +67,16 @@ namespace Kaixo::Gui {
 
         notifyListeners(&ParameterListener::parameterChanged, id, value);
         if (ui) notifyListeners(&ParameterListener::parameterUIChanged, id, value);
+    }
+
+    // ------------------------------------------------
+
+    void Window::openParameterContextMenu(ParamID id) {
+        if (auto context = getHostContext()) {
+            if (auto menu = context->getContextMenuForParameter(&m_Controller.parameter(id))) {
+                menu->showNativeMenu(getMouseXYRelative());
+            }
+        }
     }
 
     // ------------------------------------------------
@@ -142,6 +154,8 @@ namespace Kaixo::Gui {
                 notifyParameterChange(id, value);
             }
         }
+
+        Desktop::getInstance().getMainMouseSource().forceMouseCursorUpdate();
 
         m_BaseComponent->onIdle();
     }

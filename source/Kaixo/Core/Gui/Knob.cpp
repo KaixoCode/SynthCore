@@ -71,6 +71,10 @@ namespace Kaixo::Gui {
 
             m_PreviousMousePosition = event.mouseDownPosition;
             beginEdit();
+        } else if (event.mods.isRightButtonDown()) {
+            if (isLinkedToParam()) {
+                context.openParameterContextMenu(settings.param);
+            }
         }
     }
 
@@ -156,16 +160,19 @@ namespace Kaixo::Gui {
 
     void Knob::mouseDoubleClick(const juce::MouseEvent& event) {
         View::mouseDoubleClick(event);
-        reset();
 
-        if (settings.tooltipValue) {
-            if (settings.tooltipName) {
-                context.tooltip().update(valueString());
-            } else {
-                context.tooltip().open({
-                    .string = valueString(),
-                    .position = openTooltipAt()
-                });
+        if (event.mods.isLeftButtonDown()) {
+            reset();
+
+            if (settings.tooltipValue) {
+                if (settings.tooltipName) {
+                    context.tooltip().update(valueString());
+                } else {
+                    context.tooltip().open({
+                        .string = valueString(),
+                        .position = openTooltipAt()
+                    });
+                }
             }
         }
     }

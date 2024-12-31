@@ -15,6 +15,7 @@ namespace Kaixo::Theme {
     // ------------------------------------------------
 
     Theme::Theme() : Container(this) {
+#ifndef SYNTH_DEBUG
         std::string asString;
         asString.reserve(DefaultThemeBytes);
         for (auto& line : DefaultTheme) {
@@ -24,6 +25,7 @@ namespace Kaixo::Theme {
         if (auto val = basic_json::parse(asString)) {
             m_DefaultTheme = val.value();
         }
+#endif
     }
 
     // ------------------------------------------------
@@ -54,9 +56,31 @@ namespace Kaixo::Theme {
 
     void Theme::openDefault() {
         std::lock_guard _{ m_Mutex };
+
+#ifdef SYNTH_DEBUG
+        auto _absolute = std::filesystem::absolute(SYNTH_DefaultTheme);
+        std::ifstream _file{ _absolute };
+
+        if (!_file.is_open()) {
+            m_LastErrorMessage = "Failed to open file";
+            return;
+        }
+
+        if (auto _json = basic_json::parse(file_to_string(_file))) {
+            ScopedCurrentPath _{ _absolute.parent_path() };
+
+            m_DefaultTheme = std::move(_json.value());
+
+            clearCache();
+            findVariables(m_DefaultTheme);
+            open(m_DefaultTheme, Default);
+            m_OpenedPath = Default;
+        }
+#else
         findVariables(m_DefaultTheme);
         open(m_DefaultTheme, Default);
         m_OpenedPath = Default;
+#endif
     }
 
     bool Theme::reopen() {
@@ -83,7 +107,7 @@ namespace Kaixo::Theme {
 
         if (auto _json = basic_json::parse(file_to_string(_file))) {
 
-            ScopedCurrentPath _{ path.parent_path() };
+            ScopedCurrentPath _{ _absolute.parent_path() };
 
             // First load all variables
             findVariables(m_DefaultTheme);

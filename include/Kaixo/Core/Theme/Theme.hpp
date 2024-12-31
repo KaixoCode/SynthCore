@@ -90,6 +90,13 @@ namespace Kaixo::Theme {
 
         // ------------------------------------------------
         
+#ifdef SYNTH_DEBUG
+        std::filesystem::path m_DefaultThemePath = SYNTH_DefaultTheme;
+        FileWatcher m_DefaultThemeWatcher{ m_DefaultThemePath.parent_path(), [this] { openDefault(); }};
+#endif
+
+        // ------------------------------------------------
+        
         ImageID nextImageID();
         FontID nextFontID();
 

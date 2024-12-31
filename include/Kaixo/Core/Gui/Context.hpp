@@ -41,6 +41,10 @@ namespace Kaixo::Gui {
         std::string_view name        (ParamID id) const;
 
         // ------------------------------------------------
+        
+        void openParameterContextMenu(ParamID id) const;
+
+        // ------------------------------------------------
 
         void cursorPos(Point<int> pos) const; // requires screen coordinates
 

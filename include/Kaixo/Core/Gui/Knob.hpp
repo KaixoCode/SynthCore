@@ -110,14 +110,14 @@ namespace Kaixo::Gui {
 
         // ------------------------------------------------
 
-    protected:
-        ParamValue m_Value = 0;
-        Point<> m_PreviousMousePosition{ 0, 0 };
+        bool isLinkedToParam() const;
+        bool useParamInfo() const;
 
         // ------------------------------------------------
 
-        bool isLinkedToParam() const;
-        bool useParamInfo() const;
+    protected:
+        ParamValue m_Value = 0;
+        Point<> m_PreviousMousePosition{ 0, 0 };
 
         // ------------------------------------------------
 

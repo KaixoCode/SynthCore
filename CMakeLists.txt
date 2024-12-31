@@ -49,12 +49,14 @@ if(${VERSION_TYPE} STREQUAL "RELEASE")
     set(FULL_VERSION "${VERSION}")
 else()
     set(FULL_VERSION "${VERSION}-${VERSION_TYPE}")
+    add_compile_definitions(SYNTH_DEBUG="")
 endif()
 
 add_compile_definitions(
     SYNTH_InitialSize=${INITIAL_SIZE}
     SYNTH_VersionType="${VERSION_TYPE}"
     SYNTH_FullVersion="${FULL_VERSION}"
+    SYNTH_DefaultTheme="${PROJECT_SOURCE_DIRECTORY}/${THEME}"
 )
 
 juce_add_plugin(${NAME}

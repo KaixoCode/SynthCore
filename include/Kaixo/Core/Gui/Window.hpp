@@ -42,6 +42,10 @@ namespace Kaixo::Gui {
         void notifyParameterChange(ParamID id, ParamValue value, bool ui = false);
 
         // ------------------------------------------------
+
+        void openParameterContextMenu(ParamID id);
+
+        // ------------------------------------------------
         
         void defaultDescription(std::string_view str);
         void description(std::string_view str);

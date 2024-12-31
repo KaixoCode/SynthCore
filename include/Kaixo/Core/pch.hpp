@@ -116,6 +116,7 @@ namespace Kaixo {
 #include "Kaixo/Utils/utils.hpp"
 #include "Kaixo/Utils/Math.hpp"
 #include "Kaixo/Utils/StringUtils.hpp"
+#include "Kaixo/Utils/FileWatcher.hpp"
 
 #include "Kaixo/Core/Processing/Stereo.hpp"
 

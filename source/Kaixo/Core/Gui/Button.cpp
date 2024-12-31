@@ -48,19 +48,27 @@ namespace Kaixo::Gui {
 
     void Button::mouseDown(const juce::MouseEvent& event) {
         View::mouseDown(event);
-        if (trigger() == OnMouseDown) {
-            if (behaviour() == Click) return callback(true);
-            if (behaviour() == Toggle) return callback(!m_Value);
+        if (event.mods.isLeftButtonDown()) {
+            if (trigger() == OnMouseDown) {
+                if (behaviour() == Click) return callback(true);
+                if (behaviour() == Toggle) return callback(!m_Value);
+            }
+        } else if (event.mods.isRightButtonDown()) {
+            if (isLinkedToParam()) {
+                context.openParameterContextMenu(settings.param);
+            }
         }
     }
 
     void Button::mouseUp(const juce::MouseEvent& event) {
         View::mouseUp(event);
-        if (behaviour() == Click && trigger() == OnMouseDown) return callback(false);
+        if (event.mods.isLeftButtonDown()) {
+            if (behaviour() == Click && trigger() == OnMouseDown) return callback(false);
 
-        if (contains(event.position) && trigger() == OnMouseUp) {
-            if (behaviour() == Click) return callback(true);
-            if (behaviour() == Toggle) return callback(!m_Value);
+            if (contains(event.position) && trigger() == OnMouseUp) {
+                if (behaviour() == Click) return callback(true);
+                if (behaviour() == Toggle) return callback(!m_Value);
+            }
         }
     }
 
