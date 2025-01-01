@@ -637,19 +637,19 @@ namespace Kaixo {
             KAIXO_POLY magnitude_to_db(is_poly auto x) { return (20.f * log10(x)); }
             KAIXO_STEREO(magnitude_to_db)
 
-            KAIXO_MONO magnitude_to_log(is_mono auto x, is_mono auto y0, is_mono auto y1) { return y0 / exp(log(y0 / y1) * x); }
-            KAIXO_POLY magnitude_to_log(is_poly auto x, is_poly auto y0, is_poly auto y1) { return y0 / exp(log(y0 / y1) * x); }
+            KAIXO_MONO magnitude_to_log(is_mono auto x, is_mono auto y0, is_mono auto y1) { return y0 / exp2(log2(y0 / y1) * x); }
+            KAIXO_POLY magnitude_to_log(is_poly auto x, is_poly auto y0, is_poly auto y1) { return y0 / exp2(log2(y0 / y1) * x); }
             KAIXO_STEREO(magnitude_to_log)
 
-            template<auto y0, auto y1> KAIXO_MONO magnitude_to_log(is_mono auto x) { return y0 / exp(log(y0 / y1) * x); }
-            template<auto y0, auto y1> KAIXO_POLY magnitude_to_log(is_poly auto x) { return y0 / exp(log(y0 / y1) * x); }
+            template<auto y0, auto y1> KAIXO_MONO magnitude_to_log(is_mono auto x) { return y0 / exp2(log2(y0 / y1) * x); }
+            template<auto y0, auto y1> KAIXO_POLY magnitude_to_log(is_poly auto x) { return y0 / exp2(log2(y0 / y1) * x); }
             
-            KAIXO_MONO log_to_magnitude(is_mono auto x, is_mono auto y0, is_mono auto y1) { return -log(x / y0) / log(y0 / y1); }
-            KAIXO_POLY log_to_magnitude(is_poly auto x, is_poly auto y0, is_poly auto y1) { return -log(x / y0) / log(y0 / y1); }
+            KAIXO_MONO log_to_magnitude(is_mono auto x, is_mono auto y0, is_mono auto y1) { return -log2(x / y0) / log2(y0 / y1); }
+            KAIXO_POLY log_to_magnitude(is_poly auto x, is_poly auto y0, is_poly auto y1) { return -log2(x / y0) / log2(y0 / y1); }
             KAIXO_STEREO(log_to_magnitude)
 
-            template<auto y0, auto y1> KAIXO_MONO log_to_magnitude(is_mono auto x) { return -log(x / y0) / log(y0 / y1); }
-            template<auto y0, auto y1> KAIXO_POLY log_to_magnitude(is_poly auto x) { return -log(x / y0) / log(y0 / y1); }
+            template<auto y0, auto y1> KAIXO_MONO log_to_magnitude(is_mono auto x) { return -log2(x / y0) / log2(y0 / y1); }
+            template<auto y0, auto y1> KAIXO_POLY log_to_magnitude(is_poly auto x) { return -log2(x / y0) / log2(y0 / y1); }
 
             template<auto N>
             KAIXO_MONO discrete_xsquared(is_mono auto x) {

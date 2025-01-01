@@ -33,7 +33,7 @@ namespace Kaixo::Test {
         };
 
         auto json = basic_json::parse(jsonString);
-        ASSERT_TRUE(json.valid());
+        ASSERT_TRUE(json.has_value());
         ASSERT_TRUE(json->contains("field"));
 
         Theme::StateLinked<int> value{};
@@ -81,7 +81,7 @@ namespace Kaixo::Test {
         };
 
         auto json = basic_json::parse(jsonString);
-        ASSERT_TRUE(json.valid());
+        ASSERT_TRUE(json.has_value());
         ASSERT_TRUE(json->contains("field"));
 
         Theme::StateLinked<Theme::Animated<int>> value{};
