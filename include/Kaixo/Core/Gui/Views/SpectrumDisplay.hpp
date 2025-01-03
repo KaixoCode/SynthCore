@@ -17,16 +17,12 @@ namespace Kaixo::Gui {
 
     // ------------------------------------------------
     
-    class SpectrumDisplay;
-
-    // ------------------------------------------------
-    
     class SpectrumInterface : public Processing::Interface {
     public:
 
         // ------------------------------------------------
 
-        virtual Processing::Stereo read() = 0;
+        virtual const Processing::CircularBuffer& buffer() = 0;
 
         // ------------------------------------------------
 
@@ -48,7 +44,16 @@ namespace Kaixo::Gui {
 
             // ------------------------------------------------
             
-            std::size_t fftSize = 4096;
+            float mindB = -45;
+            float maxdB = 20;
+
+            // ------------------------------------------------
+            
+            std::size_t fftSize = 8192;
+
+            // ------------------------------------------------
+            
+            Processing::InterfaceStorage<SpectrumInterface> interface;
 
             // ------------------------------------------------
 
@@ -56,19 +61,18 @@ namespace Kaixo::Gui {
 
         // ------------------------------------------------
 
-        SpectrumDisplay(Context c, Settings s = {}) 
-            : View(c), settings(std::move(s)) 
-        {}
+        SpectrumDisplay(Context c, Settings s = {});
 
         // ------------------------------------------------
         
-        void paint(juce::Graphics& g) override {
-
-        }
-
+        void onIdle() override;
+        void paint(juce::Graphics& g) override;
+ 
         // ------------------------------------------------
 
     private:
+        std::vector<std::complex<float>> m_Data{};
+        std::vector<float> m_Levels{};
 
         // ------------------------------------------------
 

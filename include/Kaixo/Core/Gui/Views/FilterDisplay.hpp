@@ -61,6 +61,7 @@ namespace Kaixo::Gui {
         float at(float x) override;
         std::size_t nofPoints() const override;
         Point getPoint(std::size_t i) override;
+        PointMetadata getPointMetadata(std::size_t i) override;
         void setPoint(std::size_t i, Point point) override;
         void resetPoint(std::size_t i) override;
 
@@ -86,9 +87,16 @@ namespace Kaixo::Gui {
             virtual void reset() = 0;
 
             // ------------------------------------------------
+            
+            virtual bool enabled() const = 0;
+
+            // ------------------------------------------------
 
             virtual float x() const = 0;
             virtual float y() const = 0;
+            
+            virtual std::string xText() const = 0;
+            virtual std::string yText() const = 0;
 
             virtual void addZ(ParamValue delta) = 0;
 
@@ -110,11 +118,12 @@ namespace Kaixo::Gui {
 
             // ------------------------------------------------
             
-            TypedEntry(Filter s, FilterDisplay* f);
+            TypedEntry(Filter s, std::size_t id, FilterDisplay* f);
             ~TypedEntry();
 
             // ------------------------------------------------
 
+            std::size_t id;
             Filter settings;
             FilterDisplay* self;
 
@@ -140,9 +149,16 @@ namespace Kaixo::Gui {
             void reset() override;
 
             // ------------------------------------------------
+
+            bool enabled() const override;
+
+            // ------------------------------------------------
         
             float x() const override;
             float y() const override;
+
+            std::string xText() const override;
+            std::string yText() const override;
 
             void addZ(ParamValue delta) override;
 
@@ -189,14 +205,15 @@ namespace Kaixo::Gui {
 
     template<class FilterType>
     void FilterDisplay::addFilter(Filter settings) {
-        m_Filters.push_back(std::make_unique<TypedEntry<FilterType>>(std::move(settings), this));
+        std::size_t id = m_Filters.size();
+        m_Filters.push_back(std::make_unique<TypedEntry<FilterType>>(std::move(settings), id, this));
     }
 
     // ------------------------------------------------
     
     template<class FilterType>
-    FilterDisplay::TypedEntry<FilterType>::TypedEntry(Filter s, FilterDisplay* f)
-        : settings(std::move(s)), self(f)
+    FilterDisplay::TypedEntry<FilterType>::TypedEntry(Filter s, std::size_t id, FilterDisplay* f)
+        : settings(std::move(s)), self(f), id(id)
     {
         self->context.listener(this);
     }
@@ -218,6 +235,7 @@ namespace Kaixo::Gui {
         else if (id == settings.passes)    passes = val,    _changed = true;
 
         if (_changed) {
+            self->synchronizeValues();
             self->repaint();
         }
     }
@@ -233,6 +251,11 @@ namespace Kaixo::Gui {
         resetEnable();
         resetPasses();
     }
+    
+    // ------------------------------------------------
+
+    template<class FilterType>
+    bool FilterDisplay::TypedEntry<FilterType>::enabled() const { return enable; }
 
     // ------------------------------------------------
 
@@ -253,6 +276,31 @@ namespace Kaixo::Gui {
             return resonance;
         default:
             return gain;
+        }
+    }
+    
+    template<class FilterType>
+    std::string FilterDisplay::TypedEntry<FilterType>::xText() const { 
+        if (settings.frequency == NoParam) return std::string{};
+        return parameter(settings.frequency).toString(frequency);
+    }
+
+    template<class FilterType>
+    std::string FilterDisplay::TypedEntry<FilterType>::yText() const {
+        using enum Processing::FilterType;
+        switch (filter.type()) {
+        case LowPass:
+        case LowPass4:
+        case HighPass:
+        case HighPass4:
+        case Notch:
+        case BandPass:
+        case AllPass:
+            if (settings.resonance == NoParam) return std::string{};
+            return parameter(settings.resonance).toString(resonance);
+        default:
+            if (settings.gain == NoParam) return std::string{};
+            return parameter(settings.gain).toString(gain);
         }
     }
 

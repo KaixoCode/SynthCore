@@ -51,6 +51,15 @@ namespace Kaixo::Processing {
             return r * point.y + (1 - r) * prev->y;
         }
 
+        template<class SimdType>
+        SimdType at(const SimdType& x) const {
+            constexpr std::size_t Elements = sizeof(SimdType) / sizeof(float);
+            alignas(64) float values[Elements];
+            store(values, x);
+            for (auto& value : values) value = at(value);
+            return load<SimdType>(values, 0);
+        }
+
         // ------------------------------------------------
 
         void init() override { this->clear(); } 

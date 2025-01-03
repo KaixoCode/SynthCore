@@ -46,10 +46,41 @@ namespace Kaixo::Processing {
             writeIndex = (writeIndex + 1) % size;
         }
 
+        void read(std::vector<float>& to) const {
+            std::size_t writeI = writeIndex;
+            for (std::size_t i = 0; i < to.size(); ++i) {
+                to[i] += data[(i + writeI + size / 2) % size].average();
+            }
+        }
+        
         void read(std::vector<Stereo>& to) const {
             std::size_t writeI = writeIndex;
             for (std::size_t i = 0; i < to.size(); ++i) {
                 to[i] += data[(i + writeI + size / 2) % size];
+            }
+        }
+        
+        void read(std::vector<std::complex<float>>& mono) const {
+            std::size_t writeI = writeIndex;
+            for (std::size_t i = 0; i < mono.size(); ++i) {
+                mono[i] += data[(i + writeI + size / 2) % size].average();
+            }
+        }
+        
+        void read(std::vector<std::complex<Stereo>>& stereo) const {
+            std::size_t writeI = writeIndex;
+            for (std::size_t i = 0; i < stereo.size(); ++i) {
+                stereo[i] += data[(i + writeI + size / 2) % size];
+            }
+        }
+        
+        void read(std::vector<std::complex<float>>& l, std::vector<std::complex<float>>& r) const {
+            std::size_t writeI = writeIndex;
+            std::size_t outSize = Math::min(l.size(), r.size());
+            for (std::size_t i = 0; i < outSize; ++i) {
+                auto& read = data[(i + writeI + size / 2) % size];
+                l[i] += read.l;
+                r[i] += read.r;
             }
         }
 

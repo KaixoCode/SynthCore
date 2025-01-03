@@ -87,7 +87,6 @@ namespace Kaixo::Gui {
         repaint();
     }
 
-
     void PointsDisplay::mouseDrag(const juce::MouseEvent& event) {
         View::mouseDrag(event);
 
@@ -230,15 +229,34 @@ namespace Kaixo::Gui {
         auto parts = nofPoints();
         ensureUIPointsSize();
         for (std::size_t i = 0; i < parts; ++i) {
+            std::string index0Text = std::to_string(i);
+            std::string indexText = std::to_string(i + 1);
+            auto point = getPoint(i);
             {
                 State state = Default;
                 if (!m_IsCurve) {
                     if (m_UIPoints[i]->dragging) state |= Pressed;
                     if (m_UIPoints[i]->hovering) state |= Hovering;
+                    if (m_UIPoints[i]->selected) state |= Selected;
+                    if (m_UIPoints[i]->disabled) state |= Disabled;
                 }
                 m_UIPoints[i]->main.draw({
                     .graphics = g,
                     .bounds = handleRectAt(positionOfPoint(i)),
+                    .text = { 
+                        { "$index", indexText },
+                        { "$0index", index0Text },
+                        { "$x", m_UIPoints[i]->xvalueText },
+                        { "$y", m_UIPoints[i]->yvalueText },
+                        { "$c", m_UIPoints[i]->cvalueText },
+                    },
+                    .values = {
+                        { "$index", i + 1 },
+                        { "$0index", i },
+                        { "$x", point.x },
+                        { "$y", point.y },
+                        { "$c", point.c },
+                    },
                     .state = state 
                 });
             }
@@ -250,11 +268,27 @@ namespace Kaixo::Gui {
                 if (m_IsCurve) {
                     if (m_UIPoints[i]->dragging) state |= Pressed;
                     if (m_UIPoints[i]->hovering) state |= Hovering;
+                    if (m_UIPoints[i]->selected) state |= Selected;
+                    if (m_UIPoints[i]->disabled) state |= Disabled;
                 }
 
                 m_UIPoints[i]->curve.draw({
                     .graphics = g,
                     .bounds = handleRectAt(positionOfCurvePoint(i)),
+                    .text = { 
+                        { "$index", indexText },
+                        { "$0index", index0Text },
+                        { "$x", m_UIPoints[i]->xvalueText },
+                        { "$y", m_UIPoints[i]->yvalueText },
+                        { "$c", m_UIPoints[i]->cvalueText }, 
+                    },
+                    .values = {
+                        { "$index", i + 1 },
+                        { "$0index", i },
+                        { "$x", point.x },
+                        { "$y", point.y },
+                        { "$c", point.c },
+                    },
                     .state = state 
                 });
             }
@@ -292,7 +326,7 @@ namespace Kaixo::Gui {
         for (auto& callback : m_Callbacks)
             callback(i);
     }
-
+    
     // ------------------------------------------------
     
     void PointsDisplay::resetCurve(std::size_t i) {
@@ -444,12 +478,17 @@ namespace Kaixo::Gui {
     // ------------------------------------------------
 
     void PointsDisplay::synchronizeValues() {
-        auto parts = nofPoints();
-
+        auto parts = nofPoints(); 
+        ensureUIPointsSize();
         for (std::size_t i = 0; i < parts; ++i) {
             auto point = getPoint(i);
+            auto metadata = getPointMetadata(i);
             m_UIPoints[i]->x = point.x;
             m_UIPoints[i]->y = point.y;
+            m_UIPoints[i]->disabled = metadata.disabled;
+            m_UIPoints[i]->xvalueText = std::move(metadata.xvalueText);
+            m_UIPoints[i]->yvalueText = std::move(metadata.yvalueText);
+            m_UIPoints[i]->cvalueText = std::move(metadata.cvalueText);
         }
     }
 

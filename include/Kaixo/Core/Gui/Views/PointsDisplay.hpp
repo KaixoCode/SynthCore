@@ -34,13 +34,25 @@ namespace Kaixo::Gui {
             float c = 0;
         };
 
+        struct PointMetadata {
+            bool disabled = false;
+            std::string xvalueText{};
+            std::string yvalueText{};
+            std::string cvalueText{};
+        };
+
         struct UIPoint {
             bool hovering = false;
             bool dragging = false;
             bool selected = false;
+            bool disabled = false;
 
             float x = 0;
             float y = 0;
+
+            std::string xvalueText{};
+            std::string yvalueText{};
+            std::string cvalueText{};
 
             Theme::Drawable curve{};
             Theme::Drawable main{};
@@ -156,6 +168,7 @@ namespace Kaixo::Gui {
         virtual float at(float x) = 0;
         virtual std::size_t nofPoints() const = 0;
         virtual Point getPoint(std::size_t i) = 0;
+        virtual PointMetadata getPointMetadata(std::size_t i) { return {}; };
         virtual void setPoint(std::size_t i, Point point) = 0;
         virtual void resetCurve(std::size_t i);
         virtual void resetPoint(std::size_t i) {};

@@ -39,6 +39,14 @@ namespace Kaixo::Gui {
         };
     }
 
+    FilterDisplay::PointMetadata FilterDisplay::getPointMetadata(std::size_t i) {
+        return {
+            .disabled = !m_Filters[i]->enabled(),
+            .xvalueText = m_Filters[i]->xText(),
+            .yvalueText = m_Filters[i]->yText(),
+        };
+    }
+
     void FilterDisplay::setPoint(std::size_t i, Point point) {
         m_Filters[i]->x(point.x);
         m_Filters[i]->y(point.y);

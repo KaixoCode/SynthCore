@@ -175,6 +175,19 @@ namespace Kaixo::Processing {
         }
 
         // ------------------------------------------------
+        
+        float decibelsAt(float freq) {
+            Coefficients coef = m_Coefficients;
+            float o2 = Math::powN<2>(Math::sin(std::numbers::pi * freq / m_SampleRate));
+            float p1 = (coef.b[0] + coef.b[1] + coef.b[2]) / 2;
+            float p2 = (coef.a[0] + coef.a[1] + coef.a[2]) / 2;
+            float q1 = (4 * coef.b[0] * coef.b[2] * (1 - o2) + coef.b[1] * (coef.b[0] + coef.b[2]));
+            float q2 = (4 * coef.a[0] * coef.a[2] * (1 - o2) + coef.a[1] * (coef.a[0] + coef.a[2]));
+            float db = 10 * Math::log10((p1 * p1) - o2 * q1) - 10 * Math::log10((p2 * p2) - o2 * q2);
+            return passes() * db;
+        }
+
+        // ------------------------------------------------
 
     protected:
         float m_SampleRate = 48000;
@@ -227,12 +240,14 @@ namespace Kaixo::Processing {
             const float omega = 2 * std::numbers::pi * frequency;
             const float cosOmega = MathQuality::ncos(frequency);
             const float sinOmega = MathQuality::nsin(frequency);
-            const float Q = normalizedQ();
+            float Q = normalizedQ();
             const float gain = m_Gain;
             auto& coeffs = m_Coefficients;
 
             if (quadruple()) m_Passes = 4;
             else m_Passes = m_SetPasses;
+
+            Q /= m_Passes;
 
             const auto defaultA = [&](float alpha) {
                 coeffs.a = {
@@ -628,38 +643,27 @@ namespace Kaixo::Processing {
 
     // ------------------------------------------------
 
-    //template<class MathQuality = Math,
-    //         std::size_t Parallel = 1,
-    //         std::size_t MaxStages = 32>
+    template<class MathQuality = Math,
+             std::size_t Channels = 2,
+             std::size_t Parallel = 1,
+             std::size_t MaxStages = 32>
     class AntiAliasFilter {
     public:
 
         // ------------------------------------------------
         
-        using MathQuality = Math;
-        constexpr static std::size_t Parallel = 1;
-        constexpr static std::size_t MaxStages = 32;
+        constexpr static std::size_t MaxOrder = MaxStages * 2; // Using 2nd order stages
 
         // ------------------------------------------------
-        
-        constexpr static std::size_t MaxOrder = MaxStages * 2; // Using 2nd order stages
 
         struct Stage {
 
             // ------------------------------------------------
 
-            struct State {
-                alignas(64) float state[3][Parallel]{};
-            };
+            alignas(64) float state[Channels][2][Parallel]{};
 
             // ------------------------------------------------
 
-            State left{};
-            State right{};
-
-            // ------------------------------------------------
-
-            std::size_t order = 2;
             float a[3]{};
             float b[3]{};
 
@@ -670,8 +674,8 @@ namespace Kaixo::Processing {
         // ------------------------------------------------
         
         float sampleRate = 48000;
-        float cutoff = 21000;
-        float transitionWidth = 1000;
+        float cutoff = 22000;
+        float transitionWidth = 4000;
         float passbandAmplitude = 0.89;   // in magnitude; ~=  -1dB
         float stopbandAmplitude = 0.0001; // in magnitude; ~= -80dB
 
@@ -681,24 +685,37 @@ namespace Kaixo::Processing {
 
         // ------------------------------------------------
         
-        Stereo process(Stereo input) {
+        template<is_simd SimdType>
+        SimdType process(const SimdType& input, std::size_t channel, std::size_t index = 0) {
+            constexpr std::size_t Elements = sizeof(input) / sizeof(float);
+
+            SimdType res = input;
+            for (Stage& stage : stages) {
+                const SimdType state0 = load<SimdType>(stage.state[channel][0], index);
+                const SimdType state1 = load<SimdType>(stage.state[channel][1], index);
+                const SimdType value = (stage.b[0] * res) + state0;
+
+                store(stage.state[channel][0] + index, stage.b[1] * res - stage.a[1] * value + state1);
+                store(stage.state[channel][1] + index, stage.b[2] * res - stage.a[2] * value);
+
+                res = value;
+            }
+            
+            return res;
+        }
+        
+        Stereo process(Stereo input, std::size_t left = 0, std::size_t right = 1) {
             Stereo res = input;
             for (Stage& stage : stages) {
-                auto l = (stage.b[0] * res.l) + stage.left.state[0][0];
-                auto r = (stage.b[0] * res.r) + stage.right.state[0][0];
-            
-                if (stage.order == 1) {
-                    stage.left.state[0][0] = (stage.b[1] * res.l) - (stage.a[1] * l);
-            
-                    stage.right.state[0][0] = (stage.b[1] * res.r) - (stage.a[1] * r);
-                } else {
-                    stage.left.state[0][0] = (stage.b[1] * res.l) - (stage.a[1] * l) + stage.left.state[1][0];
-                    stage.left.state[1][0] = (stage.b[2] * res.l) - (stage.a[2] * l);
-            
-                    stage.right.state[0][0] = (stage.b[1] * res.r) - (stage.a[1] * r) + stage.right.state[1][0];
-                    stage.right.state[1][0] = (stage.b[2] * res.r) - (stage.a[2] * r);
-                }
-            
+                const float l = (stage.b[0] * res.l) + stage.state[left][0][0];
+                const float r = (stage.b[0] * res.r) + stage.state[right][0][0];
+
+                stage.state[left][0][0] = stage.b[1] * res.l - stage.a[1] * l + stage.state[left][1][0];
+                stage.state[left][1][0] = stage.b[1] * res.l - stage.a[1] * l;
+
+                stage.state[right][0][0] = stage.b[1] * res.r - stage.a[1] * r + stage.state[right][1][0];
+                stage.state[right][1][0] = stage.b[1] * res.r - stage.a[1] * r;
+
                 res = { l, r };
             }
             
@@ -707,54 +724,33 @@ namespace Kaixo::Processing {
 
         // ------------------------------------------------
         
+        // https://en.wikipedia.org/wiki/Elliptic_filter
         void recalculateCoefficients() {
-        
-            // https://en.wikipedia.org/wiki/Elliptic_filter
-
             const float normalizedFrequency = Math::Fast::min(cutoff / sampleRate, 0.5);
             const float normalizedTransitionWidth = Math::Fast::min(transitionWidth / sampleRate, 0.5);
             const float passbandFrequency = Math::Fast::max(normalizedFrequency - normalizedTransitionWidth / 2, 0.0);
             const float stopbandFrequency = Math::Fast::min(normalizedFrequency + normalizedTransitionWidth / 2, 0.5);
-
             const float epsilonPassband = std::sqrt(1.f / (passbandAmplitude * passbandAmplitude) - 1.f);
             const float epsilonStopband = std::sqrt(1.f / (stopbandAmplitude * stopbandAmplitude) - 1.f);
-
             const float omegaPassband = std::tan(std::numbers::pi * passbandFrequency);
             const float omegaStopband = std::tan(std::numbers::pi * stopbandFrequency);
              
-            // Calculate order using elliptic integral
             const float k = omegaPassband / omegaStopband;
             const float k1 = epsilonPassband / epsilonStopband;
-
             const auto [K, Kp] = ellipticIntegralK(k);
             const auto [K1, K1p] = ellipticIntegralK(k1);
 
-            const std::size_t order2 = Math::min(Math::ceil((K1p * K) / (K1 * Kp)), MaxOrder);
-            const std::size_t remainder = 0; // order % 2;
-            const std::size_t nofStages = Math::min((order2 + 1) / 2, MaxStages);
+            const std::size_t nofStages = Math::min((Math::ceil((K1p * K) / (K1 * Kp)) + 1) / 2, MaxStages);
             const std::size_t order = nofStages * 2;
             // ^^^ This ignores a potential additional 1st order filter
             //     since this is an anti-alias filter, the exact pass/stop band
             //     specifications aren't crucial, so this 1st order filter
             //     is simply left out for convenience.
-            
+
+            stages.clear();
+
             constexpr std::complex<float> j{ 0, 1 };
             const std::complex<float> v0 = -j * (asne(j / epsilonPassband, k1) / static_cast<float>(order));
-            
-            stages.clear();
-            
-            if (remainder == 1) {
-                const std::complex<float> pa = omegaPassband * j * sne(j * v0, k);
-                const std::complex<float> p = (1.f + pa) / (1.f - pa);
-                const std::complex<float> g = 0.5f * (1.f - p);
-            
-                Stage& stage = stages.emplace_back();
-                stage.order = 1;
-                stage.a[1] = -std::real(p);
-                stage.b[0] = std::real(g);
-                stage.b[1] = stage.b[0];
-            }
-            
             for (std::size_t i = 0; i < nofStages; ++i) {
                 const float ui = (2 * (i + 1) - 1.f) / static_cast<float>(order);
                 const std::complex<float> pa = omegaPassband * j * cde(ui - j * v0, k);
@@ -766,7 +762,6 @@ namespace Kaixo::Processing {
                 const float gain = std::pow(std::abs(g), 2.f);
             
                 Stage& stage = stages.emplace_back();
-                stage.order = 2;
                 stage.a[1] = std::real(-p - std::conj(p));
                 stage.a[2] = std::real(p * std::conj(p));
                 stage.b[0] = gain;
