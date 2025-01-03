@@ -28,6 +28,8 @@ namespace Kaixo::Processing {
 
         // ------------------------------------------------
 
+        Stereo at(Stereo x) const { return { at(x.l), at(x.r) }; }
+
         float at(float x) const {
             const Point* prev = this->empty() ? &Zero : &this->front();
             for (std::size_t i = 0; i < this->size(); ++i) {

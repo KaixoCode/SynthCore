@@ -373,84 +373,82 @@ namespace Kaixo::Processing {
 
     // ------------------------------------------------
 
-    inline void ellipticIntegralK(double k, double& K, double& Kp) {
+    inline float ellipticIntegral(float v) {
         constexpr int M = 4;
-
-        K = std::numbers::pi_v<double> / 2;
-        auto lastK = k;
+        float K = std::numbers::pi / 2;
+        auto lastK = v;
 
         for (int i = 0; i < M; ++i) {
             lastK = std::pow(lastK / (1 + std::sqrt(1 - std::pow(lastK, 2.0))), 2.0);
             K *= 1 + lastK;
         }
 
-        Kp = std::numbers::pi_v<double> / 2;
-        auto last = std::sqrt(1 - k * k);
-
-        for (int i = 0; i < M; ++i) {
-            last = std::pow(last / (1.0 + std::sqrt(1.0 - std::pow(last, 2.0))), 2.0);
-            Kp *= 1 + last;
-        }
+        return K;
     }
 
-    inline std::complex<double> asne(std::complex<double> w, double k) noexcept {
+    inline std::pair<float, float> ellipticIntegralK(float k) {
+        return {
+            ellipticIntegral(k),
+            ellipticIntegral(std::sqrt(1 - k * k)),
+        };
+    }
+
+    inline std::complex<float> asne(std::complex<float> w, float k) noexcept {
         constexpr int M = 4;
 
-        double ke[M + 1];
-        double* kei = ke;
+        float ke[M + 1];
+        float* kei = ke;
         *kei = k;
 
         for (int i = 0; i < M; ++i) {
-            auto next = std::pow(*kei / (1.0 + std::sqrt(1.0 - std::pow(*kei, 2.0))), 2.0);
+            auto next = std::pow(*kei / (1.f + std::sqrt(1.f - std::pow(*kei, 2.f))), 2.f);
             *++kei = next;
         }
 
-        std::complex<double> last = w;
+        std::complex<float> last = w;
 
         for (int i = 1; i <= M; ++i)
-            last = 2.0 * last / ((1.0 + ke[i]) * (1.0 + std::sqrt(1.0 - std::pow(ke[i - 1] * last, 2.0))));
+            last = 2.f * last / ((1.f + ke[i]) * (1.f + std::sqrt(1.f - std::pow(ke[i - 1] * last, 2.f))));
 
-        return 2.0 / std::numbers::pi_v<double> *std::asin(last);
+        return 2.f / std::numbers::pi_v<float> * std::asin(last);
     }
 
-    inline std::complex<double> sne(std::complex<double> u, double k) noexcept {
+    inline std::complex<float> sne(std::complex<float> u, float k) noexcept {
         constexpr int M = 4;
 
-        double ke[M + 1];
-        double* kei = ke;
+        float ke[M + 1];
+        float* kei = ke;
         *kei = k;
 
         for (int i = 0; i < M; ++i) {
-            auto next = std::pow(*kei / (1 + std::sqrt(1 - std::pow(*kei, 2.0))), 2.0);
+            auto next = std::pow(*kei / (1.f + std::sqrt(1 - std::pow(*kei, 2.f))), 2.f);
             *++kei = next;
         }
 
-        // NB: the spurious cast to double here is a workaround for a very odd link-time failure
-        std::complex<double> last = std::sin(u * (double)(std::numbers::pi_v<double> / 2));
+        std::complex<float> last = std::sin(u * static_cast<float>(std::numbers::pi / 2.f));
 
         for (int i = M - 1; i >= 0; --i)
-            last = (1.0 + ke[i + 1]) / (1.0 / last + ke[i + 1] * last);
+            last = (1.f + ke[i + 1]) / (1.f / last + ke[i + 1] * last);
 
         return last;
     }
 
-    inline std::complex<double> cde(std::complex<double> u, double k) noexcept {
+    inline std::complex<float> cde(std::complex<float> u, float k) noexcept {
         constexpr int M = 4;
 
-        double ke[M + 1];
-        double* kei = ke;
+        float ke[M + 1];
+        float* kei = ke;
         *kei = k;
 
         for (int i = 0; i < M; ++i) {
-            auto next = std::pow(*kei / (1.0 + std::sqrt(1.0 - std::pow(*kei, 2.0))), 2.0);
+            auto next = std::pow(*kei / (1.f + std::sqrt(1.f - std::pow(*kei, 2.f))), 2.f);
             *++kei = next;
         }
 
-        // NB: the spurious cast to double here is a workaround for a very odd link-time failure
-        std::complex<double> last = std::cos(u * (double)(std::numbers::pi_v<double> / 2));
+        std::complex<float> last = std::cos(u * static_cast<float>(std::numbers::pi / 2.f));
 
         for (int i = M - 1; i >= 0; --i)
-            last = (1.0 + ke[i + 1]) / (1.0 / last + ke[i + 1] * last);
+            last = (1.f + ke[i + 1]) / (1.f / last + ke[i + 1] * last);
 
         return last;
     }
@@ -492,71 +490,69 @@ namespace Kaixo::Processing {
             assert(-20 < passbandAmplitudedB && passbandAmplitudedB < 0);
             assert(-300 < stopbandAmplitudedB && stopbandAmplitudedB < -20);
 
-            auto normalisedFrequency = f0 / sampleRate;
+            float normalisedFrequency = f0 / sampleRate;
 
-            auto fp = normalisedFrequency - normalisedTransitionWidth / 2;
+            float fp = normalisedFrequency - normalisedTransitionWidth / 2;
             assert(0.0 < fp && fp < 0.5);
 
-            auto fs = normalisedFrequency + normalisedTransitionWidth / 2;
+            float fs = normalisedFrequency + normalisedTransitionWidth / 2;
             assert(0.0 < fs && fs < 0.5);
 
-            double Ap = passbandAmplitudedB;
-            double As = stopbandAmplitudedB;
-            auto Gp = Math::Fast::db_to_magnitude(Ap);
-            auto Gs = Math::Fast::db_to_magnitude(As);
-            auto epsp = std::sqrt(1.0 / (Gp * Gp) - 1.0);
-            auto epss = std::sqrt(1.0 / (Gs * Gs) - 1.0);
+            float Ap = passbandAmplitudedB;
+            float As = stopbandAmplitudedB;
+            float Gp = Math::Fast::db_to_magnitude(Ap);
+            float Gs = Math::Fast::db_to_magnitude(As);
+            float epsp = std::sqrt(1.f / (Gp * Gp) - 1.f);
+            float epss = std::sqrt(1.f / (Gs * Gs) - 1.f);
 
-            auto omegap = std::tan(std::numbers::pi * fp);
-            auto omegas = std::tan(std::numbers::pi * fs);
+            float omegap = std::tan(std::numbers::pi * fp);
+            float omegas = std::tan(std::numbers::pi * fs);
 
-            auto k = omegap / omegas;
-            auto k1 = epsp / epss;
+            float k = omegap / omegas;
+            float k1 = epsp / epss;
 
             int N;
 
-            double K, Kp, K1, K1p;
-
-            ellipticIntegralK(k, K, Kp);
-            ellipticIntegralK(k1, K1, K1p);
+            auto [K, Kp]  = ellipticIntegralK(k);
+            auto [K1, K1p]  = ellipticIntegralK(k1);
 
             N = std::round(std::ceil((K1p * K) / (K1 * Kp)));
 
             const std::size_t r = N % 2;
             const std::size_t L = (N - r) / 2;
-            const double H0 = std::pow(Gp, 1.0 - r);
+            const float H0 = std::pow(Gp, 1.0 - r);
 
-            std::vector<std::complex<double>> pa, za;
+            std::vector<std::complex<float>> pa, za;
             pa.reserve(L);
             za.reserve(L);
-            std::complex<double> j(0, 1);
+            std::complex<float> j(0, 1);
 
-            auto v0 = -j * (asne(j / epsp, k1) / (double)N);
+            auto v0 = -j * (asne(j / epsp, k1) / (float)N);
 
             if (r == 1) pa.push_back(omegap * j * sne(j * v0, k));
 
             for (std::size_t i = 1; i <= L; ++i) {
-                auto ui = (2 * i - 1.0) / (double)N;
+                auto ui = (2 * i - 1.0f) / (float)N;
                 auto zetai = cde(ui, k);
 
                 pa.push_back(omegap * j * cde(ui - j * v0, k));
                 za.push_back(omegap * j / (k * zetai));
             }
 
-            std::vector<std::complex<double>> p, z, g;
+            std::vector<std::complex<float>> p, z, g;
             p.reserve(L + 1);
             z.reserve(L + 1);
             g.reserve(L + 1);
 
             if (r == 1) {
-                p.push_back((1.0 + pa[0]) / (1.0 - pa[0]));
-                g.push_back(0.5 * (1.0 - p[0]));
+                p.push_back((1.f + pa[0]) / (1.f - pa[0]));
+                g.push_back(0.5f * (1.f - p[0]));
             }
 
             for (std::size_t i = 0; i < L; ++i) {
-                p.push_back((1.0 + pa[i + r]) / (1.0 - pa[i + r]));
-                z.push_back(za.size() == 0 ? -1.0 : (1.0 + za[i]) / (1.0 - za[i]));
-                g.push_back((1.0 - p[i + r]) / (1.0 - z[i]));
+                p.push_back((1.f + pa[i + r]) / (1.f - pa[i + r]));
+                z.push_back(za.size() == 0 ? -1.f : (1.f + za[i]) / (1.f - za[i]));
+                g.push_back((1.f - p[i + r]) / (1.f - z[i]));
             }
 
             coeficients.clear();
@@ -628,6 +624,159 @@ namespace Kaixo::Processing {
 
             return res;
         }
+    };
+
+    // ------------------------------------------------
+
+    //template<class MathQuality = Math,
+    //         std::size_t Parallel = 1,
+    //         std::size_t MaxStages = 32>
+    class AntiAliasFilter {
+    public:
+
+        // ------------------------------------------------
+        
+        using MathQuality = Math;
+        constexpr static std::size_t Parallel = 1;
+        constexpr static std::size_t MaxStages = 32;
+
+        // ------------------------------------------------
+        
+        constexpr static std::size_t MaxOrder = MaxStages * 2; // Using 2nd order stages
+
+        struct Stage {
+
+            // ------------------------------------------------
+
+            struct State {
+                alignas(64) float state[3][Parallel]{};
+            };
+
+            // ------------------------------------------------
+
+            State left{};
+            State right{};
+
+            // ------------------------------------------------
+
+            std::size_t order = 2;
+            float a[3]{};
+            float b[3]{};
+
+            // ------------------------------------------------
+
+        };
+
+        // ------------------------------------------------
+        
+        float sampleRate = 48000;
+        float cutoff = 21000;
+        float transitionWidth = 1000;
+        float passbandAmplitude = 0.89;   // in magnitude; ~=  -1dB
+        float stopbandAmplitude = 0.0001; // in magnitude; ~= -80dB
+
+        // ------------------------------------------------
+
+        Vector<Stage, MaxStages> stages;
+
+        // ------------------------------------------------
+        
+        Stereo process(Stereo input) {
+            Stereo res = input;
+            for (Stage& stage : stages) {
+                auto l = (stage.b[0] * res.l) + stage.left.state[0][0];
+                auto r = (stage.b[0] * res.r) + stage.right.state[0][0];
+            
+                if (stage.order == 1) {
+                    stage.left.state[0][0] = (stage.b[1] * res.l) - (stage.a[1] * l);
+            
+                    stage.right.state[0][0] = (stage.b[1] * res.r) - (stage.a[1] * r);
+                } else {
+                    stage.left.state[0][0] = (stage.b[1] * res.l) - (stage.a[1] * l) + stage.left.state[1][0];
+                    stage.left.state[1][0] = (stage.b[2] * res.l) - (stage.a[2] * l);
+            
+                    stage.right.state[0][0] = (stage.b[1] * res.r) - (stage.a[1] * r) + stage.right.state[1][0];
+                    stage.right.state[1][0] = (stage.b[2] * res.r) - (stage.a[2] * r);
+                }
+            
+                res = { l, r };
+            }
+            
+            return res;
+        }
+
+        // ------------------------------------------------
+        
+        void recalculateCoefficients() {
+        
+            // https://en.wikipedia.org/wiki/Elliptic_filter
+
+            const float normalizedFrequency = Math::Fast::min(cutoff / sampleRate, 0.5);
+            const float normalizedTransitionWidth = Math::Fast::min(transitionWidth / sampleRate, 0.5);
+            const float passbandFrequency = Math::Fast::max(normalizedFrequency - normalizedTransitionWidth / 2, 0.0);
+            const float stopbandFrequency = Math::Fast::min(normalizedFrequency + normalizedTransitionWidth / 2, 0.5);
+
+            const float epsilonPassband = std::sqrt(1.f / (passbandAmplitude * passbandAmplitude) - 1.f);
+            const float epsilonStopband = std::sqrt(1.f / (stopbandAmplitude * stopbandAmplitude) - 1.f);
+
+            const float omegaPassband = std::tan(std::numbers::pi * passbandFrequency);
+            const float omegaStopband = std::tan(std::numbers::pi * stopbandFrequency);
+             
+            // Calculate order using elliptic integral
+            const float k = omegaPassband / omegaStopband;
+            const float k1 = epsilonPassband / epsilonStopband;
+
+            const auto [K, Kp] = ellipticIntegralK(k);
+            const auto [K1, K1p] = ellipticIntegralK(k1);
+
+            const std::size_t order2 = Math::min(Math::ceil((K1p * K) / (K1 * Kp)), MaxOrder);
+            const std::size_t remainder = 0; // order % 2;
+            const std::size_t nofStages = Math::min((order2 + 1) / 2, MaxStages);
+            const std::size_t order = nofStages * 2;
+            // ^^^ This ignores a potential additional 1st order filter
+            //     since this is an anti-alias filter, the exact pass/stop band
+            //     specifications aren't crucial, so this 1st order filter
+            //     is simply left out for convenience.
+            
+            constexpr std::complex<float> j{ 0, 1 };
+            const std::complex<float> v0 = -j * (asne(j / epsilonPassband, k1) / static_cast<float>(order));
+            
+            stages.clear();
+            
+            if (remainder == 1) {
+                const std::complex<float> pa = omegaPassband * j * sne(j * v0, k);
+                const std::complex<float> p = (1.f + pa) / (1.f - pa);
+                const std::complex<float> g = 0.5f * (1.f - p);
+            
+                Stage& stage = stages.emplace_back();
+                stage.order = 1;
+                stage.a[1] = -std::real(p);
+                stage.b[0] = std::real(g);
+                stage.b[1] = stage.b[0];
+            }
+            
+            for (std::size_t i = 0; i < nofStages; ++i) {
+                const float ui = (2 * (i + 1) - 1.f) / static_cast<float>(order);
+                const std::complex<float> pa = omegaPassband * j * cde(ui - j * v0, k);
+                const std::complex<float> za = omegaPassband * j / (k * cde(ui, k));
+                const std::complex<float> p = (1.f + pa) / (1.f - pa);
+                const std::complex<float> z = (1.f + za) / (1.f - za);
+                const std::complex<float> g = (1.f - p) / (1.f - z);
+            
+                const float gain = std::pow(std::abs(g), 2.f);
+            
+                Stage& stage = stages.emplace_back();
+                stage.order = 2;
+                stage.a[1] = std::real(-p - std::conj(p));
+                stage.a[2] = std::real(p * std::conj(p));
+                stage.b[0] = gain;
+                stage.b[1] = std::real(-z - std::conj(z)) * gain;
+                stage.b[2] = std::real(z * std::conj(z)) * gain;
+            }
+        }
+
+        // ------------------------------------------------
+
     };
 
     // ------------------------------------------------
