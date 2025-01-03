@@ -13,6 +13,7 @@ namespace Kaixo::Processing {
 
         // ------------------------------------------------
 
+        bool active = true; // Can be set to false to prevent reading
         std::size_t writeIndex = 0;
         std::size_t size = 0;
         Stereo* data = nullptr;
@@ -47,6 +48,7 @@ namespace Kaixo::Processing {
         }
 
         void read(std::vector<float>& to) const {
+            if (!active) return;
             std::size_t writeI = writeIndex;
             for (std::size_t i = 0; i < to.size(); ++i) {
                 to[i] += data[(i + writeI + size / 2) % size].average();
@@ -54,6 +56,7 @@ namespace Kaixo::Processing {
         }
         
         void read(std::vector<Stereo>& to) const {
+            if (!active) return;
             std::size_t writeI = writeIndex;
             for (std::size_t i = 0; i < to.size(); ++i) {
                 to[i] += data[(i + writeI + size / 2) % size];
@@ -61,6 +64,7 @@ namespace Kaixo::Processing {
         }
         
         void read(std::vector<std::complex<float>>& mono) const {
+            if (!active) return;
             std::size_t writeI = writeIndex;
             for (std::size_t i = 0; i < mono.size(); ++i) {
                 mono[i] += data[(i + writeI + size / 2) % size].average();
@@ -68,6 +72,7 @@ namespace Kaixo::Processing {
         }
         
         void read(std::vector<std::complex<Stereo>>& stereo) const {
+            if (!active) return;
             std::size_t writeI = writeIndex;
             for (std::size_t i = 0; i < stereo.size(); ++i) {
                 stereo[i] += data[(i + writeI + size / 2) % size];
@@ -75,6 +80,7 @@ namespace Kaixo::Processing {
         }
         
         void read(std::vector<std::complex<float>>& l, std::vector<std::complex<float>>& r) const {
+            if (!active) return;
             std::size_t writeI = writeIndex;
             std::size_t outSize = Math::min(l.size(), r.size());
             for (std::size_t i = 0; i < outSize; ++i) {

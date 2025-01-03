@@ -22,7 +22,7 @@ namespace Kaixo::Gui {
 
         // ------------------------------------------------
 
-        virtual const Processing::CircularBuffer& buffer() = 0;
+        virtual void read(std::vector<std::complex<float>>& buffer) = 0;
 
         // ------------------------------------------------
 
@@ -44,12 +44,12 @@ namespace Kaixo::Gui {
 
             // ------------------------------------------------
             
-            float mindB = -45;
-            float maxdB = 20;
+            float mindB = -42;
+            float maxdB = 12;
 
             // ------------------------------------------------
             
-            std::size_t fftSize = 8192;
+            std::size_t fftSize = 4096;
 
             // ------------------------------------------------
             

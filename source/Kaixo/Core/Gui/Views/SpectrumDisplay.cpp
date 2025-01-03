@@ -34,9 +34,7 @@ namespace Kaixo::Gui {
 
     void SpectrumDisplay::paint(juce::Graphics& g) {
         m_Data.resize(settings.fftSize);
-        std::ranges::fill(m_Data, 0);
-        auto& buffer = settings.interface->buffer();
-        buffer.read(m_Data);
+        settings.interface->read(m_Data);
 
         for (std::size_t i = 0; i < settings.fftSize; ++i) {
             float window = Math::Fast::nsin(Math::Fast::fmod1(static_cast<float>(i) / settings.fftSize + 0.25) - 0.5) * 0.5 + 0.5;
